@@ -161,3 +161,41 @@ Passed / Failed
 - Do not apply to jobs without improving the project.
 - Keep commits small and meaningful.
 - Treat documentation as part of the work.
+
+# Daily Summary - 2026-05-14
+
+## Completed
+
+- Added project documentation and workflow.
+- Created base Spring Boot Gradle project.
+- Added Docker Compose PostgreSQL setup.
+- Verified base test passes.
+- Added and verified health endpoint test.
+- Added GitHub Actions test workflow.
+
+## Tests
+
+Command:
+
+```bash
+./gradlew clean test
+```
+
+Result:
+
+```text
+Passed
+```
+
+## Pull Request
+
+- PR: https://github.com/Rasyid619/property-billing-api/pull/6
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/5
+
+## Blockers
+
+- Docker could not be run in this local WSL distro because Docker is not installed or WSL integration is disabled.
+
+## Tomorrow
+
+- Continue with the next module only after PR checks and review are complete.
