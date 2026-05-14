@@ -133,8 +133,11 @@ Password: property_billing_password
 Port: 5432
 ```
 
-You can override these values by creating a local `.env` file from `.env.example`.
-Do not commit `.env`.
+The PostgreSQL port is bound to `127.0.0.1` for local development only.
+
+Docker Compose reads a local `.env` file automatically. To override the Docker
+database settings, create a local `.env` file from `.env.example`. Do not commit
+`.env`.
 
 Useful commands:
 
@@ -165,8 +168,12 @@ docker compose down -v
 ### Run Application
 
 ```bash
-./gradlew bootRun
+SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 ```
+
+The `local` Spring profile uses the same local PostgreSQL defaults as Docker
+Compose. For non-local environments, provide `SPRING_DATASOURCE_URL`,
+`SPRING_DATASOURCE_USERNAME`, and `SPRING_DATASOURCE_PASSWORD` explicitly.
 
 ## API Documentation
 
