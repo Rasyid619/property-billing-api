@@ -251,7 +251,7 @@ paths:
       description: Returns HTTP 200 when the API is running.
       responses:
         "200":
-          description: API is running.
+          description: API is running. The response body is empty.
 
   /invoices:
     get:
