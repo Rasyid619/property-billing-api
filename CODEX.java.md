@@ -1,164 +1,333 @@
-# AGENTS.md
+# Java Project Conventions
 
-## Read First
+## Code Style
 
-Before making any code changes, read these files:
+### Flat control flow
 
-1. `PROJECT_GUIDE.md` - product requirements and business rules
-2. `CODEX.java.md` - Java code style and engineering conventions
-3. `docs/DEVELOPMENT_PLAN.md` - module-by-module development workflow
-4. `docs/DATABASE_DESIGN.md` - database schema and relationships
-5. `docs/API_SPEC.md` - API contract and response format
-6. `docs/OPENAPI_GUIDE.md` - OpenAPI contract-first rules
-7. `docs/TESTING_STRATEGY.md` - testing requirements
-8. `docs/DAILY_SCHEDULE.md` - daily working routine
+If logic can stay flat, do not make it nested.
 
-## Project Summary
+- Prefer guard clauses and early returns over `else` blocks
+- Keep the happy path visually straight
+- If possible, every method should end with the happy path
+- Extract a small helper before adding another indentation level
+- Avoid unnecessary nesting in controllers, services, repositories, and tests
 
-This repository is a Spring Boot backend API for apartment and housing monthly fee tracking.
+```java
+// correct
+public void updateUser(UpdateUserRequest payload) {
+    if (payload.id() == null) {
+        throw new ValidationException();
+    }
 
-The system helps property owners or administrators manage:
+    if (payload.name() == null || payload.name().isBlank()) {
+        throw new ValidationException();
+    }
 
-- Properties
-- Units
-- Tenants
-- Tenant assignments
-- Monthly invoice generation
-- Payment recording
-- Property expenses
-- Cash-flow reporting
-- Monthly cash balance tracking
+    userRepository.save(payload);
+}
 
-## Required Stack
+// wrong
+public void updateUser(UpdateUserRequest payload) {
+    if (payload.id() != null) {
+        if (payload.name() != null && !payload.name().isBlank()) {
+            userRepository.save(payload);
+        } else {
+            throw new ValidationException();
+        }
+    } else {
+        throw new ValidationException();
+    }
+}
+```
 
-- Java 21
-- Spring Boot
-- Gradle Groovy DSL
-- Gradle Wrapper
-- PostgreSQL
-- Flyway Migration
-- Spring Data JPA
-- Spring Security
-- JWT Authentication
-- Bean Validation
-- Docker Compose
-- Swagger / OpenAPI
-- JUnit
-- Mockito
-- Testcontainers optional
-- GitHub Actions
+### Formatting and imports
 
-## Development Rules
+- Use the formatter configured by the project
+- Do not manually align declarations or parameters
+- Keep imports organized by the project's formatter or IDE rules
+- Avoid wildcard imports unless the project already allows them
+- Remove unused imports before committing
 
-- Follow `CODEX.java.md`.
-- Follow `PROJECT_GUIDE.md`.
-- Follow `docs/DEVELOPMENT_PLAN.md`.
+### Naming
+
+- Methods should start with a verb when they perform work, for example `fetchRewards` or `computeTotal`
+- Boolean names must start with `is`, `has`, `should`, `can`, or another clear predicate
+- Classes, records, and enums should be nouns
+- Plural names are reserved for collections and arrays
+- Constants must use `UPPER_SNAKE_CASE`
+
+### Method shape
+
+- One method should do one job
+- Prefer small methods with explicit inputs and outputs
+- Keep controllers thin and orchestration-focused
+- Keep repositories limited to data access
+- Extract helpers only when they reduce duplication or improve clarity
+- Prefer constructor injection over field injection
+
+### Layer responsibilities
+
+- Controllers should parse requests, call services, map status codes, and shape responses
+- Complex business logic should live in services
+- Repositories should contain no business logic
+- Repositories should only read, write, lock, and map database data
+- Do not move logic into repositories just to make services look shorter
+
+### Data shaping
+
+- Prefer explicit object construction over passing broad objects through layers
+- Keep request DTOs, response DTOs, query projections, and domain models clearly separated
+- Do not hide important shape changes inside generic helpers
+- Prefer records for immutable DTOs when the project supports them
+
+### Diffs
+
+- Prefer the smallest correct diff
+- Do not refactor unrelated code in the same change unless required
+- Preserve existing local patterns unless the task requires changing them
+
+### Multi-line declarations
+
+For multi-line declarations, place each element on its own line. Opening and closing brackets should be easy to scan.
+
+```java
+List<String> requiredEnvVarNames = List.of(
+    "APP_ENV",
+    "DATABASE_URL",
+    "JWT_SECRET"
+);
+
+CreateUserRequest request = new CreateUserRequest(
+    payload.id(),
+    payload.name(),
+    payload.email()
+);
+```
+
+## Documentation
+
+- Public classes, records, interfaces, enums, and public methods should have Javadoc when they are part of the module API
+- Javadoc should explain behavior and intent, not repeat the method name
+- Include `@param`, `@return`, and `@throws` when they add useful information
+- Do not add file-level Javadocs unless the project already uses them
+
+```java
+/**
+ * Reward data with current stock information.
+ *
+ * @param id unique identifier for the reward
+ * @param name display name of the reward
+ * @param stockCount number of items remaining in stock
+ */
+public record RewardWithStock(
+    UUID id,
+    String name,
+    int stockCount
+) {}
+```
+
+## Types
+
+- Use records for immutable data carriers when appropriate
+- Use classes for behavior-rich domain objects and services
+- Use interfaces for boundaries, abstractions, and multiple implementations
+- Avoid broad casts; keep conversions narrow and local
+- Prefer explicit return types over inference where Java requires clarity
+
+### Type categories
+
+Use packages that reflect ownership:
+
+```text
+com.example.project
+  controller     API boundary
+  service        business workflows
+  repository     data access
+  domain         domain models
+  dto            API request and response payloads
+  projection     database query result shapes
+```
+
+## Testing
+
+Each test should cover one behavior or code path. If assertions cover the same code path, keep them in the same test.
+
+- Test behavior, not implementation noise
+- Use Mockito for mocking in Java tests when the project does not already standardize on another mocking library
+- Mock only boundaries outside the unit under test
+- Use integration tests for repository and API happy paths
+- Do not write tests for rethrowing unexpected errors outside our control
+- If a regression-prone branch changes, add a targeted test for that branch
+
+```java
+@Nested
+class GetUser {
+    @Test
+    void returnsUserWhenUserExists() {
+        // assertions for the happy path
+    }
+
+    @Test
+    void throwsNotFoundWhenUserDoesNotExist() {
+        // assertions for the missing user path
+    }
+}
+```
+
+## Commits
+
+Use Conventional Commits for all commit messages. Prefix with one of:
+
+```text
+feat:
+fix:
+build:
+refactor:
+test:
+docs:
+chore:
+ci:
+style:
+perf:
+```
+
+- Commit messages should describe the actual change
+- Keep unrelated changes out of the same commit when possible
+
+## Workflow
+
+- Read the surrounding implementation before editing
+- Reuse existing repo patterns before introducing new abstractions
+- When changing API behavior, check routes, validation, DTOs, OpenAPI, and tests
+- Run the narrowest useful verification first, usually a targeted test class or package test
+- State clearly when verification could not be run
+- Never include temporary local files such as `.codex` in commits
+
+## SQL And Repositories
+
+- Format multi-clause SQL vertically
+- Prefer explicit column lists over `SELECT *`
+- Alias selected columns when it makes result shapes clearer
+- Keep ownership and existence checks explicit
+- Use row locks only when the workflow requires them
+
+## API And Validation
+
+- Reuse existing request and response schemas where appropriate
+- Keep validation close to the request boundary
+- Return the narrowest response shape needed by the endpoint
+- Use `400`, `403`, `404`, and `409` intentionally based on behavior
+
+## Environment Variables
+
+Required environment variable lists must be sorted alphabetically.
+
+## OpenAPI
+
+In `openapi.yml`, paths, schemas, and tags must all be sorted alphabetically.
+
+All `summary` and `description` fields must be proper sentences.
+
+## Property Billing API Project Rules
+
+This project is a Spring Boot backend API for property billing, apartment monthly fee tracking, invoice generation, payment recording, property expense tracking, and cash-flow reporting.
+
+### Stack Rules
+
+- Use Java 21.
+- Use Spring Boot.
+- Use Gradle Groovy DSL.
 - Use Gradle Wrapper.
 - Do not use Maven.
-- Do not rewrite unrelated files.
-- Keep changes small and focused.
-- Explain what files were changed.
-- Run tests when possible.
-- Do not implement future modules early.
-- Do not expose JPA entities directly from controllers.
-- Use DTOs for request and response.
+- Use PostgreSQL.
+- Use Flyway for database migrations.
+- Use Docker Compose for local dependencies.
+- Use Springdoc OpenAPI for API documentation.
+- Use JUnit and Mockito for tests.
+- Use Testcontainers for integration tests when database behavior needs to be verified.
+- Use GitHub Actions for CI.
+
+### Architecture Rules
+
+Use this package structure unless the project already has a better established structure:
+
+```text
+com.propertybilling
+  config
+  controller
+  domain
+  dto
+  exception
+  projection
+  repository
+  security
+  service
+```
+
+Controllers must stay thin.
+
+Services contain business logic.
+
+Repositories contain data access only.
+
+DTOs must be separated from entities.
+
+Do not expose JPA entities directly from controllers.
+
+### Data Type Rules
+
+- Use `UUID` for entity IDs.
 - Use `BigDecimal` for money.
-- Use `UUID` for IDs.
-- Keep controllers thin.
-- Put business logic in service layer.
+- Use `LocalDate` for business dates such as billing month, due date, payment date, and expense date.
+- Use `Instant` or `OffsetDateTime` for created and updated timestamps.
+- Use enums for fixed statuses such as invoice status.
+- Store billing month as the first day of the month.
 
-## Issue and Branch Workflow
-
-Every code or documentation task must start from a GitHub Issue.
-
-Do not start implementation without an issue.
-
-Each branch must be created from an issue using this naming convention:
+Example:
 
 ```text
-rasyid-{issueNumber}-{slugFromIssue}
+2026-05-01
 ```
 
-Examples:
+### Money Rules
+
+Money must never use:
 
 ```text
-rasyid-1-add-project-documentation
-rasyid-2-create-spring-boot-base-project
-rasyid-3-add-initial-database-migration
-rasyid-4-add-openapi-foundation
-rasyid-5-implement-property-module
+double
+float
 ```
 
-Branch naming rules:
+Use:
 
-- Use lowercase letters.
-- Use hyphen-separated words.
-- Start with `rasyid`.
-- Include the GitHub issue number.
-- Use a short slug from the issue title.
-- Do not use spaces.
-- Do not use underscores.
-- Do not use special characters.
-- Keep the slug clear and short.
+```java
+BigDecimal
+```
 
-Each pull request must link the issue.
+### Unit and Tenant Separation Rules
 
-Use one of these in the pull request description:
+Keep Unit and Tenant separated.
+
+Use this model:
 
 ```text
-Closes #1
-Fixes #1
-Resolves #1
+Property = building or housing area
+Unit = room, house, apartment number, or rented space
+Tenant = person who lives in or rents the unit
+UnitTenant = assignment history between unit and tenant
 ```
 
-Do not merge a pull request unless:
+Do not merge Unit and Tenant into one table.
 
-- The branch name follows the convention.
-- The pull request links to an issue.
-- The module checklist is complete.
-- Tests pass locally.
-- GitHub Actions CI passes.
+Reasons:
 
-## Module Completion Rule
+- A unit can exist without a tenant.
+- A tenant can move out.
+- Another tenant can move into the same unit.
+- Assignment history must be preserved.
+- Invoices should be linked to both the unit and the tenant at the time of billing.
 
-Every module must be completed with tests before moving to the next module.
-
-Codex must not start a new module until:
-
-- The current module implementation is finished
-- Relevant database migration is added if needed
-- OpenAPI contract is defined or updated
-- Relevant unit tests are added
-- Relevant integration tests are added when needed
-- `./gradlew clean test` passes, or the reason it cannot be run is clearly explained
-- GitHub Actions CI passes
-- Changed files are summarized
-
-When implementing a task, only work on the current module.
-
-## API Contract Rule
-
-After database migration and before implementing each module, define or update the OpenAPI contract.
-
-For every new endpoint, document:
-
-- Path
-- HTTP method
-- Request body
-- Response body
-- Query parameters
-- Path parameters
-- Validation rules
-- Success status code
-- Error status codes
-- Example request
-- Example response
-
-Do not implement a controller endpoint before its API contract is defined.
-
-When implementation changes the public API, update the OpenAPI contract and `docs/API_SPEC.md`.
-
-## Tenant Login Rule
+### Tenant Login Rules
 
 Tenant login is not part of MVP.
 
@@ -176,88 +345,120 @@ Future tenant login options:
 
 Do not use property name and unit name alone as login credentials because they are easy to guess.
 
-Unit and Tenant must remain separate because:
+### Invoice Rules
 
-- A unit can exist without a tenant.
-- A tenant can move out.
-- Another tenant can move into the same unit.
-- Assignment history must be preserved.
+Invoice status values:
 
-## Development Flow
+```text
+unpaid
+partial
+paid
+overdue
+cancelled
+```
 
-Use this flow for every module:
+Invoice status must be calculated from:
 
-1. Create GitHub Issue
-2. Create branch using issue number
-3. Review requirement
-4. Review database design
-5. Add or update migration if needed
-6. Define or update OpenAPI contract
-7. Implement entity/model
-8. Implement repository
-9. Implement DTOs
-10. Implement service
-11. Implement controller
-12. Add validation
-13. Add tests
-14. Run tests
-15. Update documentation if needed
-16. Push branch
-17. Open pull request
-18. Link pull request to issue
-19. Wait for CI to pass
-20. Merge pull request
-21. Move to next module
+- Invoice amount
+- Total paid amount
+- Due date
+- Current date
 
-## Required Test Command
+Rules:
 
-Before moving to the next module, run:
+```text
+total_paid = 0 -> unpaid
+total_paid > 0 and total_paid < amount -> partial
+total_paid >= amount -> paid
+due_date < today and total_paid < amount -> overdue
+```
+
+A paid invoice must not become overdue.
+
+### API Contract Rules
+
+Before implementing a controller endpoint:
+
+- Update `docs/API_SPEC.md`
+- Update OpenAPI annotations or `openapi.yml` when used
+- Define request body
+- Define response body
+- Define validation rules
+- Define error responses
+- Add or update tests
+
+### GitHub Issue and Branch Rules
+
+Every task must be based on a GitHub Issue.
+
+Branch naming convention:
+
+```text
+rasyid-{issueNumber}-{slugFromIssue}
+```
+
+Examples:
+
+```text
+rasyid-1-add-project-documentation
+rasyid-2-create-spring-boot-base-project
+rasyid-3-add-initial-database-migration
+```
+
+Rules:
+
+- One issue per focused task.
+- One branch per issue.
+- One pull request per branch.
+- Pull request must link the issue using `Closes #issueNumber`, `Fixes #issueNumber`, or `Resolves #issueNumber`.
+- Do not mix unrelated issues in one branch.
+- Do not work directly on `main`.
+
+### Module Completion Rules
+
+Do not move to the next module until the current module has:
+
+- GitHub Issue
+- Branch from issue
+- Migration if needed
+- API contract
+- Implementation
+- Unit tests
+- Integration tests when needed
+- Documentation update if public behavior changes
+- Passing local tests
+- Passing GitHub Actions CI
+
+Required command:
 
 ```bash
 ./gradlew clean test
 ```
 
-For larger changes, also run:
+For larger changes:
 
 ```bash
 ./gradlew clean build
 ```
 
-## Task Order
+### GitHub Actions Rule
 
-Implement features in this order:
+CI must run tests for:
 
-1. Project documentation and Codex instructions
-2. Base Spring Boot Gradle setup
-3. Docker Compose PostgreSQL
-4. Flyway migrations
-5. OpenAPI contract foundation
-6. GitHub Actions CI
-7. Auth module
-8. Property module
-9. Unit module
-10. Tenant module
-11. Tenant assignment module
-12. Invoice module
-13. Payment module
-14. Property expense module
-15. Cash-flow report module
-16. Cash balance closing module
-17. API documentation improvement
-18. README improvement
-19. Deployment guide
+- Push to main
+- Pull request to main
 
-## Important Restrictions
+Do not treat a module as complete when CI is failing.
 
-Do not:
+### Documentation Rules
 
-- Use Maven
-- Skip tests
-- Implement multiple modules at once
-- Add unrelated refactors
-- Work directly on `main`
-- Hardcode secrets
-- Commit `.env` files
-- Commit database passwords
-- Commit JWT secrets
-- Expose internal stack traces in API responses
+Update documentation when public behavior changes.
+
+Relevant docs:
+
+- `PROJECT_GUIDE.md`
+- `docs/API_SPEC.md`
+- `docs/DATABASE_DESIGN.md`
+- `docs/DEVELOPMENT_PLAN.md`
+- `docs/OPENAPI_GUIDE.md`
+- `docs/TESTING_STRATEGY.md`

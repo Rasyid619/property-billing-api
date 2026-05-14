@@ -124,6 +124,38 @@ property-billing-api/
 docker compose up -d
 ```
 
+Docker Compose starts a local PostgreSQL database using development-only defaults:
+
+```text
+Database: property_billing
+Username: property_billing
+Password: property_billing_password
+Port: 5432
+```
+
+The PostgreSQL port is bound to `127.0.0.1` for local development only.
+
+Docker Compose reads a local `.env` file automatically. To override the Docker
+database settings, create a local `.env` file from `.env.example`. Do not commit
+`.env`. Note that this project does not automatically load `.env` when starting
+Spring Boot with Gradle, so if you change values such as the database port,
+name, username, or password in `.env`, you must also export the same values in
+your shell or pass them explicitly to the Gradle/Spring Boot run command.
+
+Useful commands:
+
+```bash
+docker compose ps
+docker compose logs -f postgres
+docker compose down
+```
+
+To remove the local database volume and start with an empty database:
+
+```bash
+docker compose down -v
+```
+
 ### Run Tests
 
 ```bash
@@ -139,8 +171,12 @@ docker compose up -d
 ### Run Application
 
 ```bash
-./gradlew bootRun
+SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 ```
+
+The `local` Spring profile uses the same local PostgreSQL defaults as Docker
+Compose. For non-local environments, provide `SPRING_DATASOURCE_URL`,
+`SPRING_DATASOURCE_USERNAME`, and `SPRING_DATASOURCE_PASSWORD` explicitly.
 
 ## API Documentation
 
