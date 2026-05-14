@@ -187,7 +187,7 @@ Every branch must be based on a GitHub Issue.
 Branch format:
 
 ```text
-rasyid-{issueNumber}-{slugFromIssue}
+{name}-{issueNumber}-{slugFromIssue}
 ```
 
 Examples:
