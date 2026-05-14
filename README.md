@@ -124,6 +124,32 @@ property-billing-api/
 docker compose up -d
 ```
 
+Docker Compose starts a local PostgreSQL database using development-only defaults:
+
+```text
+Database: property_billing
+Username: property_billing
+Password: property_billing_password
+Port: 5432
+```
+
+You can override these values by creating a local `.env` file from `.env.example`.
+Do not commit `.env`.
+
+Useful commands:
+
+```bash
+docker compose ps
+docker compose logs -f postgres
+docker compose down
+```
+
+To remove the local database volume and start with an empty database:
+
+```bash
+docker compose down -v
+```
+
 ### Run Tests
 
 ```bash
