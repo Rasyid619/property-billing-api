@@ -410,7 +410,7 @@ Rules:
 - One issue per focused task.
 - One branch per issue.
 - One pull request per branch.
-- Pull request must link the issue using `Closes #issueNumber`.
+- Pull request must link the issue using `Closes #issueNumber`, `Fixes #issueNumber`, or `Resolves #issueNumber`.
 - Do not mix unrelated issues in one branch.
 - Do not work directly on `main`.
 
