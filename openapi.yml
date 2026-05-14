@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  title: Property Billing API
+  version: 0.1.0
+  description: API for apartment and housing monthly fee tracking.
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server.
+
+tags:
+  - name: Health
+    description: Operations for checking API availability.
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Check API health.
+      description: Returns HTTP 200 when the API is running.
+      responses:
+        "200":
+          description: API is running.
+
+components:
+  parameters: {}
+  securitySchemes: {}
+  schemas: {}

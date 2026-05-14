@@ -50,6 +50,8 @@ tags:
     description: Operations for admin and staff authentication.
   - name: Cash Balances
     description: Operations for monthly closing balances.
+  - name: Health
+    description: Operations for checking API availability.
   - name: Invoices
     description: Operations for monthly invoice generation and retrieval.
   - name: Payments
@@ -240,6 +242,16 @@ paths:
           description: Authentication is missing or invalid.
         "404":
           description: The expense was not found.
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Check API health.
+      description: Returns HTTP 200 when the API is running.
+      responses:
+        "200":
+          description: API is running.
 
   /invoices:
     get:
