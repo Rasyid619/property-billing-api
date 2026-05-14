@@ -252,10 +252,6 @@ paths:
       responses:
         "200":
           description: API is running.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
 
   /invoices:
     get:
@@ -1070,15 +1066,6 @@ components:
           properties:
             data:
               $ref: "#/components/schemas/AuthTokenResponse"
-
-    HealthResponse:
-      type: object
-      properties:
-        status:
-          type: string
-          example: UP
-      required:
-        - status
 
     CashBalanceResponse:
       type: object
