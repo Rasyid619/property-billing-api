@@ -137,7 +137,10 @@ The PostgreSQL port is bound to `127.0.0.1` for local development only.
 
 Docker Compose reads a local `.env` file automatically. To override the Docker
 database settings, create a local `.env` file from `.env.example`. Do not commit
-`.env`.
+`.env`. Note that this project does not automatically load `.env` when starting
+Spring Boot with Gradle, so if you change values such as the database port,
+name, username, or password in `.env`, you must also export the same values in
+your shell or pass them explicitly to the Gradle/Spring Boot run command.
 
 Useful commands:
 
