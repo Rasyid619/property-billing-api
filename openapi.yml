@@ -22,8 +22,20 @@ paths:
       responses:
         "200":
           description: API is running.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
 
 components:
   parameters: {}
   securitySchemes: {}
-  schemas: {}
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: UP
+      required:
+        - status
