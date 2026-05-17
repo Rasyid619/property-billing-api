@@ -94,8 +94,6 @@ property-billing-api/
 │   ├── OPENAPI_GUIDE.md
 │   ├── TESTING_STRATEGY.md
 │   └── DAILY_SCHEDULE.md
-├── AGENTS.md
-├── CODEX.java.md
 ├── PROJECT_GUIDE.md
 ├── README.md
 ├── build.gradle
