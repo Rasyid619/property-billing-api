@@ -946,13 +946,8 @@ components:
           type: string
           description: JWT access token.
           example: access-token
-        accessTokenExpiresIn:
-          type: integer
-          description: Access token lifetime in seconds.
-          example: 900
       required:
         - accessToken
-        - accessTokenExpiresIn
 
     AuthTokenResponse:
       allOf:
@@ -963,13 +958,8 @@ components:
               type: string
               description: JWT refresh token.
               example: refresh-token
-            refreshTokenExpiresIn:
-              type: integer
-              description: Refresh token lifetime in seconds.
-              example: 604800
           required:
             - refreshToken
-            - refreshTokenExpiresIn
 
 
     CashFlowReportResponse:
