@@ -1,0 +1,119 @@
+package com.propertybilling.migration;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.OffsetDateTime;
+import java.util.Set;
+import java.util.TreeSet;
+import javax.sql.DataSource;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+
+@Testcontainers
+@SpringBootTest
+class FlywayMigrationTest {
+
+	@Container
+	private static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:16-alpine");
+
+	private final DataSource dataSource;
+
+	@Autowired
+	FlywayMigrationTest(DataSource dataSource) {
+		this.dataSource = dataSource;
+	}
+
+	@DynamicPropertySource
+	static void configureDatasource(DynamicPropertyRegistry registry) {
+		registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+		registry.add("spring.datasource.username", POSTGRES::getUsername);
+		registry.add("spring.datasource.password", POSTGRES::getPassword);
+	}
+
+	@Test
+	void migrationCreatesInitialTables() throws SQLException {
+		Set<String> tableNames = new TreeSet<>();
+
+		try (var connection = dataSource.getConnection()) {
+			DatabaseMetaData metadata = connection.getMetaData();
+
+			try (ResultSet tables = metadata.getTables(null, "public", "%", new String[] { "TABLE" })) {
+				while (tables.next()) {
+					tableNames.add(tables.getString("TABLE_NAME"));
+				}
+			}
+		}
+
+		assertThat(tableNames).contains(
+				"users",
+				"properties",
+				"units",
+				"tenants",
+				"unit_tenants",
+				"invoices",
+				"payments",
+				"property_expenses",
+				"cash_balances"
+		);
+	}
+
+	@Test
+	void triggerUpdatesUpdatedAtWhenRowChanges() throws SQLException {
+		OffsetDateTime originalUpdatedAt = OffsetDateTime.parse("2026-05-17T00:00:00Z");
+		OffsetDateTime changedUpdatedAt;
+
+		try (var connection = dataSource.getConnection()) {
+			try (var insert = connection.prepareStatement("""
+					INSERT INTO properties (
+					    id,
+					    name,
+					    address,
+					    is_active,
+					    created_at,
+					    updated_at
+					)
+					VALUES (
+					    '00000000-0000-0000-0000-000000000001',
+					    'Green Residence',
+					    'Bekasi',
+					    TRUE,
+					    ?,
+					    ?
+					)
+					""")) {
+				insert.setObject(1, originalUpdatedAt);
+				insert.setObject(2, originalUpdatedAt);
+				insert.executeUpdate();
+			}
+
+			try (var update = connection.prepareStatement("""
+					UPDATE properties
+					SET name = 'Green Residence Updated'
+					WHERE id = '00000000-0000-0000-0000-000000000001'
+					""")) {
+				update.executeUpdate();
+			}
+
+			try (var select = connection.prepareStatement("""
+					SELECT updated_at
+					FROM properties
+					WHERE id = '00000000-0000-0000-0000-000000000001'
+					""");
+					ResultSet result = select.executeQuery()) {
+				result.next();
+				changedUpdatedAt = result.getObject("updated_at", OffsetDateTime.class);
+			}
+		}
+
+		assertThat(changedUpdatedAt).isAfter(originalUpdatedAt);
+	}
+}

@@ -23,7 +23,8 @@ The database stores:
 - Store money as a decimal string, for example `750000.00`.
 - Parse money values to `BigDecimal` in Java before validation or calculation.
 - Use `DATE` for billing dates.
-- Use `TIMESTAMP WITH TIME ZONE` or equivalent Java timestamp mapping for created and updated timestamps.
+- Use `TIMESTAMP WITH TIME ZONE` for created and updated timestamps.
+- Keep `updated_at` synchronized automatically with database triggers whenever a row changes.
 - Use the first day of the month for monthly fields.
 - Use database constraints to protect important business rules.
 
