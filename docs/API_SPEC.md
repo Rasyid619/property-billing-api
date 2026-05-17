@@ -32,6 +32,7 @@ root and keep this document aligned with it.
 - Auth endpoints may return token payloads directly, using `access_token` and `refresh_token` fields to make token roles explicit.
 - Do not expose JPA entities directly in schemas.
 - Use DTO-shaped request and response schemas.
+- Use `snake_case` for all public request, response, and parameter field names.
 - Use `Index` and `Show` schema families for list and detail responses.
 - Use resource-first schema names such as `PropertyCreateRequest`, `PropertyIndexElement`, `PropertyShowResponse`, and `PropertyUpdateRequest`.
 - Use `string` with `format: uuid` for IDs.
@@ -322,7 +323,7 @@ paths:
         "409":
           $ref: "#/components/responses/Conflict"
 
-  /invoices/{invoiceId}:
+  /invoices/{invoice_id}:
     get:
       tags:
         - Invoices
@@ -343,7 +344,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /invoices/{invoiceId}/payments:
+  /invoices/{invoice_id}/payments:
     get:
       tags:
         - Payments
@@ -428,7 +429,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /properties/{propertyId}:
+  /properties/{property_id}:
     delete:
       tags:
         - Properties
@@ -487,7 +488,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /properties/{propertyId}/units:
+  /properties/{property_id}/units:
     get:
       tags:
         - Units
@@ -602,7 +603,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  /tenants/{tenantId}:
+  /tenants/{tenant_id}:
     get:
       tags:
         - Tenants
@@ -672,7 +673,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /units/{unitId}:
+  /units/{unit_id}:
     delete:
       tags:
         - Units
@@ -733,7 +734,7 @@ paths:
         "409":
           $ref: "#/components/responses/Conflict"
 
-  /units/{unitId}/active-tenant:
+  /units/{unit_id}/active-tenant:
     get:
       tags:
         - Tenant Assignments
@@ -754,7 +755,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /units/{unitId}/tenant-assignments:
+  /units/{unit_id}/tenant-assignments:
     get:
       tags:
         - Tenant Assignments
@@ -812,7 +813,7 @@ components:
         type: string
         example: Bearer refresh-token
     AssignmentId:
-      name: assignmentId
+      name: assignment_id
       in: path
       required: true
       description: UUID of the tenant assignment.
@@ -820,7 +821,7 @@ components:
         type: string
         format: uuid
     ExpenseId:
-      name: expenseId
+      name: expense_id
       in: path
       required: true
       description: UUID of the property expense.
@@ -828,7 +829,7 @@ components:
         type: string
         format: uuid
     InvoiceId:
-      name: invoiceId
+      name: invoice_id
       in: path
       required: true
       description: UUID of the invoice.
@@ -871,7 +872,7 @@ components:
         maximum: 100
         default: 100
     PropertyId:
-      name: propertyId
+      name: property_id
       in: path
       required: true
       description: UUID of the property.
@@ -879,7 +880,7 @@ components:
         type: string
         format: uuid
     PropertyIdOptionalQuery:
-      name: propertyId
+      name: property_id
       in: query
       required: false
       description: UUID of the property.
@@ -887,7 +888,7 @@ components:
         type: string
         format: uuid
     PropertyIdQuery:
-      name: propertyId
+      name: property_id
       in: query
       required: true
       description: UUID of the property.
@@ -912,7 +913,7 @@ components:
         minimum: 0
         default: 0
     TenantId:
-      name: tenantId
+      name: tenant_id
       in: path
       required: true
       description: UUID of the tenant.
@@ -920,7 +921,7 @@ components:
         type: string
         format: uuid
     TenantIdQuery:
-      name: tenantId
+      name: tenant_id
       in: query
       required: false
       description: UUID of the tenant.
@@ -928,7 +929,7 @@ components:
         type: string
         format: uuid
     UnitId:
-      name: unitId
+      name: unit_id
       in: path
       required: true
       description: UUID of the unit.
@@ -936,7 +937,7 @@ components:
         type: string
         format: uuid
     UnitIdQuery:
-      name: unitId
+      name: unit_id
       in: query
       required: false
       description: UUID of the unit.
@@ -973,16 +974,16 @@ components:
     TenantAssignmentCreateRequest:
       type: object
       properties:
-        tenantId:
+        tenant_id:
           type: string
           format: uuid
-        startDate:
+        start_date:
           type: string
           format: date
           example: "2026-05-01"
       required:
-        - tenantId
-        - startDate
+        - tenant_id
+        - start_date
 
     AccessTokenResponse:
       type: object
@@ -1010,36 +1011,36 @@ components:
     CashFlowReportResponse:
       type: object
       properties:
-        propertyId:
+        property_id:
           type: string
           format: uuid
         month:
           type: string
           example: "2026-05"
-        totalIncome:
+        total_income:
           type: number
           format: double
           example: 15000000
-        totalExpense:
+        total_expense:
           type: number
           format: double
           example: 4000000
-        netSaving:
+        net_saving:
           type: number
           format: double
           example: 11000000
       required:
-        - propertyId
+        - property_id
         - month
-        - totalIncome
-        - totalExpense
-        - netSaving
+        - total_income
+        - total_expense
+        - net_saving
 
 
     CashBalanceCloseMonthRequest:
       type: object
       properties:
-        propertyId:
+        property_id:
           type: string
           format: uuid
         month:
@@ -1048,16 +1049,16 @@ components:
           description: First day of the month.
           example: "2026-05-01"
       required:
-        - propertyId
+        - property_id
         - month
 
     ExpenseCreateRequest:
       type: object
       properties:
-        propertyId:
+        property_id:
           type: string
           format: uuid
-        expenseDate:
+        expense_date:
           type: string
           format: date
           example: "2026-05-12"
@@ -1077,8 +1078,8 @@ components:
           maxLength: 500
           example: Monthly cleaning fee
       required:
-        - propertyId
-        - expenseDate
+        - property_id
+        - expense_date
         - category
         - amount
 
@@ -1090,16 +1091,16 @@ components:
           format: double
           minimum: 0.01
           example: 750000
-        paymentDate:
+        payment_date:
           type: string
           format: date
           example: "2026-05-08"
-        paymentMethod:
+        payment_method:
           type: string
           minLength: 1
           maxLength: 50
           example: bank_transfer
-        referenceNumber:
+        reference_number:
           type: string
           nullable: true
           maxLength: 100
@@ -1111,8 +1112,8 @@ components:
           example: Paid by tenant
       required:
         - amount
-        - paymentDate
-        - paymentMethod
+        - payment_date
+        - payment_method
 
     PropertyCreateRequest:
       type: object
@@ -1155,25 +1156,25 @@ components:
     UnitCreateRequest:
       type: object
       properties:
-        unitNumber:
+        unit_number:
           type: string
           minLength: 1
           maxLength: 50
           example: A-101
-        monthlyFee:
+        monthly_fee:
           type: number
           format: double
           minimum: 0.01
           example: 750000
-        dueDay:
+        due_day:
           type: integer
           minimum: 1
           maximum: 28
           example: 10
       required:
-        - unitNumber
-        - monthlyFee
-        - dueDay
+        - unit_number
+        - monthly_fee
+        - due_day
 
     ExpenseIndexResponse:
       type: object
@@ -1210,17 +1211,17 @@ components:
     InvoiceGenerateMonthlyRequest:
       type: object
       properties:
-        propertyId:
+        property_id:
           type: string
           format: uuid
-        billingMonth:
+        billing_month:
           type: string
           format: date
           description: First day of the billing month.
           example: "2026-05-01"
       required:
-        - propertyId
-        - billingMonth
+        - property_id
+        - billing_month
 
     InvoiceIndexResponse:
       type: object
@@ -1248,24 +1249,24 @@ components:
         id:
           type: string
           format: uuid
-        unitId:
+        unit_id:
           type: string
           format: uuid
-        tenantId:
+        tenant_id:
           type: string
           format: uuid
-        billingMonth:
+        billing_month:
           type: string
           format: date
           example: "2026-05-01"
-        invoiceNumber:
+        invoice_number:
           type: string
           example: INV-202605-A101
         amount:
           type: number
           format: double
           example: 750000
-        dueDate:
+        due_date:
           type: string
           format: date
           example: "2026-05-10"
@@ -1273,12 +1274,12 @@ components:
           $ref: "#/components/schemas/InvoiceStatus"
       required:
         - id
-        - unitId
-        - tenantId
-        - billingMonth
-        - invoiceNumber
+        - unit_id
+        - tenant_id
+        - billing_month
+        - invoice_number
         - amount
-        - dueDate
+        - due_date
         - status
 
 
@@ -1311,12 +1312,12 @@ components:
     TenantAssignmentMoveOutRequest:
       type: object
       properties:
-        endDate:
+        end_date:
           type: string
           format: date
           example: "2026-05-31"
       required:
-        - endDate
+        - end_date
 
     PaymentIndexResponse:
       type: object
@@ -1346,15 +1347,15 @@ components:
             id:
               type: string
               format: uuid
-            invoiceId:
+            invoice_id:
               type: string
               format: uuid
-            invoiceStatus:
+            invoice_status:
               $ref: "#/components/schemas/InvoiceStatus"
       required:
         - id
-        - invoiceId
-        - invoiceStatus
+        - invoice_id
+        - invoice_status
 
 
     PropertyIndexResponse:
@@ -1393,18 +1394,18 @@ components:
         active:
           type: boolean
           example: true
-        createdAt:
+        created_at:
           type: string
           format: date-time
-        updatedAt:
+        updated_at:
           type: string
           format: date-time
       required:
         - id
         - name
         - active
-        - createdAt
-        - updatedAt
+        - created_at
+        - updated_at
 
 
     RegisterRequest:
@@ -1435,15 +1436,15 @@ components:
         count:
           type: integer
           minimum: 0
-          description: Number of items returned in `tenantAssignments`.
+          description: Number of items returned in `tenant_assignments`.
           example: 1
-        tenantAssignments:
+        tenant_assignments:
           type: array
           items:
             $ref: "#/components/schemas/TenantAssignmentIndexElement"
       required:
         - count
-        - tenantAssignments
+        - tenant_assignments
 
     TenantAssignmentIndexElement:
       allOf:
@@ -1455,17 +1456,17 @@ components:
         id:
           type: string
           format: uuid
-        unitId:
+        unit_id:
           type: string
           format: uuid
-        tenantId:
+        tenant_id:
           type: string
           format: uuid
-        startDate:
+        start_date:
           type: string
           format: date
           example: "2026-05-01"
-        endDate:
+        end_date:
           type: string
           format: date
           nullable: true
@@ -1475,9 +1476,9 @@ components:
           example: true
       required:
         - id
-        - unitId
-        - tenantId
-        - startDate
+        - unit_id
+        - tenant_id
+        - start_date
         - active
 
 
@@ -1550,17 +1551,17 @@ components:
         id:
           type: string
           format: uuid
-        propertyId:
+        property_id:
           type: string
           format: uuid
-        unitNumber:
+        unit_number:
           type: string
           example: A-101
-        monthlyFee:
+        monthly_fee:
           type: number
           format: double
           example: 750000
-        dueDay:
+        due_day:
           type: integer
           example: 10
         active:
@@ -1568,10 +1569,10 @@ components:
           example: true
       required:
         - id
-        - propertyId
-        - unitNumber
-        - monthlyFee
-        - dueDay
+        - property_id
+        - unit_number
+        - monthly_fee
+        - due_day
         - active
 
 

@@ -131,7 +131,7 @@ Example:
 components:
   parameters:
     PropertyId:
-      name: propertyId
+      name: property_id
       in: path
       required: true
       description: UUID of the property.
@@ -180,6 +180,8 @@ security:
 Auth endpoints such as login and register do not require bearer security.
 
 ## Schema Style
+
+Use `snake_case` for all public request, response, and parameter field names.
 
 Schemas must represent DTOs, not JPA entities.
 
@@ -308,11 +310,11 @@ name:
   type: string
   minLength: 1
   maxLength: 150
-monthlyFee:
+monthly_fee:
   type: number
   format: double
   minimum: 0.01
-dueDay:
+due_day:
   type: integer
   minimum: 1
   maximum: 28
