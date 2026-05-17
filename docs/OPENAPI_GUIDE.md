@@ -78,7 +78,7 @@ responses:
     content:
       application/json:
         schema:
-          $ref: "#/components/schemas/PropertyShowResponseEnvelope"
+          $ref: "#/components/schemas/PropertyShowResponse"
   "400":
     $ref: "#/components/responses/BadRequest"
   "401":
@@ -114,7 +114,7 @@ Example:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PropertyShowResponseEnvelope"
+              $ref: "#/components/schemas/PropertyShowResponse"
       "400":
         description: The request body is invalid.
       "401":
@@ -188,9 +188,8 @@ Use:
 - `{Resource}CreateRequest`
 - `{Resource}UpdateRequest`
 - `{Resource}IndexElement` for one item in a list response
-- `{Resource}IndexResponseEnvelope` for paginated list responses
+- `{Resource}IndexResponse` for list responses
 - `{Resource}ShowResponse` for detail responses
-- `{Resource}ShowResponseEnvelope` for detail, create, and update responses
 
 Keep the route vocabulary aligned with the schema vocabulary:
 
@@ -224,49 +223,41 @@ components:
         - name
 ```
 
-## Response Envelope
+## Response Shape
 
-Single-resource responses use:
+Return resource-shaped payloads directly. Do not wrap successful responses in
+generic `data`, `message`, or `status` envelopes.
+
+Single-resource responses use the resource schema directly:
 
 ```json
 {
-  "data": {},
-  "message": "Success"
+  "id": "2b6ff716-7208-4ab3-8de3-535fa4cda5f6",
+  "name": "Green Residence",
+  "address": "Bekasi",
+  "active": true
 }
 ```
 
-List responses use:
+List responses use a resource-specific top-level key:
 
 ```json
 {
-  "data": [],
-  "message": "Success",
-  "meta": {
-    "page": 1,
-    "size": 10,
-    "totalItems": 100,
-    "totalPages": 10
-  }
-}
-```
-
-Error responses use:
-
-```json
-{
-  "timestamp": "2026-05-14T10:00:00Z",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Validation failed.",
-  "path": "/api/v1/properties",
-  "details": [
+  "properties": [
     {
-      "field": "name",
-      "message": "must not be blank"
+      "id": "2b6ff716-7208-4ab3-8de3-535fa4cda5f6",
+      "name": "Green Residence",
+      "active": true
     }
   ]
 }
 ```
+
+Common error statuses should be reusable responses under `components.responses`,
+matching the shared status-code descriptions used across the contract. Do not
+wrap `400`, `401`, `403`, `404`, `409`, or `500` in a project-specific generic
+error envelope unless a later implementation has a concrete response body that
+must be documented.
 
 ## Type Rules
 

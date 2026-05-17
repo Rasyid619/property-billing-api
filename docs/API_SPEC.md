@@ -25,6 +25,7 @@ root and keep this document aligned with it.
 - Use reusable query parameters under `components.parameters`.
 - Use reusable standard responses under `components.responses`.
 - Use reusable bearer authentication under `components.securitySchemes`.
+- Keep standard error responses description-based unless a concrete endpoint response body needs to be documented.
 - Do not expose JPA entities directly in schemas.
 - Use DTO-shaped request and response schemas.
 - Use `Index` and `Show` schema families for list and detail responses.
@@ -91,7 +92,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthTokenResponseEnvelope"
+                $ref: "#/components/schemas/AuthTokenResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -115,7 +116,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserResponseEnvelope"
+                $ref: "#/components/schemas/UserResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "409":
@@ -141,7 +142,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CashBalanceResponseEnvelope"
+                $ref: "#/components/schemas/CashBalanceResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -170,7 +171,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ExpenseIndexResponseEnvelope"
+                $ref: "#/components/schemas/ExpenseIndexResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -194,7 +195,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ExpenseShowResponseEnvelope"
+                $ref: "#/components/schemas/ExpenseShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -238,7 +239,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ExpenseShowResponseEnvelope"
+                $ref: "#/components/schemas/ExpenseShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -278,7 +279,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InvoiceIndexResponseEnvelope"
+                $ref: "#/components/schemas/InvoiceIndexResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -304,7 +305,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GeneratedInvoicesResponseEnvelope"
+                $ref: "#/components/schemas/GeneratedInvoicesResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -329,7 +330,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InvoiceShowResponseEnvelope"
+                $ref: "#/components/schemas/InvoiceShowResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -350,7 +351,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaymentIndexResponseEnvelope"
+                $ref: "#/components/schemas/PaymentIndexResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -376,7 +377,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaymentShowResponseEnvelope"
+                $ref: "#/components/schemas/PaymentShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -401,7 +402,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PropertyIndexResponseEnvelope"
+                $ref: "#/components/schemas/PropertyIndexResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
     post:
@@ -422,7 +423,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PropertyShowResponseEnvelope"
+                $ref: "#/components/schemas/PropertyShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -458,7 +459,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PropertyShowResponseEnvelope"
+                $ref: "#/components/schemas/PropertyShowResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -483,7 +484,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PropertyShowResponseEnvelope"
+                $ref: "#/components/schemas/PropertyShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -508,7 +509,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UnitIndexResponseEnvelope"
+                $ref: "#/components/schemas/UnitIndexResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -534,7 +535,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UnitShowResponseEnvelope"
+                $ref: "#/components/schemas/UnitShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -561,7 +562,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CashFlowReportResponseEnvelope"
+                $ref: "#/components/schemas/CashFlowReportResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -587,7 +588,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantIndexResponseEnvelope"
+                $ref: "#/components/schemas/TenantIndexResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
     post:
@@ -608,7 +609,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantShowResponseEnvelope"
+                $ref: "#/components/schemas/TenantShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -629,7 +630,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantShowResponseEnvelope"
+                $ref: "#/components/schemas/TenantShowResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -654,7 +655,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantShowResponseEnvelope"
+                $ref: "#/components/schemas/TenantShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -684,7 +685,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantAssignmentShowResponseEnvelope"
+                $ref: "#/components/schemas/TenantAssignmentShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -722,7 +723,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UnitShowResponseEnvelope"
+                $ref: "#/components/schemas/UnitShowResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -747,7 +748,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UnitShowResponseEnvelope"
+                $ref: "#/components/schemas/UnitShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -772,7 +773,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantAssignmentShowResponseEnvelope"
+                $ref: "#/components/schemas/TenantAssignmentShowResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -793,7 +794,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantAssignmentIndexResponseEnvelope"
+                $ref: "#/components/schemas/TenantAssignmentIndexResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -819,7 +820,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantAssignmentShowResponseEnvelope"
+                $ref: "#/components/schemas/TenantAssignmentShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -967,42 +968,18 @@ components:
   responses:
     BadRequest:
       description: The request is invalid.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
     Conflict:
       description: The request could not be completed due to a conflict with the current state of the resource.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
     Forbidden:
       description: Access is forbidden.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
     InternalServerError:
       description: The server encountered an unexpected condition that prevented it from fulfilling the request.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
     NoContent:
       description: The request was successful and no content was returned.
     NotFound:
       description: The requested resource was not found.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
     Unauthorized:
       description: Authentication is required and has failed.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
 
   securitySchemes:
     BearerAuth:
@@ -1011,69 +988,8 @@ components:
       bearerFormat: JWT
 
   schemas:
-    ApiMeta:
-      type: object
-      properties:
-        page:
-          type: integer
-          example: 1
-        size:
-          type: integer
-          example: 10
-        totalItems:
-          type: integer
-          example: 100
-        totalPages:
-          type: integer
-          example: 10
-      required:
-        - page
-        - size
-        - totalItems
-        - totalPages
 
-    ApiValidationError:
-      type: object
-      properties:
-        field:
-          type: string
-          example: name
-        message:
-          type: string
-          example: must not be blank
-      required:
-        - field
-        - message
 
-    ErrorResponse:
-      type: object
-      properties:
-        timestamp:
-          type: string
-          format: date-time
-          example: "2026-05-14T10:00:00Z"
-        status:
-          type: integer
-          example: 400
-        error:
-          type: string
-          example: Bad Request
-        message:
-          type: string
-          example: Validation failed.
-        path:
-          type: string
-          example: /api/v1/properties
-        details:
-          type: array
-          items:
-            $ref: "#/components/schemas/ApiValidationError"
-      required:
-        - timestamp
-        - status
-        - error
-        - message
-        - path
 
     TenantAssignmentCreateRequest:
       type: object
@@ -1102,13 +1018,6 @@ components:
         - accessToken
         - tokenType
 
-    AuthTokenResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessResponse"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/AuthTokenResponse"
 
     CashBalanceResponse:
       type: object
@@ -1144,13 +1053,6 @@ components:
         - totalExpense
         - closingBalance
 
-    CashBalanceResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessResponse"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/CashBalanceResponse"
 
     CashFlowReportResponse:
       type: object
@@ -1180,13 +1082,6 @@ components:
         - totalExpense
         - netSaving
 
-    CashFlowReportResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessResponse"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/CashFlowReportResponse"
 
     CashBalanceCloseMonthRequest:
       type: object
@@ -1327,15 +1222,15 @@ components:
         - monthlyFee
         - dueDay
 
-    ExpenseIndexResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessListResponse"
-        - type: object
-          properties:
-            data:
-              type: array
-              items:
-                $ref: "#/components/schemas/ExpenseIndexElement"
+    ExpenseIndexResponse:
+      type: object
+      properties:
+        expenses:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExpenseIndexElement"
+      required:
+        - expenses
 
     ExpenseIndexElement:
       allOf:
@@ -1352,13 +1247,6 @@ components:
       required:
         - id
 
-    ExpenseShowResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessResponse"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/ExpenseShowResponse"
 
     InvoiceGenerateMonthlyRequest:
       type: object
@@ -1395,23 +1283,16 @@ components:
         - generated
         - skipped
 
-    GeneratedInvoicesResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessResponse"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/GeneratedInvoicesResponse"
 
-    InvoiceIndexResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessListResponse"
-        - type: object
-          properties:
-            data:
-              type: array
-              items:
-                $ref: "#/components/schemas/InvoiceIndexElement"
+    InvoiceIndexResponse:
+      type: object
+      properties:
+        invoices:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvoiceIndexElement"
+      required:
+        - invoices
 
     InvoiceIndexElement:
       allOf:
@@ -1456,13 +1337,6 @@ components:
         - dueDate
         - status
 
-    InvoiceShowResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessResponse"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/InvoiceShowResponse"
 
     InvoiceStatus:
       type: string
@@ -1500,15 +1374,15 @@ components:
       required:
         - endDate
 
-    PaymentIndexResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessListResponse"
-        - type: object
-          properties:
-            data:
-              type: array
-              items:
-                $ref: "#/components/schemas/PaymentIndexElement"
+    PaymentIndexResponse:
+      type: object
+      properties:
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaymentIndexElement"
+      required:
+        - payments
 
     PaymentIndexElement:
       allOf:
@@ -1532,23 +1406,16 @@ components:
         - invoiceId
         - invoiceStatus
 
-    PaymentShowResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessResponse"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/PaymentShowResponse"
 
-    PropertyIndexResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessListResponse"
-        - type: object
-          properties:
-            data:
-              type: array
-              items:
-                $ref: "#/components/schemas/PropertyIndexElement"
+    PropertyIndexResponse:
+      type: object
+      properties:
+        properties:
+          type: array
+          items:
+            $ref: "#/components/schemas/PropertyIndexElement"
+      required:
+        - properties
 
     PropertyIndexElement:
       allOf:
@@ -1583,13 +1450,6 @@ components:
         - createdAt
         - updatedAt
 
-    PropertyShowResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessResponse"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/PropertyShowResponse"
 
     RegisterRequest:
       type: object
@@ -1626,44 +1486,17 @@ components:
         - unitId
         - reason
 
-    SuccessListResponse:
+
+
+    TenantAssignmentIndexResponse:
       type: object
       properties:
-        data:
+        tenantAssignments:
           type: array
           items:
-            type: object
-        message:
-          type: string
-          example: Success
-        meta:
-          $ref: "#/components/schemas/ApiMeta"
+            $ref: "#/components/schemas/TenantAssignmentIndexElement"
       required:
-        - data
-        - message
-        - meta
-
-    SuccessResponse:
-      type: object
-      properties:
-        data:
-          type: object
-        message:
-          type: string
-          example: Success
-      required:
-        - data
-        - message
-
-    TenantAssignmentIndexResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessListResponse"
-        - type: object
-          properties:
-            data:
-              type: array
-              items:
-                $ref: "#/components/schemas/TenantAssignmentIndexElement"
+        - tenantAssignments
 
     TenantAssignmentIndexElement:
       allOf:
@@ -1700,23 +1533,16 @@ components:
         - startDate
         - active
 
-    TenantAssignmentShowResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessResponse"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/TenantAssignmentShowResponse"
 
-    TenantIndexResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessListResponse"
-        - type: object
-          properties:
-            data:
-              type: array
-              items:
-                $ref: "#/components/schemas/TenantIndexElement"
+    TenantIndexResponse:
+      type: object
+      properties:
+        tenants:
+          type: array
+          items:
+            $ref: "#/components/schemas/TenantIndexElement"
+      required:
+        - tenants
 
     TenantIndexElement:
       allOf:
@@ -1744,23 +1570,16 @@ components:
         - id
         - name
 
-    TenantShowResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessResponse"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/TenantShowResponse"
 
-    UnitIndexResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessListResponse"
-        - type: object
-          properties:
-            data:
-              type: array
-              items:
-                $ref: "#/components/schemas/UnitIndexElement"
+    UnitIndexResponse:
+      type: object
+      properties:
+        units:
+          type: array
+          items:
+            $ref: "#/components/schemas/UnitIndexElement"
+      required:
+        - units
 
     UnitIndexElement:
       allOf:
@@ -1796,13 +1615,6 @@ components:
         - dueDay
         - active
 
-    UnitShowResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessResponse"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/UnitShowResponse"
 
     ExpenseUpdateRequest:
       allOf:
@@ -1844,14 +1656,6 @@ components:
         - name
         - email
         - role
-
-    UserResponseEnvelope:
-      allOf:
-        - $ref: "#/components/schemas/SuccessResponse"
-        - type: object
-          properties:
-            data:
-              $ref: "#/components/schemas/UserResponse"
 ```
 
 ## Required Error Responses
