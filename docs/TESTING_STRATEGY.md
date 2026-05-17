@@ -101,8 +101,7 @@ Each module is complete only when:
 
 Required tests:
 
-- Register user successfully
-- Reject duplicate email
+- Seed initial admin successfully
 - Login with valid credentials
 - Reject login with invalid credentials
 - Protected endpoint rejects missing token

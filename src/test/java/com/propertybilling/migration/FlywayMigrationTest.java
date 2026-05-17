@@ -37,6 +37,11 @@ class FlywayMigrationTest {
 		registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
 		registry.add("spring.datasource.username", POSTGRES::getUsername);
 		registry.add("spring.datasource.password", POSTGRES::getPassword);
+		registry.add("INITIAL_ADMIN_ID", () -> "00000000-0000-0000-0000-000000000999");
+		registry.add("INITIAL_ADMIN_NAME", () -> "Initial Admin");
+		registry.add("INITIAL_ADMIN_EMAIL", () -> "initial-admin@example.com");
+		registry.add("INITIAL_ADMIN_PASSWORD_HASH", () -> "$2a$10$abcdefghijklmnopqrstuv");
+		registry.add("INITIAL_ADMIN_ROLE", () -> "admin");
 	}
 
 	@Test
@@ -115,5 +120,24 @@ class FlywayMigrationTest {
 		}
 
 		assertThat(changedUpdatedAt).isAfter(originalUpdatedAt);
+	}
+
+	@Test
+	void migrationSeedsInitialAdminFromEnvironmentBackedPlaceholders() throws SQLException {
+		try (var connection = dataSource.getConnection();
+				var select = connection.prepareStatement("""
+						SELECT id, name, email, password_hash, role
+						FROM users
+						WHERE email = 'initial-admin@example.com'
+						""");
+				ResultSet result = select.executeQuery()) {
+			result.next();
+
+			assertThat(result.getObject("id")).hasToString("00000000-0000-0000-0000-000000000999");
+			assertThat(result.getString("name")).isEqualTo("Initial Admin");
+			assertThat(result.getString("email")).isEqualTo("initial-admin@example.com");
+			assertThat(result.getString("password_hash")).isEqualTo("$2a$10$abcdefghijklmnopqrstuv");
+			assertThat(result.getString("role")).isEqualTo("admin");
+		}
 	}
 }

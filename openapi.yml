@@ -57,6 +57,24 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Get the authenticated user.
+      description: Returns the currently authenticated admin or staff user.
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Authenticated user was successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthMeResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /auth/refresh:
     post:
       tags:
@@ -75,30 +93,6 @@ paths:
                 $ref: "#/components/schemas/AccessTokenResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
-
-  /auth/register:
-    post:
-      tags:
-        - Auth
-      summary: Register an admin or staff user.
-      description: Creates a user account for administrators or property staff only.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RegisterRequest"
-      responses:
-        "201":
-          description: User registration succeeded.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "409":
-          $ref: "#/components/responses/Conflict"
 
   /cash-balances/close-month:
     post:
@@ -961,6 +955,31 @@ components:
           required:
             - refresh_token
 
+    AuthMeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Admin User
+        email:
+          type: string
+          format: email
+          example: admin@example.com
+        role:
+          type: string
+          enum:
+            - admin
+            - staff
+          example: admin
+      required:
+        - id
+        - name
+        - email
+        - role
+
 
     CashFlowReportResponse:
       type: object
@@ -1362,28 +1381,6 @@ components:
         - updated_at
 
 
-    RegisterRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 150
-          example: Admin User
-        email:
-          type: string
-          format: email
-          example: admin@example.com
-        password:
-          type: string
-          format: password
-          minLength: 8
-          example: password123
-      required:
-        - name
-        - email
-        - password
-
     TenantAssignmentIndexResponse:
       type: object
       properties:
@@ -1545,29 +1542,3 @@ components:
     UnitUpdateRequest:
       allOf:
         - $ref: "#/components/schemas/UnitCreateRequest"
-
-    UserResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-          example: Admin User
-        email:
-          type: string
-          format: email
-          example: admin@example.com
-        role:
-          type: string
-          enum:
-            - admin
-            - staff
-          example: admin
-      required:
-        - id
-        - name
-        - email
-        - role
-

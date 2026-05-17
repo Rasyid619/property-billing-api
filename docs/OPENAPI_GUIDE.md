@@ -177,7 +177,7 @@ security:
   - BearerAuth: []
 ```
 
-Auth endpoints such as login and register do not require bearer security.
+Auth endpoints such as login and refresh do not require bearer security.
 
 ## Schema Style
 
