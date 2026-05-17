@@ -68,6 +68,29 @@ Every operation must define:
 - `requestBody` for create, update, and action endpoints
 - `responses`
 
+Use endpoint-specific success responses and reusable standard responses for
+common no-content and error outcomes:
+
+```yaml
+responses:
+  "201":
+    description: Property was created.
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/PropertyShowResponse"
+  "400":
+    $ref: "#/components/responses/BadRequest"
+  "401":
+    $ref: "#/components/responses/Unauthorized"
+  "404":
+    $ref: "#/components/responses/NotFound"
+```
+
+Define reusable standard responses under `components.responses` so the meaning
+of `204`, `400`, `401`, `403`, `404`, `409`, and `500` stays consistent across
+the contract.
+
 Example:
 
 ```yaml
@@ -84,14 +107,14 @@ Example:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CreatePropertyRequest"
+            $ref: "#/components/schemas/PropertyCreateRequest"
     responses:
       "201":
         description: Property was created.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PropertyResponseEnvelope"
+              $ref: "#/components/schemas/PropertyShowResponse"
       "400":
         description: The request body is invalid.
       "401":
@@ -108,7 +131,7 @@ Example:
 components:
   parameters:
     PropertyId:
-      name: propertyId
+      name: property_id
       in: path
       required: true
       description: UUID of the property.
@@ -158,22 +181,34 @@ Auth endpoints such as login and register do not require bearer security.
 
 ## Schema Style
 
+Use `snake_case` for all public request, response, and parameter field names.
+
 Schemas must represent DTOs, not JPA entities.
 
 Use:
 
-- `Create{Resource}Request`
-- `Update{Resource}Request`
-- `{Resource}Response`
-- `{Resource}ResponseEnvelope`
-- `{Resource}ListResponseEnvelope`
+- `{Resource}CreateRequest`
+- `{Resource}UpdateRequest`
+- `{Resource}IndexElement` for one item in a list response
+- `{Resource}IndexResponse` for list responses
+- `{Resource}ShowResponse` for detail responses
+
+Keep the route vocabulary aligned with the schema vocabulary:
+
+```text
+Index  = list
+Show   = detail
+Create = create
+Update = update
+Delete = delete or deactivate
+```
 
 Example:
 
 ```yaml
 components:
   schemas:
-    CreatePropertyRequest:
+    PropertyCreateRequest:
       type: object
       properties:
         name:
@@ -190,49 +225,50 @@ components:
         - name
 ```
 
-## Response Envelope
+## Response Shape
 
-Single-resource responses use:
+Return resource-shaped payloads directly. Do not wrap successful responses in
+generic `data`, `message`, or `status` envelopes.
+
+Single-resource responses use the resource schema directly:
 
 ```json
 {
-  "data": {},
-  "message": "Success"
+  "id": "2b6ff716-7208-4ab3-8de3-535fa4cda5f6",
+  "name": "Green Residence",
+  "address": "Bekasi",
+  "active": true
 }
 ```
 
-List responses use:
+List responses use a resource-specific top-level key:
 
 ```json
 {
-  "data": [],
-  "message": "Success",
-  "meta": {
-    "page": 1,
-    "size": 10,
-    "totalItems": 100,
-    "totalPages": 10
-  }
-}
-```
-
-Error responses use:
-
-```json
-{
-  "timestamp": "2026-05-14T10:00:00Z",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Validation failed.",
-  "path": "/api/v1/properties",
-  "details": [
+  "count": 1,
+  "properties": [
     {
-      "field": "name",
-      "message": "must not be blank"
+      "id": "2b6ff716-7208-4ab3-8de3-535fa4cda5f6",
+      "name": "Green Residence",
+      "active": true
     }
   ]
 }
 ```
+
+Common error statuses should be reusable responses under `components.responses`,
+matching the shared status-code descriptions used across the contract. Do not
+wrap `400`, `401`, `403`, `404`, `409`, or `500` in a project-specific generic
+error envelope unless a later implementation has a concrete response body that
+must be documented.
+
+Every `IndexResponse` must include `count`, equal to the number of items
+returned in that response array.
+
+Use `offset` and `limit` pagination for broad collections that can grow large.
+`offset` defaults to `0`; `limit` defaults to `100` and must not exceed `100`.
+Do not add pagination reflexively to narrow nested histories when the current
+use case does not need it.
 
 ## Type Rules
 
@@ -253,9 +289,9 @@ represents it as a number.
 
 | Status | Usage |
 |---|---|
-| 200 | Successful read, update, or action that returns a body |
-| 201 | Successful creation |
-| 204 | Successful deletion or deactivation with no response body |
+| 200 | Successful read or auth action that returns a body |
+| 201 | Successful creation with no response body, except when an auth workflow must return credentials |
+| 204 | Successful update, delete, deactivation, or other mutation with no response body |
 | 400 | Validation error or malformed request |
 | 401 | Missing or invalid authentication |
 | 403 | Authenticated but not allowed |
@@ -274,11 +310,11 @@ name:
   type: string
   minLength: 1
   maxLength: 150
-monthlyFee:
+monthly_fee:
   type: number
   format: double
   minimum: 0.01
-dueDay:
+due_day:
   type: integer
   minimum: 1
   maximum: 28
