@@ -287,9 +287,9 @@ represents it as a number.
 
 | Status | Usage |
 |---|---|
-| 200 | Successful read, update, or action that returns a body |
-| 201 | Successful creation |
-| 204 | Successful deletion or deactivation with no response body |
+| 200 | Successful read or auth action that returns a body |
+| 201 | Successful creation with no response body, except when an auth workflow must return credentials |
+| 204 | Successful update, delete, deactivation, or other mutation with no response body |
 | 400 | Validation error or malformed request |
 | 401 | Missing or invalid authentication |
 | 403 | Authenticated but not allowed |

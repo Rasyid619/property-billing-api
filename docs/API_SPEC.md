@@ -28,6 +28,8 @@ root and keep this document aligned with it.
 - Keep standard error responses description-based unless a concrete endpoint response body needs to be documented.
 - Add `count` to every index response so clients can read the returned array size directly.
 - Use `offset` and `limit` pagination for broad collections that can grow large; default `limit` is `100`.
+- Keep non-auth mutation responses lean: use `201` for create and `204` for update, delete, or action endpoints without response bodies.
+- Auth endpoints may return token payloads and must document access-token and refresh-token expiry when JWT is used.
 - Do not expose JPA entities directly in schemas.
 - Use DTO-shaped request and response schemas.
 - Use `Index` and `Show` schema families for list and detail responses.
@@ -100,6 +102,25 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Refresh an access token.
+      description: Returns a new access token when a valid refresh token is provided.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/RefreshTokenAuthorization"
+      responses:
+        "200":
+          description: Access token was refreshed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessTokenResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /auth/register:
     post:
       tags:
@@ -141,10 +162,6 @@ paths:
       responses:
         "201":
           description: Monthly cash balance was closed.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CashBalanceResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -194,10 +211,6 @@ paths:
       responses:
         "201":
           description: Expense was created.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExpenseShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -236,12 +249,8 @@ paths:
             schema:
               $ref: "#/components/schemas/ExpenseUpdateRequest"
       responses:
-        "200":
-          description: Expense was updated.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExpenseShowResponse"
+        "204":
+          $ref: "#/components/responses/NoContent"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -304,10 +313,6 @@ paths:
       responses:
         "201":
           description: Monthly invoice generation completed.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GeneratedInvoicesResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -376,10 +381,6 @@ paths:
       responses:
         "201":
           description: Payment was recorded.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PaymentShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -422,10 +423,6 @@ paths:
       responses:
         "201":
           description: Property was created.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PropertyShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -481,12 +478,8 @@ paths:
             schema:
               $ref: "#/components/schemas/PropertyUpdateRequest"
       responses:
-        "200":
-          description: Property was updated.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PropertyShowResponse"
+        "204":
+          $ref: "#/components/responses/NoContent"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -534,10 +527,6 @@ paths:
       responses:
         "201":
           description: Unit was created.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UnitShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -608,10 +597,6 @@ paths:
       responses:
         "201":
           description: Tenant was created.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TenantShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -652,12 +637,8 @@ paths:
             schema:
               $ref: "#/components/schemas/TenantUpdateRequest"
       responses:
-        "200":
-          description: Tenant was updated.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TenantShowResponse"
+        "204":
+          $ref: "#/components/responses/NoContent"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -682,12 +663,8 @@ paths:
             schema:
               $ref: "#/components/schemas/TenantAssignmentMoveOutRequest"
       responses:
-        "200":
-          description: Tenant assignment was closed.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TenantAssignmentShowResponse"
+        "204":
+          $ref: "#/components/responses/NoContent"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -745,12 +722,8 @@ paths:
             schema:
               $ref: "#/components/schemas/UnitUpdateRequest"
       responses:
-        "200":
-          description: Unit was updated.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UnitShowResponse"
+        "204":
+          $ref: "#/components/responses/NoContent"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -819,10 +792,6 @@ paths:
       responses:
         "201":
           description: Tenant was assigned to the unit.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TenantAssignmentShowResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -834,6 +803,14 @@ paths:
 
 components:
   parameters:
+    RefreshTokenAuthorization:
+      name: Authorization
+      in: header
+      required: true
+      description: Refresh token used to obtain a new access token.
+      schema:
+        type: string
+        example: Bearer refresh-token
     AssignmentId:
       name: assignmentId
       in: path
@@ -1007,53 +984,37 @@ components:
         - tenantId
         - startDate
 
-    AuthTokenResponse:
+    AccessTokenResponse:
       type: object
       properties:
         accessToken:
           type: string
-          example: jwt-token
-        tokenType:
-          type: string
-          example: Bearer
+          description: JWT access token.
+          example: access-token
+        accessTokenExpiresIn:
+          type: integer
+          description: Access token lifetime in seconds.
+          example: 900
       required:
         - accessToken
-        - tokenType
+        - accessTokenExpiresIn
 
-
-    CashBalanceResponse:
-      type: object
-      properties:
-        propertyId:
-          type: string
-          format: uuid
-        month:
-          type: string
-          format: date
-          example: "2026-05-01"
-        openingBalance:
-          type: number
-          format: double
-          example: 5000000
-        totalIncome:
-          type: number
-          format: double
-          example: 15000000
-        totalExpense:
-          type: number
-          format: double
-          example: 4000000
-        closingBalance:
-          type: number
-          format: double
-          example: 16000000
-      required:
-        - propertyId
-        - month
-        - openingBalance
-        - totalIncome
-        - totalExpense
-        - closingBalance
+    AuthTokenResponse:
+      allOf:
+        - $ref: "#/components/schemas/AccessTokenResponse"
+        - type: object
+          properties:
+            refreshToken:
+              type: string
+              description: JWT refresh token.
+              example: refresh-token
+            refreshTokenExpiresIn:
+              type: integer
+              description: Refresh token lifetime in seconds.
+              example: 604800
+          required:
+            - refreshToken
+            - refreshTokenExpiresIn
 
 
     CashFlowReportResponse:
@@ -1271,27 +1232,6 @@ components:
         - propertyId
         - billingMonth
 
-    GeneratedInvoicesResponse:
-      type: object
-      properties:
-        billingMonth:
-          type: string
-          format: date
-          example: "2026-05-01"
-        generated:
-          type: array
-          items:
-            $ref: "#/components/schemas/InvoiceShowResponse"
-        skipped:
-          type: array
-          items:
-            $ref: "#/components/schemas/SkippedInvoiceShowResponse"
-      required:
-        - billingMonth
-        - generated
-        - skipped
-
-
     InvoiceIndexResponse:
       type: object
       properties:
@@ -1498,21 +1438,6 @@ components:
         - name
         - email
         - password
-
-    SkippedInvoiceShowResponse:
-      type: object
-      properties:
-        unitId:
-          type: string
-          format: uuid
-        reason:
-          type: string
-          example: Unit has no active tenant.
-      required:
-        - unitId
-        - reason
-
-
 
     TenantAssignmentIndexResponse:
       type: object
