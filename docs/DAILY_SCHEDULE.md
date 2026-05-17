@@ -199,3 +199,46 @@ Passed
 ## Tomorrow
 
 - Continue with the next module only after PR checks and review are complete.
+
+# Daily Summary - 2026-05-17
+
+## Completed
+
+- Added the initial Flyway database migrations.
+- Added automatic `updated_at` triggers for database tables.
+- Made local workflow documents private to local development.
+- Added and refined the OpenAPI contract foundation.
+- Standardized direct API responses, reusable error responses, `snake_case` fields, index counts, and offset/limit pagination rules.
+- Added auth refresh contract support.
+- Created one implementation issue for each contracted endpoint.
+
+## Tests
+
+Command:
+
+```bash
+./gradlew clean test
+```
+
+Result:
+
+```text
+Passed
+```
+
+## Pull Request
+
+- PR: https://github.com/Rasyid619/property-billing-api/pull/8
+- PR: https://github.com/Rasyid619/property-billing-api/pull/10
+- PR: https://github.com/Rasyid619/property-billing-api/pull/12
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/7
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/9
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/11
+
+## Blockers
+
+- No blockers.
+
+## Tomorrow
+
+- Start endpoint implementation from the contract issues, beginning with the next module in order.
