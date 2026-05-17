@@ -992,7 +992,7 @@ components:
           description: JWT access token.
           example: access-token
       required:
-        - accessToken
+        - access_token
 
     AuthTokenResponse:
       allOf:
@@ -1004,7 +1004,7 @@ components:
               description: JWT refresh token.
               example: refresh-token
           required:
-            - refreshToken
+            - refresh_token
 
 
     CashFlowReportResponse:
