@@ -942,7 +942,7 @@ components:
     AccessTokenResponse:
       type: object
       properties:
-        accessToken:
+        access_token:
           type: string
           description: JWT access token.
           example: access-token
@@ -954,7 +954,7 @@ components:
         - $ref: "#/components/schemas/AccessTokenResponse"
         - type: object
           properties:
-            refreshToken:
+            refresh_token:
               type: string
               description: JWT refresh token.
               example: refresh-token

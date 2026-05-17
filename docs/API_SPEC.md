@@ -29,7 +29,7 @@ root and keep this document aligned with it.
 - Add `count` to every index response so clients can read the returned array size directly.
 - Use `offset` and `limit` pagination for broad collections that can grow large; default `limit` is `100`.
 - Keep non-auth mutation responses lean: use `201` for create and `204` for update, delete, or action endpoints without response bodies.
-- Auth endpoints may return token payloads directly, using `accessToken` and `refreshToken` fields to make token roles explicit.
+- Auth endpoints may return token payloads directly, using `access_token` and `refresh_token` fields to make token roles explicit.
 - Do not expose JPA entities directly in schemas.
 - Use DTO-shaped request and response schemas.
 - Use `Index` and `Show` schema families for list and detail responses.
@@ -987,7 +987,7 @@ components:
     AccessTokenResponse:
       type: object
       properties:
-        accessToken:
+        access_token:
           type: string
           description: JWT access token.
           example: access-token
@@ -999,7 +999,7 @@ components:
         - $ref: "#/components/schemas/AccessTokenResponse"
         - type: object
           properties:
-            refreshToken:
+            refresh_token:
               type: string
               description: JWT refresh token.
               example: refresh-token
