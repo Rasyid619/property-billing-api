@@ -23,9 +23,12 @@ root and keep this document aligned with it.
 - Sort tags, paths, parameters, responses, and schemas alphabetically where practical.
 - Use reusable schemas under `components.schemas`.
 - Use reusable query parameters under `components.parameters`.
+- Use reusable standard responses under `components.responses`.
 - Use reusable bearer authentication under `components.securitySchemes`.
 - Do not expose JPA entities directly in schemas.
 - Use DTO-shaped request and response schemas.
+- Use `Index` and `Show` schema families for list and detail responses.
+- Use resource-first schema names such as `PropertyCreateRequest`, `PropertyIndexElement`, `PropertyShowResponse`, and `PropertyUpdateRequest`.
 - Use `string` with `format: uuid` for IDs.
 - Use `number` with `format: double` for money fields.
 - Use `string` with `format: date` for dates.
@@ -90,9 +93,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthTokenResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: The credentials are invalid.
+          $ref: "#/components/responses/Unauthorized"
 
   /auth/register:
     post:
@@ -114,9 +117,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/UserResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "409":
-          description: The email address is already registered.
+          $ref: "#/components/responses/Conflict"
 
   /cash-balances/close-month:
     post:
@@ -131,7 +134,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CloseCashBalanceRequest"
+              $ref: "#/components/schemas/CashBalanceCloseMonthRequest"
       responses:
         "201":
           description: Monthly cash balance was closed.
@@ -140,13 +143,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/CashBalanceResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The property was not found.
+          $ref: "#/components/responses/NotFound"
         "409":
-          description: The property month has already been closed.
+          $ref: "#/components/responses/Conflict"
 
   /expenses:
     get:
@@ -167,11 +170,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ExpenseListResponseEnvelope"
+                $ref: "#/components/schemas/ExpenseIndexResponseEnvelope"
         "400":
-          description: Query parameters are invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - Property Expenses
@@ -184,20 +187,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateExpenseRequest"
+              $ref: "#/components/schemas/ExpenseCreateRequest"
       responses:
         "201":
           description: Expense was created.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ExpenseResponseEnvelope"
+                $ref: "#/components/schemas/ExpenseShowResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The property was not found.
+          $ref: "#/components/responses/NotFound"
 
   /expenses/{expenseId}:
     delete:
@@ -210,11 +213,11 @@ paths:
         - $ref: "#/components/parameters/ExpenseId"
       responses:
         "204":
-          description: Expense was deleted.
+          $ref: "#/components/responses/NoContent"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The expense was not found.
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - Property Expenses
@@ -228,20 +231,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateExpenseRequest"
+              $ref: "#/components/schemas/ExpenseUpdateRequest"
       responses:
         "200":
           description: Expense was updated.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ExpenseResponseEnvelope"
+                $ref: "#/components/schemas/ExpenseShowResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The expense was not found.
+          $ref: "#/components/responses/NotFound"
 
   /health:
     get:
@@ -275,11 +278,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InvoiceListResponseEnvelope"
+                $ref: "#/components/schemas/InvoiceIndexResponseEnvelope"
         "400":
-          description: Query parameters are invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
 
   /invoices/generate-monthly:
     post:
@@ -294,7 +297,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/GenerateMonthlyInvoicesRequest"
+              $ref: "#/components/schemas/InvoiceGenerateMonthlyRequest"
       responses:
         "201":
           description: Monthly invoice generation completed.
@@ -303,13 +306,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/GeneratedInvoicesResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The property was not found.
+          $ref: "#/components/responses/NotFound"
         "409":
-          description: An invoice already exists for the same unit and billing month.
+          $ref: "#/components/responses/Conflict"
 
   /invoices/{invoiceId}:
     get:
@@ -326,11 +329,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InvoiceResponseEnvelope"
+                $ref: "#/components/schemas/InvoiceShowResponseEnvelope"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The invoice was not found.
+          $ref: "#/components/responses/NotFound"
 
   /invoices/{invoiceId}/payments:
     get:
@@ -347,11 +350,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaymentListResponseEnvelope"
+                $ref: "#/components/schemas/PaymentIndexResponseEnvelope"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The invoice was not found.
+          $ref: "#/components/responses/NotFound"
     post:
       tags:
         - Payments
@@ -366,20 +369,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreatePaymentRequest"
+              $ref: "#/components/schemas/PaymentCreateRequest"
       responses:
         "201":
           description: Payment was recorded.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PaymentResponseEnvelope"
+                $ref: "#/components/schemas/PaymentShowResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The invoice was not found.
+          $ref: "#/components/responses/NotFound"
 
   /properties:
     get:
@@ -398,9 +401,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PropertyListResponseEnvelope"
+                $ref: "#/components/schemas/PropertyIndexResponseEnvelope"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - Properties
@@ -412,18 +415,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreatePropertyRequest"
+              $ref: "#/components/schemas/PropertyCreateRequest"
       responses:
         "201":
           description: Property was created.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PropertyResponseEnvelope"
+                $ref: "#/components/schemas/PropertyShowResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
 
   /properties/{propertyId}:
     delete:
@@ -436,11 +439,11 @@ paths:
         - $ref: "#/components/parameters/PropertyId"
       responses:
         "204":
-          description: Property was deactivated.
+          $ref: "#/components/responses/NoContent"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The property was not found.
+          $ref: "#/components/responses/NotFound"
     get:
       tags:
         - Properties
@@ -455,11 +458,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PropertyResponseEnvelope"
+                $ref: "#/components/schemas/PropertyShowResponseEnvelope"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The property was not found.
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - Properties
@@ -473,20 +476,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdatePropertyRequest"
+              $ref: "#/components/schemas/PropertyUpdateRequest"
       responses:
         "200":
           description: Property was updated.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PropertyResponseEnvelope"
+                $ref: "#/components/schemas/PropertyShowResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The property was not found.
+          $ref: "#/components/responses/NotFound"
 
   /properties/{propertyId}/units:
     get:
@@ -505,11 +508,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UnitListResponseEnvelope"
+                $ref: "#/components/schemas/UnitIndexResponseEnvelope"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The property was not found.
+          $ref: "#/components/responses/NotFound"
     post:
       tags:
         - Units
@@ -524,22 +527,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateUnitRequest"
+              $ref: "#/components/schemas/UnitCreateRequest"
       responses:
         "201":
           description: Unit was created.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UnitResponseEnvelope"
+                $ref: "#/components/schemas/UnitShowResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The property was not found.
+          $ref: "#/components/responses/NotFound"
         "409":
-          description: Unit number already exists inside the property.
+          $ref: "#/components/responses/Conflict"
 
   /reports/cash-flow:
     get:
@@ -560,11 +563,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/CashFlowReportResponseEnvelope"
         "400":
-          description: Query parameters are invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The property was not found.
+          $ref: "#/components/responses/NotFound"
 
   /tenants:
     get:
@@ -584,9 +587,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantListResponseEnvelope"
+                $ref: "#/components/schemas/TenantIndexResponseEnvelope"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - Tenants
@@ -598,18 +601,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateTenantRequest"
+              $ref: "#/components/schemas/TenantCreateRequest"
       responses:
         "201":
           description: Tenant was created.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantResponseEnvelope"
+                $ref: "#/components/schemas/TenantShowResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
 
   /tenants/{tenantId}:
     get:
@@ -626,11 +629,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantResponseEnvelope"
+                $ref: "#/components/schemas/TenantShowResponseEnvelope"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The tenant was not found.
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - Tenants
@@ -644,20 +647,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateTenantRequest"
+              $ref: "#/components/schemas/TenantUpdateRequest"
       responses:
         "200":
           description: Tenant was updated.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantResponseEnvelope"
+                $ref: "#/components/schemas/TenantShowResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The tenant was not found.
+          $ref: "#/components/responses/NotFound"
 
   /unit-tenant-assignments/{assignmentId}/move-out:
     patch:
@@ -674,20 +677,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MoveOutTenantRequest"
+              $ref: "#/components/schemas/TenantAssignmentMoveOutRequest"
       responses:
         "200":
           description: Tenant assignment was closed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantAssignmentResponseEnvelope"
+                $ref: "#/components/schemas/TenantAssignmentShowResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The assignment was not found.
+          $ref: "#/components/responses/NotFound"
 
   /units/{unitId}:
     delete:
@@ -700,11 +703,11 @@ paths:
         - $ref: "#/components/parameters/UnitId"
       responses:
         "204":
-          description: Unit was deactivated.
+          $ref: "#/components/responses/NoContent"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The unit was not found.
+          $ref: "#/components/responses/NotFound"
     get:
       tags:
         - Units
@@ -719,11 +722,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UnitResponseEnvelope"
+                $ref: "#/components/schemas/UnitShowResponseEnvelope"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The unit was not found.
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - Units
@@ -737,22 +740,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateUnitRequest"
+              $ref: "#/components/schemas/UnitUpdateRequest"
       responses:
         "200":
           description: Unit was updated.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UnitResponseEnvelope"
+                $ref: "#/components/schemas/UnitShowResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The unit was not found.
+          $ref: "#/components/responses/NotFound"
         "409":
-          description: Unit number already exists inside the property.
+          $ref: "#/components/responses/Conflict"
 
   /units/{unitId}/active-tenant:
     get:
@@ -769,11 +772,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantAssignmentResponseEnvelope"
+                $ref: "#/components/schemas/TenantAssignmentShowResponseEnvelope"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The unit or active assignment was not found.
+          $ref: "#/components/responses/NotFound"
 
   /units/{unitId}/tenant-assignments:
     get:
@@ -790,11 +793,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantAssignmentListResponseEnvelope"
+                $ref: "#/components/schemas/TenantAssignmentIndexResponseEnvelope"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The unit was not found.
+          $ref: "#/components/responses/NotFound"
     post:
       tags:
         - Tenant Assignments
@@ -809,22 +812,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AssignTenantRequest"
+              $ref: "#/components/schemas/TenantAssignmentCreateRequest"
       responses:
         "201":
           description: Tenant was assigned to the unit.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TenantAssignmentResponseEnvelope"
+                $ref: "#/components/schemas/TenantAssignmentShowResponseEnvelope"
         "400":
-          description: The request body is invalid.
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Authentication is missing or invalid.
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: The unit or tenant was not found.
+          $ref: "#/components/responses/NotFound"
         "409":
-          description: The unit already has an active tenant assignment.
+          $ref: "#/components/responses/Conflict"
 
 components:
   parameters:
@@ -961,6 +964,46 @@ components:
         type: string
         format: uuid
 
+  responses:
+    BadRequest:
+      description: The request is invalid.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: The request could not be completed due to a conflict with the current state of the resource.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Access is forbidden.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalServerError:
+      description: The server encountered an unexpected condition that prevented it from fulfilling the request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NoContent:
+      description: The request was successful and no content was returned.
+    NotFound:
+      description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Authentication is required and has failed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
   securitySchemes:
     BearerAuth:
       type: http
@@ -1032,7 +1075,7 @@ components:
         - message
         - path
 
-    AssignTenantRequest:
+    TenantAssignmentCreateRequest:
       type: object
       properties:
         tenantId:
@@ -1145,7 +1188,7 @@ components:
             data:
               $ref: "#/components/schemas/CashFlowReportResponse"
 
-    CloseCashBalanceRequest:
+    CashBalanceCloseMonthRequest:
       type: object
       properties:
         propertyId:
@@ -1160,7 +1203,7 @@ components:
         - propertyId
         - month
 
-    CreateExpenseRequest:
+    ExpenseCreateRequest:
       type: object
       properties:
         propertyId:
@@ -1191,7 +1234,7 @@ components:
         - category
         - amount
 
-    CreatePaymentRequest:
+    PaymentCreateRequest:
       type: object
       properties:
         amount:
@@ -1223,7 +1266,7 @@ components:
         - paymentDate
         - paymentMethod
 
-    CreatePropertyRequest:
+    PropertyCreateRequest:
       type: object
       properties:
         name:
@@ -1239,7 +1282,7 @@ components:
       required:
         - name
 
-    CreateTenantRequest:
+    TenantCreateRequest:
       type: object
       properties:
         name:
@@ -1261,7 +1304,7 @@ components:
       required:
         - name
 
-    CreateUnitRequest:
+    UnitCreateRequest:
       type: object
       properties:
         unitNumber:
@@ -1284,7 +1327,7 @@ components:
         - monthlyFee
         - dueDay
 
-    ExpenseListResponseEnvelope:
+    ExpenseIndexResponseEnvelope:
       allOf:
         - $ref: "#/components/schemas/SuccessListResponse"
         - type: object
@@ -1292,11 +1335,15 @@ components:
             data:
               type: array
               items:
-                $ref: "#/components/schemas/ExpenseResponse"
+                $ref: "#/components/schemas/ExpenseIndexElement"
 
-    ExpenseResponse:
+    ExpenseIndexElement:
       allOf:
-        - $ref: "#/components/schemas/CreateExpenseRequest"
+        - $ref: "#/components/schemas/ExpenseShowResponse"
+
+    ExpenseShowResponse:
+      allOf:
+        - $ref: "#/components/schemas/ExpenseCreateRequest"
         - type: object
           properties:
             id:
@@ -1305,15 +1352,15 @@ components:
       required:
         - id
 
-    ExpenseResponseEnvelope:
+    ExpenseShowResponseEnvelope:
       allOf:
         - $ref: "#/components/schemas/SuccessResponse"
         - type: object
           properties:
             data:
-              $ref: "#/components/schemas/ExpenseResponse"
+              $ref: "#/components/schemas/ExpenseShowResponse"
 
-    GenerateMonthlyInvoicesRequest:
+    InvoiceGenerateMonthlyRequest:
       type: object
       properties:
         propertyId:
@@ -1338,11 +1385,11 @@ components:
         generated:
           type: array
           items:
-            $ref: "#/components/schemas/InvoiceResponse"
+            $ref: "#/components/schemas/InvoiceShowResponse"
         skipped:
           type: array
           items:
-            $ref: "#/components/schemas/SkippedInvoiceResponse"
+            $ref: "#/components/schemas/SkippedInvoiceShowResponse"
       required:
         - billingMonth
         - generated
@@ -1356,7 +1403,7 @@ components:
             data:
               $ref: "#/components/schemas/GeneratedInvoicesResponse"
 
-    InvoiceListResponseEnvelope:
+    InvoiceIndexResponseEnvelope:
       allOf:
         - $ref: "#/components/schemas/SuccessListResponse"
         - type: object
@@ -1364,9 +1411,13 @@ components:
             data:
               type: array
               items:
-                $ref: "#/components/schemas/InvoiceResponse"
+                $ref: "#/components/schemas/InvoiceIndexElement"
 
-    InvoiceResponse:
+    InvoiceIndexElement:
+      allOf:
+        - $ref: "#/components/schemas/InvoiceShowResponse"
+
+    InvoiceShowResponse:
       type: object
       properties:
         id:
@@ -1405,13 +1456,13 @@ components:
         - dueDate
         - status
 
-    InvoiceResponseEnvelope:
+    InvoiceShowResponseEnvelope:
       allOf:
         - $ref: "#/components/schemas/SuccessResponse"
         - type: object
           properties:
             data:
-              $ref: "#/components/schemas/InvoiceResponse"
+              $ref: "#/components/schemas/InvoiceShowResponse"
 
     InvoiceStatus:
       type: string
@@ -1439,7 +1490,7 @@ components:
         - email
         - password
 
-    MoveOutTenantRequest:
+    TenantAssignmentMoveOutRequest:
       type: object
       properties:
         endDate:
@@ -1449,7 +1500,7 @@ components:
       required:
         - endDate
 
-    PaymentListResponseEnvelope:
+    PaymentIndexResponseEnvelope:
       allOf:
         - $ref: "#/components/schemas/SuccessListResponse"
         - type: object
@@ -1457,11 +1508,15 @@ components:
             data:
               type: array
               items:
-                $ref: "#/components/schemas/PaymentResponse"
+                $ref: "#/components/schemas/PaymentIndexElement"
 
-    PaymentResponse:
+    PaymentIndexElement:
       allOf:
-        - $ref: "#/components/schemas/CreatePaymentRequest"
+        - $ref: "#/components/schemas/PaymentShowResponse"
+
+    PaymentShowResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaymentCreateRequest"
         - type: object
           properties:
             id:
@@ -1477,15 +1532,15 @@ components:
         - invoiceId
         - invoiceStatus
 
-    PaymentResponseEnvelope:
+    PaymentShowResponseEnvelope:
       allOf:
         - $ref: "#/components/schemas/SuccessResponse"
         - type: object
           properties:
             data:
-              $ref: "#/components/schemas/PaymentResponse"
+              $ref: "#/components/schemas/PaymentShowResponse"
 
-    PropertyListResponseEnvelope:
+    PropertyIndexResponseEnvelope:
       allOf:
         - $ref: "#/components/schemas/SuccessListResponse"
         - type: object
@@ -1493,9 +1548,13 @@ components:
             data:
               type: array
               items:
-                $ref: "#/components/schemas/PropertyResponse"
+                $ref: "#/components/schemas/PropertyIndexElement"
 
-    PropertyResponse:
+    PropertyIndexElement:
+      allOf:
+        - $ref: "#/components/schemas/PropertyShowResponse"
+
+    PropertyShowResponse:
       type: object
       properties:
         id:
@@ -1524,13 +1583,13 @@ components:
         - createdAt
         - updatedAt
 
-    PropertyResponseEnvelope:
+    PropertyShowResponseEnvelope:
       allOf:
         - $ref: "#/components/schemas/SuccessResponse"
         - type: object
           properties:
             data:
-              $ref: "#/components/schemas/PropertyResponse"
+              $ref: "#/components/schemas/PropertyShowResponse"
 
     RegisterRequest:
       type: object
@@ -1554,7 +1613,7 @@ components:
         - email
         - password
 
-    SkippedInvoiceResponse:
+    SkippedInvoiceShowResponse:
       type: object
       properties:
         unitId:
@@ -1596,7 +1655,7 @@ components:
         - data
         - message
 
-    TenantAssignmentListResponseEnvelope:
+    TenantAssignmentIndexResponseEnvelope:
       allOf:
         - $ref: "#/components/schemas/SuccessListResponse"
         - type: object
@@ -1604,9 +1663,13 @@ components:
             data:
               type: array
               items:
-                $ref: "#/components/schemas/TenantAssignmentResponse"
+                $ref: "#/components/schemas/TenantAssignmentIndexElement"
 
-    TenantAssignmentResponse:
+    TenantAssignmentIndexElement:
+      allOf:
+        - $ref: "#/components/schemas/TenantAssignmentShowResponse"
+
+    TenantAssignmentShowResponse:
       type: object
       properties:
         id:
@@ -1637,15 +1700,15 @@ components:
         - startDate
         - active
 
-    TenantAssignmentResponseEnvelope:
+    TenantAssignmentShowResponseEnvelope:
       allOf:
         - $ref: "#/components/schemas/SuccessResponse"
         - type: object
           properties:
             data:
-              $ref: "#/components/schemas/TenantAssignmentResponse"
+              $ref: "#/components/schemas/TenantAssignmentShowResponse"
 
-    TenantListResponseEnvelope:
+    TenantIndexResponseEnvelope:
       allOf:
         - $ref: "#/components/schemas/SuccessListResponse"
         - type: object
@@ -1653,9 +1716,13 @@ components:
             data:
               type: array
               items:
-                $ref: "#/components/schemas/TenantResponse"
+                $ref: "#/components/schemas/TenantIndexElement"
 
-    TenantResponse:
+    TenantIndexElement:
+      allOf:
+        - $ref: "#/components/schemas/TenantShowResponse"
+
+    TenantShowResponse:
       type: object
       properties:
         id:
@@ -1677,15 +1744,15 @@ components:
         - id
         - name
 
-    TenantResponseEnvelope:
+    TenantShowResponseEnvelope:
       allOf:
         - $ref: "#/components/schemas/SuccessResponse"
         - type: object
           properties:
             data:
-              $ref: "#/components/schemas/TenantResponse"
+              $ref: "#/components/schemas/TenantShowResponse"
 
-    UnitListResponseEnvelope:
+    UnitIndexResponseEnvelope:
       allOf:
         - $ref: "#/components/schemas/SuccessListResponse"
         - type: object
@@ -1693,9 +1760,13 @@ components:
             data:
               type: array
               items:
-                $ref: "#/components/schemas/UnitResponse"
+                $ref: "#/components/schemas/UnitIndexElement"
 
-    UnitResponse:
+    UnitIndexElement:
+      allOf:
+        - $ref: "#/components/schemas/UnitShowResponse"
+
+    UnitShowResponse:
       type: object
       properties:
         id:
@@ -1725,29 +1796,29 @@ components:
         - dueDay
         - active
 
-    UnitResponseEnvelope:
+    UnitShowResponseEnvelope:
       allOf:
         - $ref: "#/components/schemas/SuccessResponse"
         - type: object
           properties:
             data:
-              $ref: "#/components/schemas/UnitResponse"
+              $ref: "#/components/schemas/UnitShowResponse"
 
-    UpdateExpenseRequest:
+    ExpenseUpdateRequest:
       allOf:
-        - $ref: "#/components/schemas/CreateExpenseRequest"
+        - $ref: "#/components/schemas/ExpenseCreateRequest"
 
-    UpdatePropertyRequest:
+    PropertyUpdateRequest:
       allOf:
-        - $ref: "#/components/schemas/CreatePropertyRequest"
+        - $ref: "#/components/schemas/PropertyCreateRequest"
 
-    UpdateTenantRequest:
+    TenantUpdateRequest:
       allOf:
-        - $ref: "#/components/schemas/CreateTenantRequest"
+        - $ref: "#/components/schemas/TenantCreateRequest"
 
-    UpdateUnitRequest:
+    UnitUpdateRequest:
       allOf:
-        - $ref: "#/components/schemas/CreateUnitRequest"
+        - $ref: "#/components/schemas/UnitCreateRequest"
 
     UserResponse:
       type: object

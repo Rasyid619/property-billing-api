@@ -68,6 +68,29 @@ Every operation must define:
 - `requestBody` for create, update, and action endpoints
 - `responses`
 
+Use endpoint-specific success responses and reusable standard responses for
+common no-content and error outcomes:
+
+```yaml
+responses:
+  "201":
+    description: Property was created.
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/PropertyShowResponseEnvelope"
+  "400":
+    $ref: "#/components/responses/BadRequest"
+  "401":
+    $ref: "#/components/responses/Unauthorized"
+  "404":
+    $ref: "#/components/responses/NotFound"
+```
+
+Define reusable standard responses under `components.responses` so the meaning
+of `204`, `400`, `401`, `403`, `404`, `409`, and `500` stays consistent across
+the contract.
+
 Example:
 
 ```yaml
@@ -84,14 +107,14 @@ Example:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CreatePropertyRequest"
+            $ref: "#/components/schemas/PropertyCreateRequest"
     responses:
       "201":
         description: Property was created.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PropertyResponseEnvelope"
+              $ref: "#/components/schemas/PropertyShowResponseEnvelope"
       "400":
         description: The request body is invalid.
       "401":
@@ -162,18 +185,29 @@ Schemas must represent DTOs, not JPA entities.
 
 Use:
 
-- `Create{Resource}Request`
-- `Update{Resource}Request`
-- `{Resource}Response`
-- `{Resource}ResponseEnvelope`
-- `{Resource}ListResponseEnvelope`
+- `{Resource}CreateRequest`
+- `{Resource}UpdateRequest`
+- `{Resource}IndexElement` for one item in a list response
+- `{Resource}IndexResponseEnvelope` for paginated list responses
+- `{Resource}ShowResponse` for detail responses
+- `{Resource}ShowResponseEnvelope` for detail, create, and update responses
+
+Keep the route vocabulary aligned with the schema vocabulary:
+
+```text
+Index  = list
+Show   = detail
+Create = create
+Update = update
+Delete = delete or deactivate
+```
 
 Example:
 
 ```yaml
 components:
   schemas:
-    CreatePropertyRequest:
+    PropertyCreateRequest:
       type: object
       properties:
         name:
