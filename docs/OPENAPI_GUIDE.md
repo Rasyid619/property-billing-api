@@ -243,6 +243,7 @@ List responses use a resource-specific top-level key:
 
 ```json
 {
+  "count": 1,
   "properties": [
     {
       "id": "2b6ff716-7208-4ab3-8de3-535fa4cda5f6",
@@ -258,6 +259,14 @@ matching the shared status-code descriptions used across the contract. Do not
 wrap `400`, `401`, `403`, `404`, `409`, or `500` in a project-specific generic
 error envelope unless a later implementation has a concrete response body that
 must be documented.
+
+Every `IndexResponse` must include `count`, equal to the number of items
+returned in that response array.
+
+Use `offset` and `limit` pagination for broad collections that can grow large.
+`offset` defaults to `0`; `limit` defaults to `100` and must not exceed `100`.
+Do not add pagination reflexively to narrow nested histories when the current
+use case does not need it.
 
 ## Type Rules
 

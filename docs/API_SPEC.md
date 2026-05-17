@@ -26,6 +26,8 @@ root and keep this document aligned with it.
 - Use reusable standard responses under `components.responses`.
 - Use reusable bearer authentication under `components.securitySchemes`.
 - Keep standard error responses description-based unless a concrete endpoint response body needs to be documented.
+- Add `count` to every index response so clients can read the returned array size directly.
+- Use `offset` and `limit` pagination for broad collections that can grow large; default `limit` is `100`.
 - Do not expose JPA entities directly in schemas.
 - Use DTO-shaped request and response schemas.
 - Use `Index` and `Show` schema families for list and detail responses.
@@ -163,8 +165,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PropertyIdQuery"
         - $ref: "#/components/parameters/MonthQuery"
-        - $ref: "#/components/parameters/Page"
-        - $ref: "#/components/parameters/Size"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
           description: Expenses were successfully retrieved.
@@ -271,8 +273,8 @@ paths:
         - $ref: "#/components/parameters/TenantIdQuery"
         - $ref: "#/components/parameters/MonthQuery"
         - $ref: "#/components/parameters/InvoiceStatusQuery"
-        - $ref: "#/components/parameters/Page"
-        - $ref: "#/components/parameters/Size"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
           description: Invoices were successfully retrieved.
@@ -393,8 +395,8 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/Page"
-        - $ref: "#/components/parameters/Size"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Search"
       responses:
         "200":
@@ -501,8 +503,8 @@ paths:
         - BearerAuth: []
       parameters:
         - $ref: "#/components/parameters/PropertyId"
-        - $ref: "#/components/parameters/Page"
-        - $ref: "#/components/parameters/Size"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
           description: Units were successfully retrieved.
@@ -579,8 +581,8 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: "#/components/parameters/Page"
-        - $ref: "#/components/parameters/Size"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Search"
       responses:
         "200":
@@ -881,15 +883,16 @@ components:
         type: string
         pattern: "^\\d{4}-\\d{2}$"
         example: "2026-05"
-    Page:
-      name: page
+    Limit:
+      name: limit
       in: query
       required: false
-      description: One-based page number.
+      description: Maximum number of items to return.
       schema:
         type: integer
         minimum: 1
-        default: 1
+        maximum: 100
+        default: 100
     PropertyId:
       name: propertyId
       in: path
@@ -922,16 +925,15 @@ components:
       schema:
         type: string
         maxLength: 100
-    Size:
-      name: size
+    Offset:
+      name: offset
       in: query
       required: false
-      description: Number of items per page.
+      description: Number of items to skip before returning results.
       schema:
         type: integer
-        minimum: 1
-        maximum: 100
-        default: 10
+        minimum: 0
+        default: 0
     TenantId:
       name: tenantId
       in: path
@@ -1225,11 +1227,17 @@ components:
     ExpenseIndexResponse:
       type: object
       properties:
+        count:
+          type: integer
+          minimum: 0
+          description: Number of items returned in `expenses`.
+          example: 1
         expenses:
           type: array
           items:
             $ref: "#/components/schemas/ExpenseIndexElement"
       required:
+        - count
         - expenses
 
     ExpenseIndexElement:
@@ -1287,11 +1295,17 @@ components:
     InvoiceIndexResponse:
       type: object
       properties:
+        count:
+          type: integer
+          minimum: 0
+          description: Number of items returned in `invoices`.
+          example: 1
         invoices:
           type: array
           items:
             $ref: "#/components/schemas/InvoiceIndexElement"
       required:
+        - count
         - invoices
 
     InvoiceIndexElement:
@@ -1377,11 +1391,17 @@ components:
     PaymentIndexResponse:
       type: object
       properties:
+        count:
+          type: integer
+          minimum: 0
+          description: Number of items returned in `payments`.
+          example: 1
         payments:
           type: array
           items:
             $ref: "#/components/schemas/PaymentIndexElement"
       required:
+        - count
         - payments
 
     PaymentIndexElement:
@@ -1410,11 +1430,17 @@ components:
     PropertyIndexResponse:
       type: object
       properties:
+        count:
+          type: integer
+          minimum: 0
+          description: Number of items returned in `properties`.
+          example: 1
         properties:
           type: array
           items:
             $ref: "#/components/schemas/PropertyIndexElement"
       required:
+        - count
         - properties
 
     PropertyIndexElement:
@@ -1491,11 +1517,17 @@ components:
     TenantAssignmentIndexResponse:
       type: object
       properties:
+        count:
+          type: integer
+          minimum: 0
+          description: Number of items returned in `tenantAssignments`.
+          example: 1
         tenantAssignments:
           type: array
           items:
             $ref: "#/components/schemas/TenantAssignmentIndexElement"
       required:
+        - count
         - tenantAssignments
 
     TenantAssignmentIndexElement:
@@ -1537,11 +1569,17 @@ components:
     TenantIndexResponse:
       type: object
       properties:
+        count:
+          type: integer
+          minimum: 0
+          description: Number of items returned in `tenants`.
+          example: 1
         tenants:
           type: array
           items:
             $ref: "#/components/schemas/TenantIndexElement"
       required:
+        - count
         - tenants
 
     TenantIndexElement:
@@ -1574,11 +1612,17 @@ components:
     UnitIndexResponse:
       type: object
       properties:
+        count:
+          type: integer
+          minimum: 0
+          description: Number of items returned in `units`.
+          example: 1
         units:
           type: array
           items:
             $ref: "#/components/schemas/UnitIndexElement"
       required:
+        - count
         - units
 
     UnitIndexElement:
