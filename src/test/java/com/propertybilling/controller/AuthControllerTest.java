@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.propertybilling.config.SecurityConfig;
 import com.propertybilling.dto.AuthTokenResponse;
-import com.propertybilling.exception.ApiExceptionHandler;
+import com.propertybilling.exception.GlobalExceptionHandler;
 import com.propertybilling.exception.InvalidCredentialsException;
 import com.propertybilling.service.AuthService;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AuthController.class)
-@Import({ SecurityConfig.class, ApiExceptionHandler.class })
+@Import({ SecurityConfig.class, GlobalExceptionHandler.class })
 class AuthControllerTest {
 
 	private final MockMvc mockMvc;
