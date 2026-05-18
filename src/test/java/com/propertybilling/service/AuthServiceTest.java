@@ -1,0 +1,74 @@
+package com.propertybilling.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
+
+import com.propertybilling.domain.User;
+import com.propertybilling.dto.AuthTokenResponse;
+import com.propertybilling.dto.LoginRequest;
+import com.propertybilling.exception.InvalidCredentialsException;
+import com.propertybilling.repository.UserRepository;
+import com.propertybilling.security.JwtTokenService;
+import java.time.OffsetDateTime;
+import java.util.Optional;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+class AuthServiceTest {
+
+	private final UserRepository userRepository = Mockito.mock(UserRepository.class);
+	private final PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
+	private final JwtTokenService jwtTokenService = Mockito.mock(JwtTokenService.class);
+	private final AuthService authService = new AuthService(userRepository, passwordEncoder, jwtTokenService);
+
+	@Test
+	void returnsTokensWhenCredentialsAreValid() {
+		User user = buildUser();
+		LoginRequest request = new LoginRequest("admin@example.com", "password123");
+		when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches("password123", user.getPasswordHash())).thenReturn(true);
+		when(jwtTokenService.createAccessToken(user)).thenReturn("access-token");
+		when(jwtTokenService.createRefreshToken(user)).thenReturn("refresh-token");
+
+		AuthTokenResponse response = authService.login(request);
+
+		assertThat(response.accessToken()).isEqualTo("access-token");
+		assertThat(response.refreshToken()).isEqualTo("refresh-token");
+	}
+
+	@Test
+	void rejectsUnknownEmail() {
+		LoginRequest request = new LoginRequest("missing@example.com", "password123");
+		when(userRepository.findByEmail("missing@example.com")).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> authService.login(request))
+				.isInstanceOf(InvalidCredentialsException.class);
+	}
+
+	@Test
+	void rejectsInvalidPassword() {
+		User user = buildUser();
+		LoginRequest request = new LoginRequest("admin@example.com", "wrong-password");
+		when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches("wrong-password", user.getPasswordHash())).thenReturn(false);
+
+		assertThatThrownBy(() -> authService.login(request))
+				.isInstanceOf(InvalidCredentialsException.class);
+	}
+
+	private User buildUser() {
+		OffsetDateTime now = OffsetDateTime.parse("2026-05-18T00:00:00Z");
+		return new User(
+				UUID.fromString("00000000-0000-0000-0000-000000000001"),
+				"Admin User",
+				"admin@example.com",
+				"password-hash",
+				"admin",
+				now,
+				now
+		);
+	}
+}

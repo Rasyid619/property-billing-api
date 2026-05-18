@@ -15,7 +15,8 @@ import org.springframework.test.web.servlet.MockMvc;
 		"spring.datasource.driver-class-name=org.h2.Driver",
 		"spring.datasource.username=sa",
 		"spring.datasource.password=",
-		"spring.flyway.enabled=false"
+		"spring.flyway.enabled=false",
+		"app.jwt.secret=openapi-test-secret"
 })
 @AutoConfigureMockMvc
 class OpenApiEndpointTest {
