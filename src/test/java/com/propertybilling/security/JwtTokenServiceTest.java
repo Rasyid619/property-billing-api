@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.propertybilling.entity.User;
+import com.propertybilling.exception.InvalidAccessTokenException;
 import com.propertybilling.exception.InvalidRefreshTokenException;
 import java.time.Clock;
 import java.time.Instant;
@@ -29,6 +30,22 @@ class JwtTokenServiceTest {
 	}
 
 	@Test
+	void readsSubjectFromValidAccessToken() {
+		User user = buildUser();
+		String accessToken = jwtTokenService.createAccessToken(user);
+
+		assertThat(jwtTokenService.readAccessTokenSubject(accessToken)).isEqualTo(user.getId());
+	}
+
+	@Test
+	void rejectsRefreshTokenAsAccessToken() {
+		String refreshToken = jwtTokenService.createRefreshToken(buildUser());
+
+		assertThatThrownBy(() -> jwtTokenService.readAccessTokenSubject(refreshToken))
+				.isInstanceOf(InvalidAccessTokenException.class);
+	}
+
+	@Test
 	void rejectsAccessTokenAsRefreshToken() {
 		String accessToken = jwtTokenService.createAccessToken(buildUser());
 
@@ -48,6 +65,7 @@ class JwtTokenServiceTest {
 	private User buildUser() {
 		return new User(
 				UUID.fromString("00000000-0000-0000-0000-000000000001"),
+				"Admin User",
 				"admin@example.com",
 				"password-hash",
 				"admin"

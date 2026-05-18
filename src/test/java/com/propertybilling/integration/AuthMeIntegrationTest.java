@@ -1,6 +1,6 @@
 package com.propertybilling.integration;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -16,7 +16,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest(properties = {
-		"spring.datasource.url=jdbc:h2:mem:auth_refresh_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
+		"spring.datasource.url=jdbc:h2:mem:auth_me_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
 		"spring.datasource.driver-class-name=org.h2.Driver",
 		"spring.datasource.username=sa",
 		"spring.datasource.password=",
@@ -26,9 +26,9 @@ import org.springframework.test.web.servlet.MockMvc;
 })
 @AutoConfigureMockMvc
 /*
- * Integration tests for refresh-token behavior across HTTP, persistence, and token generation.
+ * Integration tests for current-user behavior across HTTP, persistence, and token validation.
  */
-class AuthRefreshIntegrationTest {
+class AuthMeIntegrationTest {
 
 	private final MockMvc mockMvc;
 	private final UserRepository userRepository;
@@ -36,7 +36,7 @@ class AuthRefreshIntegrationTest {
 	private User user;
 
 	@Autowired
-	AuthRefreshIntegrationTest(
+	AuthMeIntegrationTest(
 			MockMvc mockMvc,
 			UserRepository userRepository,
 			JwtTokenService jwtTokenService
@@ -59,21 +59,16 @@ class AuthRefreshIntegrationTest {
 	}
 
 	@Test
-	void refreshReturnsNewAccessTokenForValidRefreshToken() throws Exception {
-		String refreshToken = jwtTokenService.createRefreshToken(user);
-
-		mockMvc.perform(post("/api/v1/auth/refresh")
-						.header("Authorization", "Bearer " + refreshToken))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isString());
-	}
-
-	@Test
-	void refreshRejectsAccessToken() throws Exception {
+	void meReturnsAuthenticatedUser() throws Exception {
 		String accessToken = jwtTokenService.createAccessToken(user);
 
-		mockMvc.perform(post("/api/v1/auth/refresh")
+		mockMvc.perform(get("/api/v1/auth/me")
 						.header("Authorization", "Bearer " + accessToken))
-				.andExpect(status().isUnauthorized());
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value("00000000-0000-0000-0000-000000000001"))
+				.andExpect(jsonPath("$.name").value("Admin User"))
+				.andExpect(jsonPath("$.email").value("admin@example.com"))
+				.andExpect(jsonPath("$.role").value("admin"));
 	}
+
 }

@@ -242,3 +242,45 @@ Passed
 ## Tomorrow
 
 - Start endpoint implementation from the contract issues, beginning with the next module in order.
+
+# Daily Summary - 2026-05-18
+
+## Completed
+
+- Completed four issue and pull request threads today.
+- Implemented auth login, refresh-token renewal, and current-user endpoint work.
+- Added focused auth unit, controller, and integration coverage.
+- Refined auth package structure, exception handling, and JWT validation behavior.
+- Strengthened CI to expose separate test and build jobs.
+
+## Tests
+
+Command:
+
+```bash
+./gradlew clean test
+```
+
+Result:
+
+```text
+Passed
+```
+
+## Pull Request
+
+- PR: https://github.com/Rasyid619/property-billing-api/pull/51
+- PR: https://github.com/Rasyid619/property-billing-api/pull/53
+- PR: https://github.com/Rasyid619/property-billing-api/pull/55
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/13
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/14
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/50
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/52
+
+## Blockers
+
+- No blockers.
+
+## Tomorrow
+
+- Finish the remaining auth endpoint work, then continue to the next module in order after review and CI are complete.

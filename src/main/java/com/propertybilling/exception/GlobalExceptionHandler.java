@@ -22,6 +22,11 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	}
 
+	@ExceptionHandler(InvalidAccessTokenException.class)
+	ResponseEntity<Void> handleInvalidAccessToken() {
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+	}
+
 	@ExceptionHandler(MissingRequestHeaderException.class)
 	ResponseEntity<Void> handleMissingRequestHeader() {
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

@@ -2,8 +2,10 @@ package com.propertybilling.service;
 
 import com.propertybilling.entity.User;
 import com.propertybilling.dto.auth.AccessTokenResponse;
+import com.propertybilling.dto.auth.AuthMeResponse;
 import com.propertybilling.dto.auth.AuthTokenResponse;
 import com.propertybilling.dto.auth.LoginRequest;
+import com.propertybilling.exception.InvalidAccessTokenException;
 import com.propertybilling.exception.InvalidCredentialsException;
 import com.propertybilling.exception.InvalidRefreshTokenException;
 import com.propertybilling.repository.UserRepository;
@@ -85,6 +87,25 @@ public class AuthService {
 		return new AccessTokenResponse(jwtTokenService.createAccessToken(user));
 	}
 
+	/**
+	 * Returns the authenticated admin or staff user represented by an access token.
+	 *
+	 * @param authorizationHeader bearer access token header
+	 * @return authenticated user details
+	 * @throws InvalidAccessTokenException when the access token is invalid
+	 */
+	public AuthMeResponse me(String authorizationHeader) {
+		String accessToken = extractBearerAccessToken(authorizationHeader);
+		User user = userRepository.findById(jwtTokenService.readAccessTokenSubject(accessToken))
+				.orElseThrow(InvalidAccessTokenException::new);
+
+		if (!canLogin(user)) {
+			throw new InvalidAccessTokenException();
+		}
+
+		return new AuthMeResponse(user.getId(), user.getName(), user.getEmail(), user.getRole());
+	}
+
 	private boolean canLogin(User user) {
 		return ADMIN_ROLE.equals(user.getRole()) || STAFF_ROLE.equals(user.getRole());
 	}
@@ -101,5 +122,13 @@ public class AuthService {
 		}
 
 		return token;
+	}
+
+	private String extractBearerAccessToken(String authorizationHeader) {
+		try {
+			return extractBearerToken(authorizationHeader);
+		} catch (InvalidRefreshTokenException exception) {
+			throw new InvalidAccessTokenException();
+		}
 	}
 }

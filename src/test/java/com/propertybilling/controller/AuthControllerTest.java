@@ -2,17 +2,20 @@ package com.propertybilling.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.propertybilling.config.SecurityConfig;
 import com.propertybilling.dto.auth.AccessTokenResponse;
+import com.propertybilling.dto.auth.AuthMeResponse;
 import com.propertybilling.dto.auth.AuthTokenResponse;
 import com.propertybilling.exception.GlobalExceptionHandler;
 import com.propertybilling.exception.InvalidCredentialsException;
 import com.propertybilling.exception.InvalidRefreshTokenException;
 import com.propertybilling.service.AuthService;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -98,6 +101,30 @@ class AuthControllerTest {
 		when(authService.refresh(null)).thenThrow(new InvalidRefreshTokenException());
 
 		mockMvc.perform(post("/api/v1/auth/refresh"))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void meReturnsAuthenticatedUser() throws Exception {
+		when(authService.me("Bearer access-token")).thenReturn(new AuthMeResponse(
+				UUID.fromString("00000000-0000-0000-0000-000000000001"),
+				"Admin User",
+				"admin@example.com",
+				"admin"
+		));
+
+		mockMvc.perform(get("/api/v1/auth/me")
+						.header("Authorization", "Bearer access-token"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value("00000000-0000-0000-0000-000000000001"))
+				.andExpect(jsonPath("$.name").value("Admin User"))
+				.andExpect(jsonPath("$.email").value("admin@example.com"))
+				.andExpect(jsonPath("$.role").value("admin"));
+	}
+
+	@Test
+	void meRejectsMissingAuthorizationHeader() throws Exception {
+		mockMvc.perform(get("/api/v1/auth/me"))
 				.andExpect(status().isUnauthorized());
 	}
 }
