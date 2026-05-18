@@ -20,6 +20,9 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @Testcontainers
 @SpringBootTest
+/**
+ * Integration tests that verify the initial schema and seed migrations.
+ */
 class FlywayMigrationTest {
 
 	@Container

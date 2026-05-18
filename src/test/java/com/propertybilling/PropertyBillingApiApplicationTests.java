@@ -11,6 +11,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 		"spring.flyway.enabled=false",
 		"app.jwt.secret=context-load-test-secret"
 })
+/**
+ * Verifies that the Spring application context can start successfully.
+ */
 class PropertyBillingApiApplicationTests {
 
 	@Test

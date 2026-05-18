@@ -5,6 +5,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
+/**
+ * Central translation layer from domain exceptions to HTTP responses.
+ */
 public class GlobalExceptionHandler {
 
 	@ExceptionHandler(InvalidCredentialsException.class)

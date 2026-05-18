@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/health")
+/**
+ * HTTP endpoint used to report whether the API is available.
+ */
 public class HealthController {
 
 	@GetMapping

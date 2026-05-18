@@ -2,7 +2,7 @@ package com.propertybilling.security;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.propertybilling.domain.User;
+import com.propertybilling.entity.User;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
@@ -16,6 +16,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+/**
+ * Creates signed JWT access and refresh tokens for authenticated users.
+ *
+ * <p>TODO: Consider asymmetric signing when token verification needs to be shared
+ * with other services without allowing them to mint tokens.
+ */
 public class JwtTokenService {
 
 	private static final Base64.Encoder BASE64_URL_ENCODER = Base64.getUrlEncoder().withoutPadding();
@@ -26,6 +32,13 @@ public class JwtTokenService {
 	private final long accessTokenTtlSeconds;
 	private final long refreshTokenTtlSeconds;
 
+	/**
+	 * Creates a JWT token service from application configuration.
+	 *
+	 * @param secret signing secret used for HMAC tokens
+	 * @param accessTokenTtlSeconds lifetime of access tokens in seconds
+	 * @param refreshTokenTtlSeconds lifetime of refresh tokens in seconds
+	 */
 	@Autowired
 	public JwtTokenService(
 			@Value("${app.jwt.secret}") String secret,
@@ -47,10 +60,22 @@ public class JwtTokenService {
 		this.refreshTokenTtlSeconds = refreshTokenTtlSeconds;
 	}
 
+	/**
+	 * Creates an access token for an authenticated user.
+	 *
+	 * @param user authenticated user
+	 * @return signed JWT access token
+	 */
 	public String createAccessToken(User user) {
 		return createToken(user, "access", accessTokenTtlSeconds);
 	}
 
+	/**
+	 * Creates a refresh token for an authenticated user.
+	 *
+	 * @param user authenticated user
+	 * @return signed JWT refresh token
+	 */
 	public String createRefreshToken(User user) {
 		return createToken(user, "refresh", refreshTokenTtlSeconds);
 	}

@@ -4,9 +4,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.propertybilling.domain.User;
+import com.propertybilling.entity.User;
 import com.propertybilling.repository.UserRepository;
-import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +26,9 @@ import org.springframework.test.web.servlet.MockMvc;
 		"app.jwt.secret=integration-test-secret"
 })
 @AutoConfigureMockMvc
+/**
+ * Integration tests for login behavior across HTTP, persistence, and token generation.
+ */
 class AuthLoginIntegrationTest {
 
 	private final MockMvc mockMvc;
@@ -47,15 +49,11 @@ class AuthLoginIntegrationTest {
 	@BeforeEach
 	void setUp() {
 		userRepository.deleteAll();
-		OffsetDateTime now = OffsetDateTime.parse("2026-05-18T00:00:00Z");
 		userRepository.save(new User(
 				UUID.fromString("00000000-0000-0000-0000-000000000001"),
-				"Admin User",
 				"admin@example.com",
 				passwordEncoder.encode("password123"),
-				"admin",
-				now,
-				now
+				"admin"
 		));
 	}
 

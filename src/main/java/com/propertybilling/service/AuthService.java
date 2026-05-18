@@ -1,6 +1,6 @@
 package com.propertybilling.service;
 
-import com.propertybilling.domain.User;
+import com.propertybilling.entity.User;
 import com.propertybilling.dto.auth.AuthTokenResponse;
 import com.propertybilling.dto.auth.LoginRequest;
 import com.propertybilling.exception.InvalidCredentialsException;
@@ -10,12 +10,22 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+/**
+ * Business workflow for authenticating admin and staff users.
+ */
 public class AuthService {
 
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtTokenService jwtTokenService;
 
+	/**
+	 * Creates the authentication workflow service.
+	 *
+	 * @param userRepository user data access boundary
+	 * @param passwordEncoder password verifier
+	 * @param jwtTokenService token issuer
+	 */
 	public AuthService(
 			UserRepository userRepository,
 			PasswordEncoder passwordEncoder,
@@ -26,6 +36,13 @@ public class AuthService {
 		this.jwtTokenService = jwtTokenService;
 	}
 
+	/**
+	 * Authenticates a user and issues access and refresh tokens.
+	 *
+	 * @param request submitted login credentials
+	 * @return issued JWT tokens
+	 * @throws InvalidCredentialsException when the credentials do not match a user
+	 */
 	public AuthTokenResponse login(LoginRequest request) {
 		User user = userRepository.findByEmail(request.email())
 				.orElseThrow(InvalidCredentialsException::new);

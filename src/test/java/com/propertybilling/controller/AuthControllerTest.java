@@ -21,6 +21,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AuthController.class)
 @Import({ SecurityConfig.class, GlobalExceptionHandler.class })
+/**
+ * Web-layer tests for authentication endpoints.
+ */
 class AuthControllerTest {
 
 	private final MockMvc mockMvc;

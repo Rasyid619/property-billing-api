@@ -19,6 +19,9 @@ import org.springframework.test.web.servlet.MockMvc;
 		"app.jwt.secret=openapi-test-secret"
 })
 @AutoConfigureMockMvc
+/**
+ * Verifies that the generated OpenAPI endpoint is exposed.
+ */
 class OpenApiEndpointTest {
 
 	private final MockMvc mockMvc;

@@ -4,19 +4,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
-import com.propertybilling.domain.User;
+import com.propertybilling.entity.User;
 import com.propertybilling.dto.auth.AuthTokenResponse;
 import com.propertybilling.dto.auth.LoginRequest;
 import com.propertybilling.exception.InvalidCredentialsException;
 import com.propertybilling.repository.UserRepository;
 import com.propertybilling.security.JwtTokenService;
-import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+/**
+ * Unit tests for authentication business rules.
+ */
 class AuthServiceTest {
 
 	private final UserRepository userRepository = Mockito.mock(UserRepository.class);
@@ -60,15 +62,11 @@ class AuthServiceTest {
 	}
 
 	private User buildUser() {
-		OffsetDateTime now = OffsetDateTime.parse("2026-05-18T00:00:00Z");
 		return new User(
 				UUID.fromString("00000000-0000-0000-0000-000000000001"),
-				"Admin User",
 				"admin@example.com",
 				"password-hash",
-				"admin",
-				now,
-				now
+				"admin"
 		);
 	}
 }

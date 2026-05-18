@@ -12,10 +12,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+/**
+ * HTTP endpoints for admin and staff authentication workflows.
+ */
 public class AuthController {
 
 	private final AuthService authService;
 
+	/**
+	 * Creates the authentication controller.
+	 *
+	 * @param authService business workflow used to authenticate users
+	 */
 	public AuthController(AuthService authService) {
 		this.authService = authService;
 	}
