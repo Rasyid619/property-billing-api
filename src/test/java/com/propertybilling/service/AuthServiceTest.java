@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import com.propertybilling.entity.User;
+import com.propertybilling.dto.auth.AccessTokenResponse;
 import com.propertybilling.dto.auth.AuthTokenResponse;
 import com.propertybilling.dto.auth.LoginRequest;
 import com.propertybilling.exception.InvalidCredentialsException;
+import com.propertybilling.exception.InvalidRefreshTokenException;
 import com.propertybilling.repository.UserRepository;
 import com.propertybilling.security.JwtTokenService;
 import java.util.Optional;
@@ -16,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-/**
+/*
  * Unit tests for authentication business rules.
  */
 class AuthServiceTest {
@@ -74,6 +76,34 @@ class AuthServiceTest {
 
 		assertThatThrownBy(() -> authService.login(request))
 				.isInstanceOf(InvalidCredentialsException.class);
+	}
+
+	@Test
+	void refreshReturnsAccessTokenWhenRefreshTokenIsValid() {
+		User user = buildUser();
+		when(jwtTokenService.readRefreshTokenSubject("refresh-token")).thenReturn(user.getId());
+		when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+		when(jwtTokenService.createAccessToken(user)).thenReturn("new-access-token");
+
+		AccessTokenResponse response = authService.refresh("Bearer refresh-token");
+
+		assertThat(response.accessToken()).isEqualTo("new-access-token");
+	}
+
+	@Test
+	void refreshRejectsMalformedAuthorizationHeader() {
+		assertThatThrownBy(() -> authService.refresh("refresh-token"))
+				.isInstanceOf(InvalidRefreshTokenException.class);
+	}
+
+	@Test
+	void refreshRejectsMissingUser() {
+		UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000003");
+		when(jwtTokenService.readRefreshTokenSubject("refresh-token")).thenReturn(userId);
+		when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> authService.refresh("Bearer refresh-token"))
+				.isInstanceOf(InvalidRefreshTokenException.class);
 	}
 
 	private User buildUser() {

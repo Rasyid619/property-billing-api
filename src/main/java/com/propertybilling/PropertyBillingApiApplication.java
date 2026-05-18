@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-/**
+/*
  * Application entry point for the Property Billing API.
  */
 public class PropertyBillingApiApplication {

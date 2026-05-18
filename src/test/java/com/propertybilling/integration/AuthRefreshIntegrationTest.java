@@ -6,18 +6,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.propertybilling.entity.User;
 import com.propertybilling.repository.UserRepository;
+import com.propertybilling.security.JwtTokenService;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest(properties = {
-		"spring.datasource.url=jdbc:h2:mem:auth_login_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
+		"spring.datasource.url=jdbc:h2:mem:auth_refresh_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
 		"spring.datasource.driver-class-name=org.h2.Driver",
 		"spring.datasource.username=sa",
 		"spring.datasource.password=",
@@ -27,61 +26,53 @@ import org.springframework.test.web.servlet.MockMvc;
 })
 @AutoConfigureMockMvc
 /*
- * Integration tests for login behavior across HTTP, persistence, and token generation.
+ * Integration tests for refresh-token behavior across HTTP, persistence, and token generation.
  */
-class AuthLoginIntegrationTest {
+class AuthRefreshIntegrationTest {
 
 	private final MockMvc mockMvc;
 	private final UserRepository userRepository;
-	private final PasswordEncoder passwordEncoder;
+	private final JwtTokenService jwtTokenService;
+	private User user;
 
 	@Autowired
-	AuthLoginIntegrationTest(
+	AuthRefreshIntegrationTest(
 			MockMvc mockMvc,
 			UserRepository userRepository,
-			PasswordEncoder passwordEncoder
+			JwtTokenService jwtTokenService
 	) {
 		this.mockMvc = mockMvc;
 		this.userRepository = userRepository;
-		this.passwordEncoder = passwordEncoder;
+		this.jwtTokenService = jwtTokenService;
 	}
 
 	@BeforeEach
 	void setUp() {
 		userRepository.deleteAll();
-		userRepository.save(new User(
+		user = userRepository.save(new User(
 				UUID.fromString("00000000-0000-0000-0000-000000000001"),
 				"admin@example.com",
-				passwordEncoder.encode("password123"),
+				"password-hash",
 				"admin"
 		));
 	}
 
 	@Test
-	void loginReturnsJwtTokensForValidCredentials() throws Exception {
-		mockMvc.perform(post("/api/v1/auth/login")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content("""
-								{
-								  "email": "admin@example.com",
-								  "password": "password123"
-								}
-								"""))
+	void refreshReturnsNewAccessTokenForValidRefreshToken() throws Exception {
+		String refreshToken = jwtTokenService.createRefreshToken(user);
+
+		mockMvc.perform(post("/api/v1/auth/refresh")
+						.header("Authorization", "Bearer " + refreshToken))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.access_token").isString())
-				.andExpect(jsonPath("$.refresh_token").isString());
+				.andExpect(jsonPath("$.access_token").isString());
 	}
 
 	@Test
-	void loginRejectsInvalidCredentials() throws Exception {
-		mockMvc.perform(post("/api/v1/auth/login")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content("""
-								{
-								  "email": "admin@example.com",
-								  "password": "wrong-password"
-								}
-								"""))
+	void refreshRejectsAccessToken() throws Exception {
+		String accessToken = jwtTokenService.createAccessToken(user);
+
+		mockMvc.perform(post("/api/v1/auth/refresh")
+						.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isUnauthorized());
 	}
 }

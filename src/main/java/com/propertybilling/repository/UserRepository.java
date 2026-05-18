@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-/**
+/*
  * Data access boundary for persisted admin and staff users.
  */
 public interface UserRepository extends JpaRepository<User, UUID> {
