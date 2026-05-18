@@ -1,7 +1,7 @@
 package com.propertybilling.controller;
 
-import com.propertybilling.dto.AuthTokenResponse;
-import com.propertybilling.dto.LoginRequest;
+import com.propertybilling.dto.auth.AuthTokenResponse;
+import com.propertybilling.dto.auth.LoginRequest;
 import com.propertybilling.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;

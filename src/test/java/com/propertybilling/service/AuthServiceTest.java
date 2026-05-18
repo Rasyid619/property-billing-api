@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import com.propertybilling.domain.User;
-import com.propertybilling.dto.AuthTokenResponse;
-import com.propertybilling.dto.LoginRequest;
+import com.propertybilling.dto.auth.AuthTokenResponse;
+import com.propertybilling.dto.auth.LoginRequest;
 import com.propertybilling.exception.InvalidCredentialsException;
 import com.propertybilling.repository.UserRepository;
 import com.propertybilling.security.JwtTokenService;

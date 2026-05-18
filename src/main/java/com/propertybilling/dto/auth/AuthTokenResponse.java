@@ -1,4 +1,4 @@
-package com.propertybilling.dto;
+package com.propertybilling.dto.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

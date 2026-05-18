@@ -7,7 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.propertybilling.config.SecurityConfig;
-import com.propertybilling.dto.AuthTokenResponse;
+import com.propertybilling.dto.auth.AuthTokenResponse;
 import com.propertybilling.exception.GlobalExceptionHandler;
 import com.propertybilling.exception.InvalidCredentialsException;
 import com.propertybilling.service.AuthService;
