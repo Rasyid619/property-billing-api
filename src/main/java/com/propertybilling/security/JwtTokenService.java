@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.propertybilling.entity.User;
+import com.propertybilling.exception.InvalidAccessTokenException;
 import com.propertybilling.exception.InvalidRefreshTokenException;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -91,6 +92,25 @@ public class JwtTokenService {
 	 * @throws InvalidRefreshTokenException when the token is invalid or expired
 	 */
 	public UUID readRefreshTokenSubject(String token) {
+		return readTokenSubject(token, "refresh");
+	}
+
+	/**
+	 * Validates an access token and returns the user identifier stored in it.
+	 *
+	 * @param token submitted JWT access token
+	 * @return user identifier stored in the token subject
+	 * @throws InvalidAccessTokenException when the token is invalid or expired
+	 */
+	public UUID readAccessTokenSubject(String token) {
+		try {
+			return readTokenSubject(token, "access");
+		} catch (InvalidRefreshTokenException exception) {
+			throw new InvalidAccessTokenException();
+		}
+	}
+
+	private UUID readTokenSubject(String token, String expectedType) {
 		String[] tokenParts = token.split("\\.", 3);
 
 		if (tokenParts.length != 3) {
@@ -105,7 +125,7 @@ public class JwtTokenService {
 
 		Map<String, Object> payload = decodePayload(tokenParts[1]);
 
-		if (!"refresh".equals(payload.get("type"))) {
+		if (!expectedType.equals(payload.get("type"))) {
 			throw new InvalidRefreshTokenException();
 		}
 

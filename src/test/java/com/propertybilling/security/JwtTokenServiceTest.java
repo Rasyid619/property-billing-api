@@ -29,6 +29,14 @@ class JwtTokenServiceTest {
 	}
 
 	@Test
+	void readsSubjectFromValidAccessToken() {
+		User user = buildUser();
+		String accessToken = jwtTokenService.createAccessToken(user);
+
+		assertThat(jwtTokenService.readAccessTokenSubject(accessToken)).isEqualTo(user.getId());
+	}
+
+	@Test
 	void rejectsAccessTokenAsRefreshToken() {
 		String accessToken = jwtTokenService.createAccessToken(buildUser());
 
@@ -48,6 +56,7 @@ class JwtTokenServiceTest {
 	private User buildUser() {
 		return new User(
 				UUID.fromString("00000000-0000-0000-0000-000000000001"),
+				"Admin User",
 				"admin@example.com",
 				"password-hash",
 				"admin"

@@ -6,8 +6,10 @@ import static org.mockito.Mockito.when;
 
 import com.propertybilling.entity.User;
 import com.propertybilling.dto.auth.AccessTokenResponse;
+import com.propertybilling.dto.auth.AuthMeResponse;
 import com.propertybilling.dto.auth.AuthTokenResponse;
 import com.propertybilling.dto.auth.LoginRequest;
+import com.propertybilling.exception.InvalidAccessTokenException;
 import com.propertybilling.exception.InvalidCredentialsException;
 import com.propertybilling.exception.InvalidRefreshTokenException;
 import com.propertybilling.repository.UserRepository;
@@ -67,6 +69,7 @@ class AuthServiceTest {
 	void rejectsUnsupportedRole() {
 		User user = new User(
 				UUID.fromString("00000000-0000-0000-0000-000000000002"),
+				"Tenant User",
 				"tenant@example.com",
 				"password-hash",
 				"tenant"
@@ -106,9 +109,30 @@ class AuthServiceTest {
 				.isInstanceOf(InvalidRefreshTokenException.class);
 	}
 
+	@Test
+	void meReturnsAuthenticatedUser() {
+		User user = buildUser();
+		when(jwtTokenService.readAccessTokenSubject("access-token")).thenReturn(user.getId());
+		when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+
+		AuthMeResponse response = authService.me("Bearer access-token");
+
+		assertThat(response.id()).isEqualTo(user.getId());
+		assertThat(response.name()).isEqualTo(user.getName());
+		assertThat(response.email()).isEqualTo(user.getEmail());
+		assertThat(response.role()).isEqualTo(user.getRole());
+	}
+
+	@Test
+	void meRejectsMalformedAuthorizationHeader() {
+		assertThatThrownBy(() -> authService.me("access-token"))
+				.isInstanceOf(InvalidAccessTokenException.class);
+	}
+
 	private User buildUser() {
 		return new User(
 				UUID.fromString("00000000-0000-0000-0000-000000000001"),
+				"Admin User",
 				"admin@example.com",
 				"password-hash",
 				"admin"

@@ -2,9 +2,11 @@ package com.propertybilling.controller;
 
 import com.propertybilling.dto.auth.AuthTokenResponse;
 import com.propertybilling.dto.auth.AccessTokenResponse;
+import com.propertybilling.dto.auth.AuthMeResponse;
 import com.propertybilling.dto.auth.LoginRequest;
 import com.propertybilling.service.AuthService;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +35,11 @@ public class AuthController {
 	@PostMapping("/login")
 	ResponseEntity<AuthTokenResponse> login(@Valid @RequestBody LoginRequest request) {
 		return ResponseEntity.ok(authService.login(request));
+	}
+
+	@GetMapping("/me")
+	ResponseEntity<AuthMeResponse> me(@RequestHeader("Authorization") String authorizationHeader) {
+		return ResponseEntity.ok(authService.me(authorizationHeader));
 	}
 
 	@PostMapping("/refresh")

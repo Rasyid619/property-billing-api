@@ -13,6 +13,9 @@ public class User {
 	@Id
 	private UUID id;
 
+	@Column(nullable = false)
+	private String name;
+
 	@Column(nullable = false, unique = true)
 	private String email;
 
@@ -29,17 +32,20 @@ public class User {
 	 * Creates a persisted user representation.
 	 *
 	 * @param id unique user identifier
+	 * @param name display name
 	 * @param email login email address
 	 * @param passwordHash hashed password
 	 * @param role authorization role
 	 */
 	public User(
 			UUID id,
+			String name,
 			String email,
 			String passwordHash,
 			String role
 	) {
 		this.id = id;
+		this.name = name;
 		this.email = email;
 		this.passwordHash = passwordHash;
 		this.role = role;
@@ -52,6 +58,15 @@ public class User {
 	 */
 	public UUID getId() {
 		return id;
+	}
+
+	/**
+	 * Returns the user display name.
+	 *
+	 * @return display name
+	 */
+	public String getName() {
+		return name;
 	}
 
 	/**

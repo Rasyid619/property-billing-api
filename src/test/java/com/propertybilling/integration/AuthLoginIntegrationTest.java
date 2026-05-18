@@ -51,6 +51,7 @@ class AuthLoginIntegrationTest {
 		userRepository.deleteAll();
 		userRepository.save(new User(
 				UUID.fromString("00000000-0000-0000-0000-000000000001"),
+				"Admin User",
 				"admin@example.com",
 				passwordEncoder.encode("password123"),
 				"admin"
