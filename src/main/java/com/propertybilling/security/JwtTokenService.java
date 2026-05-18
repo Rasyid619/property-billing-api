@@ -1,14 +1,17 @@
 package com.propertybilling.security;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.propertybilling.entity.User;
+import com.propertybilling.exception.InvalidRefreshTokenException;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
@@ -80,6 +83,39 @@ public class JwtTokenService {
 		return createToken(user, "refresh", refreshTokenTtlSeconds);
 	}
 
+	/**
+	 * Validates a refresh token and returns the user identifier stored in it.
+	 *
+	 * @param token submitted JWT refresh token
+	 * @return user identifier stored in the token subject
+	 * @throws InvalidRefreshTokenException when the token is invalid or expired
+	 */
+	public UUID readRefreshTokenSubject(String token) {
+		String[] tokenParts = token.split("\\.");
+
+		if (tokenParts.length != 3) {
+			throw new InvalidRefreshTokenException();
+		}
+
+		String content = tokenParts[0] + "." + tokenParts[1];
+
+		if (!isValidSignature(content, tokenParts[2])) {
+			throw new InvalidRefreshTokenException();
+		}
+
+		Map<String, Object> payload = decodePayload(tokenParts[1]);
+
+		if (!"refresh".equals(payload.get("type"))) {
+			throw new InvalidRefreshTokenException();
+		}
+
+		if (isExpired(payload.get("exp"))) {
+			throw new InvalidRefreshTokenException();
+		}
+
+		return parseSubject(payload.get("sub"));
+	}
+
 	private String createToken(User user, String tokenType, long ttlSeconds) {
 		Instant issuedAt = clock.instant();
 		Map<String, Object> header = Map.of("alg", "HS256", "typ", "JWT");
@@ -113,6 +149,41 @@ public class JwtTokenService {
 			return BASE64_URL_ENCODER.encodeToString(mac.doFinal(content.getBytes(StandardCharsets.UTF_8)));
 		} catch (Exception exception) {
 			throw new IllegalStateException("Unable to sign JWT.", exception);
+		}
+	}
+
+	private boolean isValidSignature(String content, String submittedSignature) {
+		byte[] expectedSignature = sign(content).getBytes(StandardCharsets.UTF_8);
+		byte[] actualSignature = submittedSignature.getBytes(StandardCharsets.UTF_8);
+		return java.security.MessageDigest.isEqual(expectedSignature, actualSignature);
+	}
+
+	private Map<String, Object> decodePayload(String encodedPayload) {
+		try {
+			byte[] decodedPayload = Base64.getUrlDecoder().decode(encodedPayload);
+			return objectMapper.readValue(decodedPayload, new TypeReference<>() {});
+		} catch (Exception exception) {
+			throw new InvalidRefreshTokenException();
+		}
+	}
+
+	private boolean isExpired(Object expiration) {
+		if (!(expiration instanceof Number expirationSeconds)) {
+			throw new InvalidRefreshTokenException();
+		}
+
+		return clock.instant().getEpochSecond() >= expirationSeconds.longValue();
+	}
+
+	private UUID parseSubject(Object subject) {
+		if (!(subject instanceof String subjectValue)) {
+			throw new InvalidRefreshTokenException();
+		}
+
+		try {
+			return UUID.fromString(subjectValue);
+		} catch (IllegalArgumentException exception) {
+			throw new InvalidRefreshTokenException();
 		}
 	}
 }

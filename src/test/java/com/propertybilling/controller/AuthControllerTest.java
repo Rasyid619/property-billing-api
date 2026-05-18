@@ -7,9 +7,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.propertybilling.config.SecurityConfig;
+import com.propertybilling.dto.auth.AccessTokenResponse;
 import com.propertybilling.dto.auth.AuthTokenResponse;
 import com.propertybilling.exception.GlobalExceptionHandler;
 import com.propertybilling.exception.InvalidCredentialsException;
+import com.propertybilling.exception.InvalidRefreshTokenException;
 import com.propertybilling.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,6 +80,24 @@ class AuthControllerTest {
 								  "password": "password123"
 								}
 								"""))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void refreshReturnsAccessToken() throws Exception {
+		when(authService.refresh("Bearer refresh-token")).thenReturn(new AccessTokenResponse("access-token"));
+
+		mockMvc.perform(post("/api/v1/auth/refresh")
+						.header("Authorization", "Bearer refresh-token"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.access_token").value("access-token"));
+	}
+
+	@Test
+	void refreshRejectsMissingAuthorizationHeader() throws Exception {
+		when(authService.refresh(null)).thenThrow(new InvalidRefreshTokenException());
+
+		mockMvc.perform(post("/api/v1/auth/refresh"))
 				.andExpect(status().isUnauthorized());
 	}
 }

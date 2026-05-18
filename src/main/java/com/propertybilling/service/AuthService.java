@@ -1,9 +1,11 @@
 package com.propertybilling.service;
 
 import com.propertybilling.entity.User;
+import com.propertybilling.dto.auth.AccessTokenResponse;
 import com.propertybilling.dto.auth.AuthTokenResponse;
 import com.propertybilling.dto.auth.LoginRequest;
 import com.propertybilling.exception.InvalidCredentialsException;
+import com.propertybilling.exception.InvalidRefreshTokenException;
 import com.propertybilling.repository.UserRepository;
 import com.propertybilling.security.JwtTokenService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -64,7 +66,40 @@ public class AuthService {
 		);
 	}
 
+	/**
+	 * Issues a new access token from a valid refresh token.
+	 *
+	 * @param authorizationHeader bearer refresh token header
+	 * @return newly issued access token
+	 * @throws InvalidRefreshTokenException when the refresh token is invalid
+	 */
+	public AccessTokenResponse refresh(String authorizationHeader) {
+		String refreshToken = extractBearerToken(authorizationHeader);
+		User user = userRepository.findById(jwtTokenService.readRefreshTokenSubject(refreshToken))
+				.orElseThrow(InvalidRefreshTokenException::new);
+
+		if (!canLogin(user)) {
+			throw new InvalidRefreshTokenException();
+		}
+
+		return new AccessTokenResponse(jwtTokenService.createAccessToken(user));
+	}
+
 	private boolean canLogin(User user) {
 		return ADMIN_ROLE.equals(user.getRole()) || STAFF_ROLE.equals(user.getRole());
+	}
+
+	private String extractBearerToken(String authorizationHeader) {
+		if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+			throw new InvalidRefreshTokenException();
+		}
+
+		String token = authorizationHeader.substring("Bearer ".length());
+
+		if (token.isBlank()) {
+			throw new InvalidRefreshTokenException();
+		}
+
+		return token;
 	}
 }

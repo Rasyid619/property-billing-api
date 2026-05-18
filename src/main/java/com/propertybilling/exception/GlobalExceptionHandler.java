@@ -14,4 +14,9 @@ public class GlobalExceptionHandler {
 	ResponseEntity<Void> handleInvalidCredentials() {
 		return ResponseEntity.status(401).build();
 	}
+
+	@ExceptionHandler(InvalidRefreshTokenException.class)
+	ResponseEntity<Void> handleInvalidRefreshToken() {
+		return ResponseEntity.status(401).build();
+	}
 }
