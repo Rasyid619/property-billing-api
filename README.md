@@ -312,8 +312,6 @@ conversations, and receive approval from the repository owner before merge.
 
 Important documents:
 
-- `AGENTS.md`
-- `CODEX.java.md`
 - `PROJECT_GUIDE.md`
 - `docs/DEVELOPMENT_PLAN.md`
 - `docs/DATABASE_DESIGN.md`
