@@ -2,7 +2,9 @@
 
 Property Billing API is a backend REST API for tracking monthly housing and apartment fees.
 
-The system helps property owners or administrators manage properties, units, tenants, monthly invoices, payments, expenses, and cash-flow reports.
+The system is designed for property owners or administrators who need to manage properties, units, tenants, monthly invoices, payments, expenses, and cash-flow reports from one backend service.
+
+Current implementation status: the platform foundation is in place and the authentication module is complete for MVP admin/staff access.
 
 ## Project Goal
 
@@ -43,7 +45,15 @@ It demonstrates:
 
 ## Main Features
 
+Implemented:
+
 - Admin and staff authentication
+- JWT access-token login
+- Refresh-token renewal
+- Authenticated current-user lookup
+
+Planned MVP modules:
+
 - Property management
 - Unit management
 - Tenant management
@@ -81,6 +91,20 @@ UnitTenant = assignment history between unit and tenant
 Tenant login is not part of MVP.
 
 For MVP, tenants are managed as data records by admin or staff.
+
+## Implemented API
+
+The public API contract is defined in `openapi.yml` and documented in `docs/API_SPEC.md`.
+
+Implemented auth endpoints:
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/v1/auth/login` | Login an admin or staff user and return access/refresh tokens. |
+| `POST` | `/api/v1/auth/refresh` | Exchange a refresh token for a new access token. |
+| `GET` | `/api/v1/auth/me` | Return the currently authenticated admin or staff user. |
+
+Tenant login is intentionally not part of MVP.
 
 ## Project Structure
 
@@ -154,6 +178,30 @@ To remove the local database volume and start with an empty database:
 docker compose down -v
 ```
 
+### Configure Environment
+
+Create a local `.env` file from `.env.example` for Docker Compose overrides:
+
+```bash
+cp .env.example .env
+```
+
+The application expects these runtime variables outside the `local` profile:
+
+| Variable | Purpose |
+|---|---|
+| `SPRING_DATASOURCE_URL` | JDBC connection string |
+| `SPRING_DATASOURCE_USERNAME` | Database username |
+| `SPRING_DATASOURCE_PASSWORD` | Database password |
+| `JWT_SECRET` | HMAC secret used to sign JWTs |
+| `INITIAL_ADMIN_ID` | Seeded admin UUID |
+| `INITIAL_ADMIN_NAME` | Seeded admin name |
+| `INITIAL_ADMIN_EMAIL` | Seeded admin login email |
+| `INITIAL_ADMIN_PASSWORD_HASH` | Seeded admin BCrypt hash |
+| `INITIAL_ADMIN_ROLE` | Seeded admin role |
+
+For local development, `application-local.properties` supplies the PostgreSQL defaults used by Docker Compose. You still need to provide the initial admin values and `JWT_SECRET` when starting the application.
+
 ### Run Tests
 
 ```bash
@@ -166,10 +214,24 @@ docker compose down -v
 ./gradlew clean build
 ```
 
+CI runs both checks independently:
+
+```text
+test  -> ./gradlew clean test
+build -> ./gradlew clean build
+```
+
 ### Run Application
 
 ```bash
-SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
+SPRING_PROFILES_ACTIVE=local \
+JWT_SECRET=change_me \
+INITIAL_ADMIN_ID=00000000-0000-0000-0000-000000000001 \
+INITIAL_ADMIN_NAME="Admin User" \
+INITIAL_ADMIN_EMAIL=admin@example.com \
+INITIAL_ADMIN_PASSWORD_HASH='$2a$10$replace_with_real_bcrypt_hash' \
+INITIAL_ADMIN_ROLE=admin \
+./gradlew bootRun
 ```
 
 The `local` Spring profile uses the same local PostgreSQL defaults as Docker
@@ -242,6 +304,10 @@ Example:
 Closes #1
 ```
 
+The public repository protects `main` with required CI checks and code-owner
+review. Pull requests must pass both the `test` and `build` jobs, resolve review
+conversations, and receive approval from the repository owner before merge.
+
 ## Documentation
 
 Important documents:
@@ -261,7 +327,9 @@ Important documents:
 Current status:
 
 ```text
-Planning and setup phase
+Foundation complete
+Auth module complete
+Next planned module: Property management
 ```
 
 ## License
