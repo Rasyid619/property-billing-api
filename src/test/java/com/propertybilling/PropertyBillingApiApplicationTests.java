@@ -8,8 +8,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 		"spring.datasource.driver-class-name=org.h2.Driver",
 		"spring.datasource.username=sa",
 		"spring.datasource.password=",
-		"spring.flyway.enabled=false"
+		"spring.flyway.enabled=false",
+		"app.jwt.secret=context-load-test-secret"
 })
+/**
+ * Verifies that the Spring application context can start successfully.
+ */
 class PropertyBillingApiApplicationTests {
 
 	@Test

@@ -13,6 +13,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(HealthController.class)
 @Import(SecurityConfig.class)
+/**
+ * Web-layer tests for the health endpoint.
+ */
 class HealthControllerTest {
 
 	private final MockMvc mockMvc;

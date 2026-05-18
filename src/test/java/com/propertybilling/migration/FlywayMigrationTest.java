@@ -20,6 +20,9 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @Testcontainers
 @SpringBootTest
+/**
+ * Integration tests that verify the initial schema and seed migrations.
+ */
 class FlywayMigrationTest {
 
 	@Container
@@ -42,6 +45,7 @@ class FlywayMigrationTest {
 		registry.add("INITIAL_ADMIN_EMAIL", () -> "initial-admin@example.com");
 		registry.add("INITIAL_ADMIN_PASSWORD_HASH", () -> "$2a$10$abcdefghijklmnopqrstuv");
 		registry.add("INITIAL_ADMIN_ROLE", () -> "admin");
+		registry.add("app.jwt.secret", () -> "migration-test-secret");
 	}
 
 	@Test
