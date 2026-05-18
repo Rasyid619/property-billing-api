@@ -61,6 +61,21 @@ class AuthServiceTest {
 				.isInstanceOf(InvalidCredentialsException.class);
 	}
 
+	@Test
+	void rejectsUnsupportedRole() {
+		User user = new User(
+				UUID.fromString("00000000-0000-0000-0000-000000000002"),
+				"tenant@example.com",
+				"password-hash",
+				"tenant"
+		);
+		LoginRequest request = new LoginRequest("tenant@example.com", "password123");
+		when(userRepository.findByEmail("tenant@example.com")).thenReturn(Optional.of(user));
+
+		assertThatThrownBy(() -> authService.login(request))
+				.isInstanceOf(InvalidCredentialsException.class);
+	}
+
 	private User buildUser() {
 		return new User(
 				UUID.fromString("00000000-0000-0000-0000-000000000001"),

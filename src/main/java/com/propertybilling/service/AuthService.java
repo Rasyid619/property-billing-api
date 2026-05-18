@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
  */
 public class AuthService {
 
+	private static final String ADMIN_ROLE = "admin";
+	private static final String STAFF_ROLE = "staff";
+
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtTokenService jwtTokenService;
@@ -47,6 +50,10 @@ public class AuthService {
 		User user = userRepository.findByEmail(request.email())
 				.orElseThrow(InvalidCredentialsException::new);
 
+		if (!canLogin(user)) {
+			throw new InvalidCredentialsException();
+		}
+
 		if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
 			throw new InvalidCredentialsException();
 		}
@@ -55,5 +62,9 @@ public class AuthService {
 				jwtTokenService.createAccessToken(user),
 				jwtTokenService.createRefreshToken(user)
 		);
+	}
+
+	private boolean canLogin(User user) {
+		return ADMIN_ROLE.equals(user.getRole()) || STAFF_ROLE.equals(user.getRole());
 	}
 }
