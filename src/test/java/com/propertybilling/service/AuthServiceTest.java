@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-/**
+/*
  * Unit tests for authentication business rules.
  */
 class AuthServiceTest {

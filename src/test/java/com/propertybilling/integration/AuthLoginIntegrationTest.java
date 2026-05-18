@@ -26,7 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 		"app.jwt.secret=integration-test-secret"
 })
 @AutoConfigureMockMvc
-/**
+/*
  * Integration tests for login behavior across HTTP, persistence, and token generation.
  */
 class AuthLoginIntegrationTest {

@@ -11,7 +11,7 @@ import java.time.ZoneOffset;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-/**
+/*
  * Unit tests for JWT creation and refresh-token validation.
  */
 class JwtTokenServiceTest {

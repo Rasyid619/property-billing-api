@@ -12,7 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
-/**
+/*
  * Business workflow for authenticating admin and staff users.
  */
 public class AuthService {

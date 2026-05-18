@@ -91,7 +91,7 @@ public class JwtTokenService {
 	 * @throws InvalidRefreshTokenException when the token is invalid or expired
 	 */
 	public UUID readRefreshTokenSubject(String token) {
-		String[] tokenParts = token.split("\\.");
+		String[] tokenParts = token.split("\\.", 3);
 
 		if (tokenParts.length != 3) {
 			throw new InvalidRefreshTokenException();

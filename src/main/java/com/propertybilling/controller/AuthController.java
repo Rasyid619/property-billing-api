@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-/**
+/*
  * HTTP endpoints for admin and staff authentication workflows.
  */
 public class AuthController {
@@ -36,9 +36,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/refresh")
-	ResponseEntity<AccessTokenResponse> refresh(
-			@RequestHeader(name = "Authorization", required = false) String authorizationHeader
-	) {
+	ResponseEntity<AccessTokenResponse> refresh(@RequestHeader("Authorization") String authorizationHeader) {
 		return ResponseEntity.ok(authService.refresh(authorizationHeader));
 	}
 }
