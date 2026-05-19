@@ -311,7 +311,7 @@ Passed
 
 ## Pull Request
 
-- PR:
+- PR: https://github.com/Rasyid619/property-billing-api/pull/61
 - Issue: https://github.com/Rasyid619/property-billing-api/issues/60
 
 ## Blockers

@@ -38,7 +38,7 @@ paths:
       tags:
         - Monitoring
       summary: Check application health.
-      description: Returns Spring Boot Actuator health details for local monitoring.
+      description: Returns Spring Boot Actuator health status for local monitoring.
       servers:
         - url: http://localhost:8080
           description: Local application management server.
