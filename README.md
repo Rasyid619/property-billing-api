@@ -51,6 +51,8 @@ Implemented:
 - JWT access-token login
 - Refresh-token renewal
 - Authenticated current-user lookup
+- Prometheus metrics export
+- Local Grafana monitoring setup
 
 Planned MVP modules:
 
@@ -253,6 +255,41 @@ OpenAPI JSON:
 ```text
 http://localhost:8080/v3/api-docs
 ```
+
+## Monitoring
+
+The application exposes Prometheus metrics through Spring Boot Actuator:
+
+```text
+http://localhost:8080/actuator/health
+http://localhost:8080/actuator/prometheus
+```
+
+Start the local monitoring stack with Docker Compose:
+
+```bash
+docker compose up -d prometheus grafana
+```
+
+When using Docker Desktop from WSL and the Spring Boot app runs directly inside
+WSL, Prometheus may need the WSL host IP instead of Docker's default host
+gateway:
+
+```bash
+PROMETHEUS_HOST_GATEWAY=$(hostname -I | awk '{print $1}') docker compose up -d prometheus grafana
+```
+
+Prometheus and Grafana are bound to localhost for development:
+
+| Service | URL |
+|---|---|
+| Prometheus | `http://localhost:9090` |
+| Grafana | `http://localhost:3000` |
+
+Grafana is provisioned with a Prometheus datasource and a basic Property Billing
+API dashboard. The development default Grafana login is `admin` / `admin`.
+Override it with `GRAFANA_ADMIN_USER` and `GRAFANA_ADMIN_PASSWORD` in a local
+`.env` file when needed.
 
 ## Development Workflow
 
