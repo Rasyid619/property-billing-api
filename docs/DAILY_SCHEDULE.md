@@ -284,3 +284,40 @@ Passed
 ## Tomorrow
 
 - Finish the remaining auth endpoint work, then continue to the next module in order after review and CI are complete.
+
+# Daily Summary - 2026-05-19
+
+## Completed
+
+- Started GitHub Issue #60 on branch `rasyid-60-add-prometheus-and-grafana-monitoring`.
+- Pulled latest `main` before implementation.
+- Added Prometheus and Grafana monitoring setup for local development.
+- Updated OpenAPI and API documentation for actuator health and Prometheus metrics endpoints.
+
+## Tests
+
+Command:
+
+```bash
+./gradlew test --tests com.propertybilling.integration.PrometheusMetricsIntegrationTest
+./gradlew clean test
+```
+
+Result:
+
+```text
+Passed
+```
+
+## Pull Request
+
+- PR:
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/60
+
+## Blockers
+
+- None yet.
+
+## Tomorrow
+
+- Continue with the next module only after Issue #60 tests and review are complete.
