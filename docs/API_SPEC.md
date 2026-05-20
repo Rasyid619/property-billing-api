@@ -137,8 +137,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AuthTokenResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -417,12 +415,14 @@ paths:
       tags:
         - Properties
       summary: List properties.
+      description: Returns properties filtered by optional search text and status.
       security:
         - BearerAuth: []
       parameters:
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Status"
       responses:
         "200":
           description: Properties were successfully retrieved.
@@ -926,6 +926,13 @@ components:
       schema:
         type: string
         maxLength: 100
+    Status:
+      name: status
+      in: query
+      required: false
+      description: Property status filter.
+      schema:
+        $ref: "#/components/schemas/PropertyStatus"
     Offset:
       name: offset
       in: query
@@ -1442,18 +1449,17 @@ components:
         active:
           type: boolean
           example: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
       required:
         - id
         - name
         - active
-        - created_at
-        - updated_at
+
+    PropertyStatus:
+      type: string
+      enum:
+        - active
+        - inactive
+      example: active
 
 
     TenantAssignmentIndexResponse:
