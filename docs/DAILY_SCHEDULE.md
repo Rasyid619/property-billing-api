@@ -321,3 +321,44 @@ Passed
 ## Tomorrow
 
 - Continue with the next module only after Issue #60 tests and review are complete.
+
+# Daily Summary - 2026-05-20
+
+## Completed
+
+- Pulled latest `main` before implementation.
+- Reviewed GitHub Issue #27 and required project docs.
+- Created branch `rasyid-27-get-properties`.
+- Implemented `GET /properties` within the property module scope.
+- Added property entity, repository, DTOs, service, controller, and validation.
+- Kept the OpenAPI contract and API spec aligned with the documented `200` and `401` responses.
+- Removed timestamp fields from property list responses and added a property status filter.
+- Added focused service, controller, and integration tests for property listing.
+
+## Tests
+
+Command:
+
+```bash
+./gradlew test --tests com.propertybilling.service.PropertyServiceTest --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.integration.PropertyIndexIntegrationTest --tests com.propertybilling.service.AuthServiceTest
+./gradlew clean test
+```
+
+Result:
+
+```text
+Passed
+```
+
+## Pull Request
+
+- PR:
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/27
+
+## Blockers
+
+- No blockers.
+
+## Tomorrow
+
+- Push branch, open a pull request for Issue #27, and wait for CI before moving to the next endpoint issue.

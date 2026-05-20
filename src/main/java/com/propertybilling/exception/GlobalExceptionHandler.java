@@ -31,4 +31,5 @@ public class GlobalExceptionHandler {
 	ResponseEntity<Void> handleMissingRequestHeader() {
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	}
+
 }

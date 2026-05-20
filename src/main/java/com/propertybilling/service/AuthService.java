@@ -95,6 +95,19 @@ public class AuthService {
 	 * @throws InvalidAccessTokenException when the access token is invalid
 	 */
 	public AuthMeResponse me(String authorizationHeader) {
+		User user = authenticateAccessToken(authorizationHeader);
+
+		return new AuthMeResponse(user.getId(), user.getName(), user.getEmail(), user.getRole());
+	}
+
+	/**
+	 * Returns the admin or staff user represented by a valid access token.
+	 *
+	 * @param authorizationHeader bearer access token header
+	 * @return authenticated user
+	 * @throws InvalidAccessTokenException when the access token is invalid
+	 */
+	public User authenticateAccessToken(String authorizationHeader) {
 		String accessToken = extractBearerAccessToken(authorizationHeader);
 		User user = userRepository.findById(jwtTokenService.readAccessTokenSubject(accessToken))
 				.orElseThrow(InvalidAccessTokenException::new);
@@ -103,7 +116,7 @@ public class AuthService {
 			throw new InvalidAccessTokenException();
 		}
 
-		return new AuthMeResponse(user.getId(), user.getName(), user.getEmail(), user.getRole());
+		return user;
 	}
 
 	private boolean canLogin(User user) {
