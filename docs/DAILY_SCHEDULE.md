@@ -334,6 +334,10 @@ Passed
 - Kept the OpenAPI contract and API spec aligned with the documented `200` and `401` responses.
 - Removed timestamp fields from property list responses and added a property status filter.
 - Added focused service, controller, and integration tests for property listing.
+- Started GitHub Issue #62 on branch `rasyid-62-refactor-project-boilerplate-using-lombok`.
+- Added Lombok Gradle configuration.
+- Refactored repetitive constructor and getter boilerplate using limited Lombok annotations.
+- Kept DTO and query result records unchanged.
 
 ## Tests
 
@@ -341,6 +345,7 @@ Command:
 
 ```bash
 ./gradlew test --tests com.propertybilling.service.PropertyServiceTest --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.integration.PropertyIndexIntegrationTest --tests com.propertybilling.service.AuthServiceTest
+./gradlew test --tests com.propertybilling.controller.AuthControllerTest --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.service.AuthServiceTest --tests com.propertybilling.service.PropertyServiceTest --tests com.propertybilling.integration.AuthLoginIntegrationTest --tests com.propertybilling.integration.AuthMeIntegrationTest --tests com.propertybilling.integration.PropertyIndexIntegrationTest
 ./gradlew clean test
 ```
 
@@ -353,7 +358,9 @@ Passed
 ## Pull Request
 
 - PR:
+- PR: https://github.com/Rasyid619/property-billing-api/pull/64
 - Issue: https://github.com/Rasyid619/property-billing-api/issues/27
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/62
 
 ## Blockers
 
@@ -361,4 +368,4 @@ Passed
 
 ## Tomorrow
 
-- Push branch, open a pull request for Issue #27, and wait for CI before moving to the next endpoint issue.
+- Open the Lombok refactor pull request and wait for CI before moving to the next endpoint issue.

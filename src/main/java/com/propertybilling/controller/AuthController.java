@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
 /*
  * HTTP endpoints for admin and staff authentication workflows.
@@ -22,15 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
 	private final AuthService authService;
-
-	/**
-	 * Creates the authentication controller.
-	 *
-	 * @param authService business workflow used to authenticate users
-	 */
-	public AuthController(AuthService authService) {
-		this.authService = authService;
-	}
 
 	@PostMapping("/login")
 	ResponseEntity<AuthTokenResponse> login(@Valid @RequestBody LoginRequest request) {

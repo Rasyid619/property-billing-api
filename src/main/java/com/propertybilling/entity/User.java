@@ -5,8 +5,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "users")
 public class User {
 
@@ -24,9 +29,6 @@ public class User {
 
 	@Column(nullable = false)
 	private String role;
-
-	protected User() {
-	}
 
 	/**
 	 * Creates a persisted user representation.
@@ -49,50 +51,5 @@ public class User {
 		this.email = email;
 		this.passwordHash = passwordHash;
 		this.role = role;
-	}
-
-	/**
-	 * Returns the unique user identifier.
-	 *
-	 * @return user identifier
-	 */
-	public UUID getId() {
-		return id;
-	}
-
-	/**
-	 * Returns the user display name.
-	 *
-	 * @return display name
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * Returns the email address used for login.
-	 *
-	 * @return login email address
-	 */
-	public String getEmail() {
-		return email;
-	}
-
-	/**
-	 * Returns the stored password hash.
-	 *
-	 * @return password hash
-	 */
-	public String getPasswordHash() {
-		return passwordHash;
-	}
-
-	/**
-	 * Returns the user's authorization role.
-	 *
-	 * @return authorization role
-	 */
-	public String getRole() {
-		return role;
 	}
 }

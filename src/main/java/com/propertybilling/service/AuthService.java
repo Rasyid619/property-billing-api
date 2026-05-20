@@ -12,8 +12,10 @@ import com.propertybilling.repository.UserRepository;
 import com.propertybilling.security.JwtTokenService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 /*
  * Business workflow for authenticating admin and staff users.
  */
@@ -25,23 +27,6 @@ public class AuthService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtTokenService jwtTokenService;
-
-	/**
-	 * Creates the authentication workflow service.
-	 *
-	 * @param userRepository user data access boundary
-	 * @param passwordEncoder password verifier
-	 * @param jwtTokenService token issuer
-	 */
-	public AuthService(
-			UserRepository userRepository,
-			PasswordEncoder passwordEncoder,
-			JwtTokenService jwtTokenService
-	) {
-		this.userRepository = userRepository;
-		this.passwordEncoder = passwordEncoder;
-		this.jwtTokenService = jwtTokenService;
-	}
 
 	/**
 	 * Authenticates a user and issues access and refresh tokens.
