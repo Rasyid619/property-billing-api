@@ -6,8 +6,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "properties")
 /*
  * Persisted property or building managed by admins and staff.
@@ -30,9 +35,6 @@ public class Property {
 
 	@Column(name = "updated_at", nullable = false)
 	private OffsetDateTime updatedAt;
-
-	protected Property() {
-	}
 
 	/**
 	 * Creates a persisted property representation.
@@ -58,59 +60,5 @@ public class Property {
 		this.active = active;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
-	}
-
-	/**
-	 * Returns the unique property identifier.
-	 *
-	 * @return property identifier
-	 */
-	public UUID getId() {
-		return id;
-	}
-
-	/**
-	 * Returns the property display name.
-	 *
-	 * @return display name
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * Returns the optional property address.
-	 *
-	 * @return address or null
-	 */
-	public String getAddress() {
-		return address;
-	}
-
-	/**
-	 * Returns whether the property is active.
-	 *
-	 * @return active state
-	 */
-	public boolean isActive() {
-		return active;
-	}
-
-	/**
-	 * Returns when the property was created.
-	 *
-	 * @return creation timestamp
-	 */
-	public OffsetDateTime getCreatedAt() {
-		return createdAt;
-	}
-
-	/**
-	 * Returns when the property was last updated.
-	 *
-	 * @return update timestamp
-	 */
-	public OffsetDateTime getUpdatedAt() {
-		return updatedAt;
 	}
 }

@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/properties")
 /*
  * HTTP boundary for property management endpoints.
@@ -19,20 +21,6 @@ public class PropertyController {
 
 	private final AuthService authService;
 	private final PropertyService propertyService;
-
-	/**
-	 * Creates the property controller.
-	 *
-	 * @param authService access-token validation workflow
-	 * @param propertyService property business workflow
-	 */
-	public PropertyController(
-			AuthService authService,
-			PropertyService propertyService
-	) {
-		this.authService = authService;
-		this.propertyService = propertyService;
-	}
 
 	/**
 	 * Lists properties visible to authenticated admin and staff users.

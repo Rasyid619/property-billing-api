@@ -10,23 +10,16 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 /*
  * Business workflow for property management.
  */
 public class PropertyService {
 
 	private final PropertyRepository propertyRepository;
-
-	/**
-	 * Creates the property workflow service.
-	 *
-	 * @param propertyRepository property data access boundary
-	 */
-	public PropertyService(PropertyRepository propertyRepository) {
-		this.propertyRepository = propertyRepository;
-	}
 
 	/**
 	 * Lists properties using optional text search and offset pagination.
