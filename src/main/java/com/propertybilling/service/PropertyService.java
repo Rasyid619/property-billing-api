@@ -100,6 +100,7 @@ public class PropertyService {
 				.orElseThrow(PropertyNotFoundException::new);
 
 		property.deactivate(OffsetDateTime.now(ZoneOffset.UTC));
+		propertyRepository.save(property);
 	}
 
 	/**
@@ -114,6 +115,7 @@ public class PropertyService {
 				.orElseThrow(PropertyNotFoundException::new);
 
 		property.activate(OffsetDateTime.now(ZoneOffset.UTC));
+		propertyRepository.save(property);
 	}
 
 	private boolean hasUnsupportedStatus(String status, Optional<PropertyStatus> propertyStatus) {
