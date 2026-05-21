@@ -419,7 +419,7 @@ Passed
 
 ## Blockers
 
-- `./gradlew clean test` and the Issue #31 body update could not be completed after the sandbox required escalation and the approval system rejected escalation due a usage limit.
+- None.
 
 ## Tomorrow
 
