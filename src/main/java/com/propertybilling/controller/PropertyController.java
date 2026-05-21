@@ -3,6 +3,7 @@ package com.propertybilling.controller;
 import com.propertybilling.dto.property.PropertyCreateRequest;
 import com.propertybilling.dto.property.PropertyIndexResponse;
 import com.propertybilling.dto.property.PropertyShowResponse;
+import com.propertybilling.dto.property.PropertyUpdateRequest;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.PropertyService;
 import jakarta.validation.Valid;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -123,5 +125,25 @@ public class PropertyController {
 		propertyService.createProperty(request);
 
 		return ResponseEntity.status(HttpStatus.CREATED).build();
+	}
+
+	/**
+	 * Updates a property for authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param propertyId property identifier
+	 * @param request updated property data
+	 * @return empty no-content response
+	 */
+	@PutMapping("/{property_id}")
+	ResponseEntity<Void> update(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@PathVariable("property_id") UUID propertyId,
+			@Valid @RequestBody PropertyUpdateRequest request
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+		propertyService.updateProperty(propertyId, request);
+
+		return ResponseEntity.noContent().build();
 	}
 }

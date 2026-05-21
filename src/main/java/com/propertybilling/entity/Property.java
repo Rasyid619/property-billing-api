@@ -75,4 +75,15 @@ public class Property {
 	public void activate() {
 		this.active = true;
 	}
+
+	/**
+	 * Replaces the name and address of the property.
+	 *
+	 * @param name new display name
+	 * @param address new optional address
+	 */
+	public void update(String name, String address) {
+		this.name = name;
+		this.address = address;
+	}
 }
