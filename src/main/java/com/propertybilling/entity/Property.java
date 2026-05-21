@@ -64,21 +64,15 @@ public class Property {
 
 	/**
 	 * Marks the property inactive.
-	 *
-	 * @param updatedAt latest update timestamp
 	 */
-	public void deactivate(OffsetDateTime updatedAt) {
+	public void deactivate() {
 		this.active = false;
-		this.updatedAt = updatedAt;
 	}
 
 	/**
 	 * Marks the property active.
-	 *
-	 * @param updatedAt latest update timestamp
 	 */
-	public void activate(OffsetDateTime updatedAt) {
+	public void activate() {
 		this.active = true;
-		this.updatedAt = updatedAt;
 	}
 }

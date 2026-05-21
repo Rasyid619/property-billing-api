@@ -99,7 +99,7 @@ public class PropertyService {
 		Property property = propertyRepository.findByIdForUpdate(propertyId)
 				.orElseThrow(PropertyNotFoundException::new);
 
-		property.deactivate(OffsetDateTime.now(ZoneOffset.UTC));
+		property.deactivate();
 		propertyRepository.save(property);
 	}
 
@@ -114,7 +114,7 @@ public class PropertyService {
 		Property property = propertyRepository.findByIdForUpdate(propertyId)
 				.orElseThrow(PropertyNotFoundException::new);
 
-		property.activate(OffsetDateTime.now(ZoneOffset.UTC));
+		property.activate();
 		propertyRepository.save(property);
 	}
 
