@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -15,6 +14,9 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "users")
+/*
+ * Persisted admin or staff account used for authentication.
+ */
 public class User {
 
 	@Id
@@ -32,10 +34,10 @@ public class User {
 	@Column(nullable = false)
 	private String role;
 
-	@Column(name = "created_at", nullable = false)
+	@Column(name = "created_at", nullable = false, insertable = false, updatable = false)
 	private OffsetDateTime createdAt;
 
-	@Column(name = "updated_at", nullable = false)
+	@Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
 	private OffsetDateTime updatedAt;
 
 	/**
@@ -54,15 +56,7 @@ public class User {
 			String passwordHash,
 			String role
 	) {
-		this(
-				id,
-				name,
-				email,
-				passwordHash,
-				role,
-				OffsetDateTime.now(ZoneOffset.UTC),
-				OffsetDateTime.now(ZoneOffset.UTC)
-		);
+		this(id, name, email, passwordHash, role, null, null);
 	}
 
 	/**

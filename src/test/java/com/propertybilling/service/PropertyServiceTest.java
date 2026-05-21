@@ -50,8 +50,8 @@ class PropertyServiceTest {
 			assertThat(propertyCaptor.getValue().getName()).isEqualTo("Green Residence");
 			assertThat(propertyCaptor.getValue().getAddress()).isEqualTo("Bekasi");
 			assertThat(propertyCaptor.getValue().isActive()).isTrue();
-			assertThat(propertyCaptor.getValue().getCreatedAt()).isNotNull();
-			assertThat(propertyCaptor.getValue().getUpdatedAt()).isNotNull();
+			assertThat(propertyCaptor.getValue().getCreatedAt()).isNull();
+			assertThat(propertyCaptor.getValue().getUpdatedAt()).isNull();
 		}
 	}
 

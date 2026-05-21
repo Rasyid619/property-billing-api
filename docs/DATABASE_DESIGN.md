@@ -24,6 +24,7 @@ The database stores:
 - Parse money values to `BigDecimal` in Java before validation or calculation.
 - Use `DATE` for billing dates.
 - Use `TIMESTAMP WITH TIME ZONE` for created and updated timestamps.
+- Set `created_at` and `updated_at` defaults to `CURRENT_TIMESTAMP` on insert.
 - Keep `updated_at` synchronized automatically with database triggers whenever a row changes.
 - Use the first day of the month for monthly fields.
 - Use database constraints to protect important business rules.
