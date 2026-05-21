@@ -61,4 +61,18 @@ public class Property {
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
 	}
+
+	/**
+	 * Marks the property inactive.
+	 */
+	public void deactivate() {
+		this.active = false;
+	}
+
+	/**
+	 * Marks the property active.
+	 */
+	public void activate() {
+		this.active = true;
+	}
 }

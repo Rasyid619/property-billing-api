@@ -458,6 +458,7 @@ paths:
       tags:
         - Properties
       summary: Deactivate a property.
+      description: Marks a property inactive so it is not used for new workflows.
       security:
         - BearerAuth: []
       parameters:
@@ -508,6 +509,24 @@ paths:
           $ref: "#/components/responses/NoContent"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /properties/{property_id}/activate:
+    post:
+      tags:
+        - Properties
+      summary: Activate a property.
+      description: Marks a property active so it can be used for new workflows.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PropertyId"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
