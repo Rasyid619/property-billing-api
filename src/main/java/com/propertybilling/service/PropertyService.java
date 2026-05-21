@@ -3,9 +3,11 @@ package com.propertybilling.service;
 import com.propertybilling.dto.property.PropertyCreateRequest;
 import com.propertybilling.dto.property.PropertyIndexElement;
 import com.propertybilling.dto.property.PropertyIndexResponse;
+import com.propertybilling.dto.property.PropertyShowResponse;
 import com.propertybilling.dto.property.PropertyStatus;
 import com.propertybilling.dto.property.queryresult.PropertyIndexQueryResult;
 import com.propertybilling.entity.Property;
+import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.helper.SearchPatternHelper;
 import com.propertybilling.repository.PropertyRepository;
 import java.time.OffsetDateTime;
@@ -72,6 +74,19 @@ public class PropertyService {
 		return new PropertyIndexResponse(properties.size(), properties);
 	}
 
+	/**
+	 * Returns one property by ID.
+	 *
+	 * @param propertyId property identifier
+	 * @return property detail response
+	 * @throws PropertyNotFoundException when no property exists for the ID
+	 */
+	public PropertyShowResponse getProperty(UUID propertyId) {
+		return propertyRepository.findById(propertyId)
+				.map(this::toShowResponse)
+				.orElseThrow(PropertyNotFoundException::new);
+	}
+
 	private boolean hasUnsupportedStatus(String status, Optional<PropertyStatus> propertyStatus) {
 		return status != null && !status.isBlank() && propertyStatus.isEmpty();
 	}
@@ -86,6 +101,15 @@ public class PropertyService {
 				property.name(),
 				property.address(),
 				property.active()
+		);
+	}
+
+	private PropertyShowResponse toShowResponse(Property property) {
+		return new PropertyShowResponse(
+				property.getId(),
+				property.getName(),
+				property.getAddress(),
+				property.isActive()
 		);
 	}
 }
