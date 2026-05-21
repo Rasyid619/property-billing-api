@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,6 +52,42 @@ public class PropertyController {
 		authService.authenticateAccessToken(authorizationHeader);
 
 		return ResponseEntity.ok(propertyService.listProperties(offset, limit, search, status));
+	}
+
+	/**
+	 * Deactivates one property for authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param propertyId property identifier
+	 * @return empty no-content response
+	 */
+	@DeleteMapping("/{property_id}")
+	ResponseEntity<Void> delete(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@PathVariable("property_id") UUID propertyId
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+		propertyService.deactivateProperty(propertyId);
+
+		return ResponseEntity.noContent().build();
+	}
+
+	/**
+	 * Activates one property for authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param propertyId property identifier
+	 * @return empty no-content response
+	 */
+	@PostMapping("/{property_id}/activate")
+	ResponseEntity<Void> activate(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@PathVariable("property_id") UUID propertyId
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+		propertyService.activateProperty(propertyId);
+
+		return ResponseEntity.noContent().build();
 	}
 
 	/**

@@ -184,7 +184,7 @@ Command:
 Result:
 
 ```text
-Passed
+Targeted tests passed. Full clean test blocked locally by sandbox escalation approval limit.
 ```
 
 ## Pull Request
@@ -385,6 +385,10 @@ Passed
 - Started GitHub Issue #29 on branch `rasyid-29-get-properties-property-id`.
 - Implemented `GET /properties/{property_id}` with property detail response mapping and empty `404` handling.
 - Added focused service, controller, and integration tests for property detail retrieval.
+- Started GitHub Issue #31 on branch `rasyid-31-delete-properties-property-id`.
+- Implemented soft property deactivation with transaction handling and row locking.
+- Added `POST /properties/{property_id}/activate` in the same active-state workflow, with matching transaction handling and row locking.
+- Added focused service, controller, and integration tests for property activation and deactivation.
 
 ## Tests
 
@@ -394,6 +398,8 @@ Command:
 ./gradlew test --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.service.PropertyServiceTest --tests com.propertybilling.integration.property.PropertyCreateIntegrationTest
 ./gradlew test --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.controller.AuthControllerTest --tests com.propertybilling.integration.property.PropertyCreateIntegrationTest --tests com.propertybilling.openapi.OpenApiEndpointTest
 ./gradlew test --tests com.propertybilling.service.PropertyServiceTest --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.integration.property.PropertyShowIntegrationTest
+./gradlew test --tests com.propertybilling.service.PropertyServiceTest --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.integration.property.PropertyDeleteIntegrationTest
+./gradlew test --tests com.propertybilling.service.PropertyServiceTest --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.integration.property.PropertyDeleteIntegrationTest --tests com.propertybilling.integration.property.PropertyActivateIntegrationTest
 ./gradlew clean test
 ```
 
@@ -409,10 +415,11 @@ Passed
 - PR: https://github.com/Rasyid619/property-billing-api/pull/69
 - Issue: https://github.com/Rasyid619/property-billing-api/issues/28
 - Issue: https://github.com/Rasyid619/property-billing-api/issues/29
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/31
 
 ## Blockers
 
-- No blockers.
+- `./gradlew clean test` and the Issue #31 body update could not be completed after the sandbox required escalation and the approval system rejected escalation due a usage limit.
 
 ## Tomorrow
 

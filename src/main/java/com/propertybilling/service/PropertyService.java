@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -85,6 +86,34 @@ public class PropertyService {
 		return propertyRepository.findById(propertyId)
 				.map(this::toShowResponse)
 				.orElseThrow(PropertyNotFoundException::new);
+	}
+
+	/**
+	 * Marks one property inactive using a row lock.
+	 *
+	 * @param propertyId property identifier
+	 * @throws PropertyNotFoundException when no property exists for the ID
+	 */
+	@Transactional
+	public void deactivateProperty(UUID propertyId) {
+		Property property = propertyRepository.findByIdForUpdate(propertyId)
+				.orElseThrow(PropertyNotFoundException::new);
+
+		property.deactivate(OffsetDateTime.now(ZoneOffset.UTC));
+	}
+
+	/**
+	 * Marks one property active using a row lock.
+	 *
+	 * @param propertyId property identifier
+	 * @throws PropertyNotFoundException when no property exists for the ID
+	 */
+	@Transactional
+	public void activateProperty(UUID propertyId) {
+		Property property = propertyRepository.findByIdForUpdate(propertyId)
+				.orElseThrow(PropertyNotFoundException::new);
+
+		property.activate(OffsetDateTime.now(ZoneOffset.UTC));
 	}
 
 	private boolean hasUnsupportedStatus(String status, Optional<PropertyStatus> propertyStatus) {

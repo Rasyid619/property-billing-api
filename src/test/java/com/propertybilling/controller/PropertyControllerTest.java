@@ -5,6 +5,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -146,6 +147,122 @@ class PropertyControllerTest {
 
 			verify(authService, times(1)).authenticateAccessToken("Bearer invalid-token");
 			verify(propertyService, never()).createProperty(Mockito.any());
+		}
+	}
+
+	@Nested
+	/*
+	 * Web-layer tests for activating properties.
+	 */
+	class ActivateProperty {
+
+		@Test
+		void returnsNoContent() throws Exception {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+
+			mockMvc.perform(post("/api/v1/properties/00000000-0000-0000-0000-000000000101/activate")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNoContent())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(propertyService, times(1)).activateProperty(propertyId);
+		}
+
+		@Test
+		void returnsNotFoundWhenPropertyDoesNotExist() throws Exception {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new PropertyNotFoundException())
+					.when(propertyService)
+					.activateProperty(propertyId);
+
+			mockMvc.perform(post("/api/v1/properties/00000000-0000-0000-0000-000000000999/activate")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNotFound())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(propertyService, times(1)).activateProperty(propertyId);
+		}
+
+		@Test
+		void rejectsMissingAuthorizationHeader() throws Exception {
+			mockMvc.perform(post("/api/v1/properties/00000000-0000-0000-0000-000000000101/activate"))
+					.andExpect(status().isUnauthorized());
+
+			verifyNoInteractions(authService, propertyService);
+		}
+
+		@Test
+		void rejectsInvalidAccessToken() throws Exception {
+			when(authService.authenticateAccessToken("Bearer invalid-token")).thenThrow(new InvalidAccessTokenException());
+
+			mockMvc.perform(post("/api/v1/properties/00000000-0000-0000-0000-000000000101/activate")
+							.header("Authorization", "Bearer invalid-token"))
+					.andExpect(status().isUnauthorized());
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer invalid-token");
+			verify(propertyService, never()).activateProperty(Mockito.any());
+		}
+	}
+
+	@Nested
+	/*
+	 * Web-layer tests for deactivating properties.
+	 */
+	class DeleteProperty {
+
+		@Test
+		void returnsNoContent() throws Exception {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+
+			mockMvc.perform(delete("/api/v1/properties/00000000-0000-0000-0000-000000000101")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNoContent())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(propertyService, times(1)).deactivateProperty(propertyId);
+		}
+
+		@Test
+		void returnsNotFoundWhenPropertyDoesNotExist() throws Exception {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new PropertyNotFoundException())
+					.when(propertyService)
+					.deactivateProperty(propertyId);
+
+			mockMvc.perform(delete("/api/v1/properties/00000000-0000-0000-0000-000000000999")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNotFound())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(propertyService, times(1)).deactivateProperty(propertyId);
+		}
+
+		@Test
+		void rejectsMissingAuthorizationHeader() throws Exception {
+			mockMvc.perform(delete("/api/v1/properties/00000000-0000-0000-0000-000000000101"))
+					.andExpect(status().isUnauthorized());
+
+			verifyNoInteractions(authService, propertyService);
+		}
+
+		@Test
+		void rejectsInvalidAccessToken() throws Exception {
+			when(authService.authenticateAccessToken("Bearer invalid-token")).thenThrow(new InvalidAccessTokenException());
+
+			mockMvc.perform(delete("/api/v1/properties/00000000-0000-0000-0000-000000000101")
+							.header("Authorization", "Bearer invalid-token"))
+					.andExpect(status().isUnauthorized());
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer invalid-token");
+			verify(propertyService, never()).deactivateProperty(Mockito.any());
 		}
 	}
 

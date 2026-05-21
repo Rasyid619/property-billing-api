@@ -2,10 +2,13 @@ package com.propertybilling.repository;
 
 import com.propertybilling.dto.property.queryresult.PropertyIndexQueryResult;
 import com.propertybilling.entity.Property;
+import jakarta.persistence.LockModeType;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -46,4 +49,18 @@ public interface PropertyRepository extends JpaRepository<Property, UUID> {
 			@Param("active") Boolean active,
 			Pageable pageable
 	);
+
+	/**
+	 * Finds one property using a write lock for mutation workflows.
+	 *
+	 * @param propertyId property identifier
+	 * @return matching property, or empty when it does not exist
+	 */
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("""
+			SELECT property
+			FROM Property property
+			WHERE property.id = :propertyId
+			""")
+	Optional<Property> findByIdForUpdate(@Param("propertyId") UUID propertyId);
 }

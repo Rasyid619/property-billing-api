@@ -56,6 +56,78 @@ class PropertyServiceTest {
 
 	@Nested
 	/*
+	 * Service tests for activating properties.
+	 */
+	class ActivateProperty {
+
+		@Test
+		void activatesPropertyWithWriteLock() {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+			Property property = buildEntity(
+					"00000000-0000-0000-0000-000000000101",
+					"Green Residence",
+					"Bekasi",
+					false
+			);
+			when(propertyRepository.findByIdForUpdate(propertyId)).thenReturn(Optional.of(property));
+
+			propertyService.activateProperty(propertyId);
+
+			assertThat(property.isActive()).isTrue();
+			assertThat(property.getUpdatedAt()).isNotNull();
+			verify(propertyRepository, times(1)).findByIdForUpdate(propertyId);
+		}
+
+		@Test
+		void throwsNotFoundWhenPropertyDoesNotExist() {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(propertyRepository.findByIdForUpdate(propertyId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> propertyService.activateProperty(propertyId))
+					.isInstanceOf(PropertyNotFoundException.class);
+
+			verify(propertyRepository, times(1)).findByIdForUpdate(propertyId);
+		}
+	}
+
+	@Nested
+	/*
+	 * Service tests for deactivating properties.
+	 */
+	class DeleteProperty {
+
+		@Test
+		void deactivatesPropertyWithWriteLock() {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+			Property property = buildEntity(
+					"00000000-0000-0000-0000-000000000101",
+					"Green Residence",
+					"Bekasi",
+					true
+			);
+			when(propertyRepository.findByIdForUpdate(propertyId)).thenReturn(Optional.of(property));
+
+			propertyService.deactivateProperty(propertyId);
+
+			assertThat(property.isActive()).isFalse();
+			assertThat(property.getUpdatedAt()).isNotNull();
+			verify(propertyRepository, times(1)).findByIdForUpdate(propertyId);
+		}
+
+		@Test
+		void throwsNotFoundWhenPropertyDoesNotExist() {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(propertyRepository.findByIdForUpdate(propertyId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> propertyService.deactivateProperty(propertyId))
+					.isInstanceOf(PropertyNotFoundException.class);
+
+			verify(propertyRepository, times(1)).findByIdForUpdate(propertyId);
+		}
+	}
+
+	@Nested
+	/*
 	 * Service tests for showing one property.
 	 */
 	class ShowProperty {
