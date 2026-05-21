@@ -5,6 +5,7 @@ import com.propertybilling.dto.property.PropertyIndexElement;
 import com.propertybilling.dto.property.PropertyIndexResponse;
 import com.propertybilling.dto.property.PropertyShowResponse;
 import com.propertybilling.dto.property.PropertyStatus;
+import com.propertybilling.dto.property.PropertyUpdateRequest;
 import com.propertybilling.dto.property.queryresult.PropertyIndexQueryResult;
 import com.propertybilling.entity.Property;
 import com.propertybilling.exception.PropertyNotFoundException;
@@ -115,6 +116,22 @@ public class PropertyService {
 				.orElseThrow(PropertyNotFoundException::new);
 
 		property.activate();
+		propertyRepository.save(property);
+	}
+
+	/**
+	 * Updates the name and address of one property using a row lock.
+	 *
+	 * @param propertyId property identifier
+	 * @param request new property data
+	 * @throws PropertyNotFoundException when no property exists for the ID
+	 */
+	@Transactional
+	public void updateProperty(UUID propertyId, PropertyUpdateRequest request) {
+		Property property = propertyRepository.findByIdForUpdate(propertyId)
+				.orElseThrow(PropertyNotFoundException::new);
+
+		property.update(request.name(), request.address());
 		propertyRepository.save(property);
 	}
 

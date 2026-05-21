@@ -490,10 +490,11 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-    patch:
+    put:
       tags:
         - Properties
       summary: Update a property.
+      description: Replaces the name and address of an existing property.
       security:
         - BearerAuth: []
       parameters:

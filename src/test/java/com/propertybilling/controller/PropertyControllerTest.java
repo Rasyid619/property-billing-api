@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -52,6 +53,112 @@ class PropertyControllerTest {
 	@Autowired
 	PropertyControllerTest(MockMvc mockMvc) {
 		this.mockMvc = mockMvc;
+	}
+
+	@Nested
+	/*
+	 * Web-layer tests for updating properties.
+	 */
+	class UpdateProperty {
+
+		@Test
+		void returnsNoContent() throws Exception {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+
+			mockMvc.perform(put("/api/v1/properties/00000000-0000-0000-0000-000000000101")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "name": "Blue Residence",
+									  "address": "Jakarta"
+									}
+									"""))
+					.andExpect(status().isNoContent())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(propertyService, times(1)).updateProperty(
+					Mockito.eq(propertyId),
+					Mockito.argThat(r -> "Blue Residence".equals(r.name()) && "Jakarta".equals(r.address()))
+			);
+		}
+
+		@Test
+		void rejectsBlankName() throws Exception {
+			mockMvc.perform(put("/api/v1/properties/00000000-0000-0000-0000-000000000101")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "name": "  ",
+									  "address": "Jakarta"
+									}
+									"""))
+					.andExpect(status().isBadRequest())
+					.andExpect(content().string(""));
+
+			verifyNoInteractions(authService, propertyService);
+		}
+
+		@Test
+		void returnsNotFoundWhenPropertyDoesNotExist() throws Exception {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new PropertyNotFoundException())
+					.when(propertyService)
+					.updateProperty(Mockito.eq(propertyId), Mockito.any());
+
+			mockMvc.perform(put("/api/v1/properties/00000000-0000-0000-0000-000000000999")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "name": "Blue Residence",
+									  "address": "Jakarta"
+									}
+									"""))
+					.andExpect(status().isNotFound())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(propertyService, times(1)).updateProperty(Mockito.eq(propertyId), Mockito.any());
+		}
+
+		@Test
+		void rejectsMissingAuthorizationHeader() throws Exception {
+			mockMvc.perform(put("/api/v1/properties/00000000-0000-0000-0000-000000000101")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "name": "Blue Residence",
+									  "address": "Jakarta"
+									}
+									"""))
+					.andExpect(status().isUnauthorized());
+
+			verifyNoInteractions(authService, propertyService);
+		}
+
+		@Test
+		void rejectsInvalidAccessToken() throws Exception {
+			when(authService.authenticateAccessToken("Bearer invalid-token")).thenThrow(new InvalidAccessTokenException());
+
+			mockMvc.perform(put("/api/v1/properties/00000000-0000-0000-0000-000000000101")
+							.header("Authorization", "Bearer invalid-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "name": "Blue Residence",
+									  "address": "Jakarta"
+									}
+									"""))
+					.andExpect(status().isUnauthorized());
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer invalid-token");
+			verify(propertyService, never()).updateProperty(Mockito.any(), Mockito.any());
+		}
 	}
 
 	@Nested

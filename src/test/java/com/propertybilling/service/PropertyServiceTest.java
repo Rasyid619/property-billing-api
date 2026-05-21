@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import com.propertybilling.dto.property.PropertyCreateRequest;
 import com.propertybilling.dto.property.PropertyIndexResponse;
 import com.propertybilling.dto.property.PropertyShowResponse;
+import com.propertybilling.dto.property.PropertyUpdateRequest;
 import com.propertybilling.dto.property.queryresult.PropertyIndexQueryResult;
 import com.propertybilling.entity.Property;
 import com.propertybilling.exception.PropertyNotFoundException;
@@ -51,6 +52,45 @@ class PropertyServiceTest {
 			assertThat(propertyCaptor.getValue().isActive()).isTrue();
 			assertThat(propertyCaptor.getValue().getCreatedAt()).isNotNull();
 			assertThat(propertyCaptor.getValue().getUpdatedAt()).isNotNull();
+		}
+	}
+
+	@Nested
+	/*
+	 * Service tests for updating properties.
+	 */
+	class UpdateProperty {
+
+		@Test
+		void updatesPropertyFieldsWithWriteLock() {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+			Property property = buildEntity(
+					"00000000-0000-0000-0000-000000000101",
+					"Green Residence",
+					"Bekasi",
+					true
+			);
+			when(propertyRepository.findByIdForUpdate(propertyId)).thenReturn(Optional.of(property));
+
+			propertyService.updateProperty(propertyId, new PropertyUpdateRequest("Blue Residence", "Jakarta"));
+
+			assertThat(property.getName()).isEqualTo("Blue Residence");
+			assertThat(property.getAddress()).isEqualTo("Jakarta");
+			verify(propertyRepository, times(1)).findByIdForUpdate(propertyId);
+			verify(propertyRepository, times(1)).save(property);
+		}
+
+		@Test
+		void throwsNotFoundWhenPropertyDoesNotExist() {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(propertyRepository.findByIdForUpdate(propertyId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> propertyService.updateProperty(
+					propertyId,
+					new PropertyUpdateRequest("Blue Residence", null)
+			)).isInstanceOf(PropertyNotFoundException.class);
+
+			verify(propertyRepository, times(1)).findByIdForUpdate(propertyId);
 		}
 	}
 

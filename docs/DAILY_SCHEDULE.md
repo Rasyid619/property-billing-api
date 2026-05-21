@@ -424,3 +424,39 @@ Passed
 ## Tomorrow
 
 - Wait for CI review on Issue #28 before moving to the next endpoint issue.
+
+---
+
+## 2026-05-21 (continued) — Issue #30: PUT /properties/{property_id}
+
+## What I Did
+
+- Changed update method from `PATCH` to `PUT` per convention.
+- Updated `openapi.yml`: changed `patch` to `put` for `/properties/{property_id}`, added description.
+- Updated `docs/API_SPEC.md` to match.
+- Created `PropertyUpdateRequest` DTO with `@NotBlank name` and optional `address`.
+- Added `update(String name, String address)` domain method to `Property` entity.
+- Added `updateProperty(UUID, PropertyUpdateRequest)` to `PropertyService` with `@Transactional` and `findByIdForUpdate` (pessimistic write lock) — consistent with deactivate/activate pattern.
+- Added `PUT /{property_id}` endpoint to `PropertyController` returning `204 No Content`.
+- Added `UpdateProperty` nested class to `PropertyServiceTest` (2 tests: success + not found).
+- Added `UpdateProperty` nested class to `PropertyControllerTest` (5 tests: 204, 400, 404, 401 missing header, 401 invalid token).
+- Created `PropertyUpdateIntegrationTest` (4 tests: success + DB assertion, 404, 401, 400).
+- All tests pass, JaCoCo 95% coverage gate passes.
+
+## Test Results
+
+```text
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/30
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Open PR for Issue #30 and wait for CI.
