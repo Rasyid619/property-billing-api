@@ -127,6 +127,79 @@ class FlywayMigrationTest {
 	}
 
 	@Test
+	void insertDefaultsPopulateCreatedAtAndUpdatedAt() throws SQLException {
+		OffsetDateTime userCreatedAt;
+		OffsetDateTime userUpdatedAt;
+		OffsetDateTime propertyCreatedAt;
+		OffsetDateTime propertyUpdatedAt;
+
+		try (var connection = dataSource.getConnection()) {
+			try (var insertUser = connection.prepareStatement("""
+					INSERT INTO users (
+					    id,
+					    name,
+					    email,
+					    password_hash,
+					    role
+					)
+					VALUES (
+					    '00000000-0000-0000-0000-000000000111',
+					    'Default Timestamp User',
+					    'default-timestamp-user@example.com',
+					    'hashed-password',
+					    'admin'
+					)
+					""")) {
+				insertUser.executeUpdate();
+			}
+
+			try (var insertProperty = connection.prepareStatement("""
+					INSERT INTO properties (
+					    id,
+					    name,
+					    address,
+					    is_active
+					)
+					VALUES (
+					    '00000000-0000-0000-0000-000000000112',
+					    'Default Timestamp Property',
+					    'Bekasi',
+					    TRUE
+					)
+					""")) {
+				insertProperty.executeUpdate();
+			}
+
+			try (var selectUser = connection.prepareStatement("""
+					SELECT created_at, updated_at
+					FROM users
+					WHERE id = '00000000-0000-0000-0000-000000000111'
+					""");
+					ResultSet userResult = selectUser.executeQuery()) {
+				userResult.next();
+				userCreatedAt = userResult.getObject("created_at", OffsetDateTime.class);
+				userUpdatedAt = userResult.getObject("updated_at", OffsetDateTime.class);
+			}
+
+			try (var selectProperty = connection.prepareStatement("""
+					SELECT created_at, updated_at
+					FROM properties
+					WHERE id = '00000000-0000-0000-0000-000000000112'
+					""");
+					ResultSet propertyResult = selectProperty.executeQuery()) {
+				propertyResult.next();
+				propertyCreatedAt = propertyResult.getObject("created_at", OffsetDateTime.class);
+				propertyUpdatedAt = propertyResult.getObject("updated_at", OffsetDateTime.class);
+			}
+		}
+
+		assertThat(userCreatedAt).isNotNull();
+		assertThat(userUpdatedAt).isNotNull();
+		assertThat(propertyCreatedAt).isNotNull();
+		assertThat(propertyUpdatedAt).isNotNull();
+	}
+
+	@Test
 	void migrationSeedsInitialAdminFromEnvironmentBackedPlaceholders() throws SQLException {
 		try (var connection = dataSource.getConnection();
 				var select = connection.prepareStatement("""

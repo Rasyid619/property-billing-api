@@ -11,8 +11,6 @@ import com.propertybilling.entity.Property;
 import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.helper.SearchPatternHelper;
 import com.propertybilling.repository.PropertyRepository;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,14 +34,11 @@ public class PropertyService {
 	 * @param request property data to persist
 	 */
 	public void createProperty(PropertyCreateRequest request) {
-		OffsetDateTime timestamp = OffsetDateTime.now(ZoneOffset.UTC);
 		propertyRepository.save(new Property(
 				UUID.randomUUID(),
 				request.name(),
 				request.address(),
-				true,
-				timestamp,
-				timestamp
+				true
 		));
 	}
 

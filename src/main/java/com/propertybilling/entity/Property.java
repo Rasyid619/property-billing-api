@@ -30,11 +30,28 @@ public class Property {
 	@Column(name = "is_active", nullable = false)
 	private boolean active;
 
-	@Column(name = "created_at", nullable = false)
+	@Column(name = "created_at", nullable = false, insertable = false, updatable = false)
 	private OffsetDateTime createdAt;
 
-	@Column(name = "updated_at", nullable = false)
+	@Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
 	private OffsetDateTime updatedAt;
+
+	/**
+	 * Creates a new property that relies on database-managed timestamps.
+	 *
+	 * @param id unique property identifier
+	 * @param name display name
+	 * @param address optional property address
+	 * @param active whether the property can be used for new workflows
+	 */
+	public Property(
+			UUID id,
+			String name,
+			String address,
+			boolean active
+	) {
+		this(id, name, address, active, null, null);
+	}
 
 	/**
 	 * Creates a persisted property representation.

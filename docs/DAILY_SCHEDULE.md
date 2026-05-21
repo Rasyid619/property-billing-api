@@ -493,4 +493,39 @@ Passed
 
 ## Tomorrow
 
-- Wait for the Issue #65 pull request review and CI before moving to the next module.
+- Wait for pull request review and CI before moving to the next module.
+
+---
+
+## 2026-05-21 (continued) — Issue #68: add database defaults for created_at and updated_at
+
+## What I Did
+
+- Pulled latest `main`, reviewed GitHub Issue #68, and re-read the required project docs before implementation.
+- Confirmed this issue does not change the public API, so `openapi.yml` and `docs/API_SPEC.md` did not need updates.
+- Added a new Flyway migration to set `CURRENT_TIMESTAMP` defaults for `created_at` and `updated_at` on all existing tables.
+- Updated the current JPA timestamp mappings so inserts and updates rely on database-managed timestamps instead of application-populated values.
+- Refactored property creation to stop generating timestamps in service code and rely on the database defaults.
+- Extended migration coverage to verify inserts succeed without explicit timestamp values.
+- Updated the property create service test to assert the service no longer populates timestamps before persistence.
+- Documented the insert-default rule in `docs/DATABASE_DESIGN.md`.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.migration.FlywayMigrationTest --tests com.propertybilling.service.PropertyServiceTest --tests com.propertybilling.integration.property.PropertyCreateIntegrationTest --tests com.propertybilling.integration.AuthLoginIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/68
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Open the Issue #68 pull request and wait for CI before moving to the next module.
