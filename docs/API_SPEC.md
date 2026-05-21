@@ -436,6 +436,7 @@ paths:
       tags:
         - Properties
       summary: Create a property.
+      description: Creates a property that can contain multiple units.
       security:
         - BearerAuth: []
       requestBody:
@@ -1177,6 +1178,7 @@ components:
           type: string
           minLength: 1
           maxLength: 150
+          pattern: '.*\S.*'
           example: Green Residence
         address:
           type: string

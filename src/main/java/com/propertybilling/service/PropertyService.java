@@ -1,13 +1,18 @@
 package com.propertybilling.service;
 
+import com.propertybilling.dto.property.PropertyCreateRequest;
 import com.propertybilling.dto.property.PropertyIndexElement;
 import com.propertybilling.dto.property.PropertyIndexResponse;
 import com.propertybilling.dto.property.PropertyStatus;
 import com.propertybilling.dto.property.queryresult.PropertyIndexQueryResult;
+import com.propertybilling.entity.Property;
 import com.propertybilling.helper.SearchPatternHelper;
 import com.propertybilling.repository.PropertyRepository;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +25,23 @@ import lombok.RequiredArgsConstructor;
 public class PropertyService {
 
 	private final PropertyRepository propertyRepository;
+
+	/**
+	 * Creates an active property.
+	 *
+	 * @param request property data to persist
+	 */
+	public void createProperty(PropertyCreateRequest request) {
+		OffsetDateTime timestamp = OffsetDateTime.now(ZoneOffset.UTC);
+		propertyRepository.save(new Property(
+				UUID.randomUUID(),
+				request.name(),
+				request.address(),
+				true,
+				timestamp,
+				timestamp
+		));
+	}
 
 	/**
 	 * Lists properties using optional text search and offset pagination.

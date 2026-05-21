@@ -369,3 +369,45 @@ Passed
 ## Tomorrow
 
 - Open the Lombok refactor pull request and wait for CI before moving to the next endpoint issue.
+
+# Daily Summary - 2026-05-21
+
+## Completed
+
+- Pulled latest `main` before implementation.
+- Reviewed GitHub Issue #28 and required project docs.
+- Created branch `rasyid-28-post-properties`.
+- Confirmed the approved `POST /properties` contract and aligned operation descriptions in `openapi.yml` and `docs/API_SPEC.md`.
+- Implemented property creation with validation, authentication, service logic, persistence, and lean `201` response.
+- Added focused service, controller, and integration tests for property creation.
+- Segmented property tests by create and index behavior, moved property integration tests under `integration/property`, and documented Mockito call-count verification expectations.
+- Addressed PR review comments by aligning the non-blank property-name contract and normalizing body validation errors to empty `400` responses.
+
+## Tests
+
+Command:
+
+```bash
+./gradlew test --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.service.PropertyServiceTest --tests com.propertybilling.integration.property.PropertyCreateIntegrationTest
+./gradlew test --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.controller.AuthControllerTest --tests com.propertybilling.integration.property.PropertyCreateIntegrationTest --tests com.propertybilling.openapi.OpenApiEndpointTest
+./gradlew clean test
+```
+
+Result:
+
+```text
+Passed
+```
+
+## Pull Request
+
+- PR: https://github.com/Rasyid619/property-billing-api/pull/67
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/28
+
+## Blockers
+
+- No blockers.
+
+## Tomorrow
+
+- Wait for CI review on Issue #28 before moving to the next endpoint issue.

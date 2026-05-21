@@ -53,6 +53,11 @@ Use:
 - Mockito
 - AssertJ if available
 
+Unit tests should assert the returned result or state change and verify important
+collaborator calls. When using Mockito, verify expected calls with call counts
+such as `times(1)`, and verify blocked flows with `never()` or
+`verifyNoInteractions()` when the dependency must not be called.
+
 ## Integration Tests
 
 Integration tests are used when behavior depends on:
@@ -75,6 +80,8 @@ Controller tests should verify:
 - Correct response format
 - Correct error format
 - Authentication behavior
+- Service calls happen once on successful requests
+- Service calls do not happen when authentication or validation rejects the request
 
 ## Migration Tests
 
