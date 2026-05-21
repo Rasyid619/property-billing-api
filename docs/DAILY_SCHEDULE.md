@@ -460,3 +460,37 @@ Passed
 ## Tomorrow
 
 - Open PR for Issue #30 and wait for CI.
+
+---
+
+## 2026-05-21 (continued) — Issue #65: refactor integration tests to Testcontainers
+
+## What I Did
+
+- Pulled latest `main`, reviewed GitHub Issue #65, and stayed within the integration-test refactor scope.
+- Replaced H2-backed auth and property integration tests with a shared PostgreSQL Testcontainers base class.
+- Added `AbstractIntegrationTest` to centralize datasource, Flyway placeholder, and JWT test configuration.
+- Updated auth and property integration tests to extend the shared PostgreSQL-backed base class.
+- Fixed the shared container lifecycle so one PostgreSQL container stays available across all migrated integration test classes.
+- Mapped `created_at` and `updated_at` on `User` so repository-backed test fixtures match the real PostgreSQL schema.
+- Verified the migrated integration tests against Flyway-managed PostgreSQL instead of per-test H2 schemas.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.integration.AuthLoginIntegrationTest --tests com.propertybilling.integration.property.PropertyShowIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/65
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Wait for the Issue #65 pull request review and CI before moving to the next module.

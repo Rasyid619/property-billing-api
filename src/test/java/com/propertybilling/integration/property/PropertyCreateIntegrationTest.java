@@ -14,25 +14,15 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest(properties = {
-		"spring.datasource.url=jdbc:h2:mem:property_create_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
-		"spring.datasource.driver-class-name=org.h2.Driver",
-		"spring.datasource.username=sa",
-		"spring.datasource.password=",
-		"spring.jpa.hibernate.ddl-auto=create-drop",
-		"spring.flyway.enabled=false",
-		"app.jwt.secret=integration-test-secret"
-})
-@AutoConfigureMockMvc
+import com.propertybilling.integration.AbstractIntegrationTest;
+
 /*
  * Integration tests for property creation across HTTP, persistence, and token validation.
  */
-class PropertyCreateIntegrationTest {
+class PropertyCreateIntegrationTest extends AbstractIntegrationTest {
 
 	private final MockMvc mockMvc;
 	private final PropertyRepository propertyRepository;
