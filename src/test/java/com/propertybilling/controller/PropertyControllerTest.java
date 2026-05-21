@@ -14,9 +14,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.propertybilling.config.SecurityConfig;
 import com.propertybilling.dto.property.PropertyIndexElement;
 import com.propertybilling.dto.property.PropertyIndexResponse;
+import com.propertybilling.dto.property.PropertyShowResponse;
 import com.propertybilling.entity.User;
 import com.propertybilling.exception.GlobalExceptionHandler;
 import com.propertybilling.exception.InvalidAccessTokenException;
+import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.PropertyService;
 import java.util.List;
@@ -144,6 +146,83 @@ class PropertyControllerTest {
 
 			verify(authService, times(1)).authenticateAccessToken("Bearer invalid-token");
 			verify(propertyService, never()).createProperty(Mockito.any());
+		}
+	}
+
+	@Nested
+	/*
+	 * Web-layer tests for showing one property.
+	 */
+	class ShowProperty {
+
+		@Test
+		void returnsProperty() throws Exception {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			when(propertyService.getProperty(propertyId)).thenReturn(new PropertyShowResponse(
+					propertyId,
+					"Green Residence",
+					"Bekasi",
+					true
+			));
+
+			mockMvc.perform(get("/api/v1/properties/00000000-0000-0000-0000-000000000101")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isOk())
+					.andExpect(jsonPath("$.id").value("00000000-0000-0000-0000-000000000101"))
+					.andExpect(jsonPath("$.name").value("Green Residence"))
+					.andExpect(jsonPath("$.address").value("Bekasi"))
+					.andExpect(jsonPath("$.active").value(true))
+					.andExpect(jsonPath("$.created_at").doesNotExist())
+					.andExpect(jsonPath("$.updated_at").doesNotExist());
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(propertyService, times(1)).getProperty(propertyId);
+		}
+
+		@Test
+		void returnsNotFoundWhenPropertyDoesNotExist() throws Exception {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			when(propertyService.getProperty(propertyId)).thenThrow(new PropertyNotFoundException());
+
+			mockMvc.perform(get("/api/v1/properties/00000000-0000-0000-0000-000000000999")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNotFound())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(propertyService, times(1)).getProperty(propertyId);
+		}
+
+		@Test
+		void rejectsInvalidPropertyId() throws Exception {
+			mockMvc.perform(get("/api/v1/properties/not-a-uuid")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isBadRequest())
+					.andExpect(content().string(""));
+
+			verifyNoInteractions(authService, propertyService);
+		}
+
+		@Test
+		void rejectsMissingAuthorizationHeader() throws Exception {
+			mockMvc.perform(get("/api/v1/properties/00000000-0000-0000-0000-000000000101"))
+					.andExpect(status().isUnauthorized());
+
+			verifyNoInteractions(authService, propertyService);
+		}
+
+		@Test
+		void rejectsInvalidAccessToken() throws Exception {
+			when(authService.authenticateAccessToken("Bearer invalid-token")).thenThrow(new InvalidAccessTokenException());
+
+			mockMvc.perform(get("/api/v1/properties/00000000-0000-0000-0000-000000000101")
+							.header("Authorization", "Bearer invalid-token"))
+					.andExpect(status().isUnauthorized());
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer invalid-token");
+			verify(propertyService, never()).getProperty(Mockito.any());
 		}
 	}
 

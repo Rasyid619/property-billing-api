@@ -382,6 +382,10 @@ Passed
 - Added focused service, controller, and integration tests for property creation.
 - Segmented property tests by create and index behavior, moved property integration tests under `integration/property`, and documented Mockito call-count verification expectations.
 - Addressed PR review comments by aligning the non-blank property-name contract and normalizing body validation errors to empty `400` responses.
+- Started GitHub Issue #29 on branch `rasyid-29-get-properties-property-id`.
+- Implemented `GET /properties/{property_id}` with property detail response mapping and empty `404` handling.
+- Added focused service, controller, and integration tests for property detail retrieval.
+- Addressed PR review comment by normalizing invalid path-variable conversion errors to empty `400` responses.
 
 ## Tests
 
@@ -390,6 +394,8 @@ Command:
 ```bash
 ./gradlew test --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.service.PropertyServiceTest --tests com.propertybilling.integration.property.PropertyCreateIntegrationTest
 ./gradlew test --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.controller.AuthControllerTest --tests com.propertybilling.integration.property.PropertyCreateIntegrationTest --tests com.propertybilling.openapi.OpenApiEndpointTest
+./gradlew test --tests com.propertybilling.service.PropertyServiceTest --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.integration.property.PropertyShowIntegrationTest
+./gradlew test --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.integration.property.PropertyShowIntegrationTest
 ./gradlew clean test
 ```
 
@@ -402,7 +408,9 @@ Passed
 ## Pull Request
 
 - PR: https://github.com/Rasyid619/property-billing-api/pull/67
+- PR: https://github.com/Rasyid619/property-billing-api/pull/69
 - Issue: https://github.com/Rasyid619/property-billing-api/issues/28
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/29
 
 ## Blockers
 

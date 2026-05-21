@@ -2,12 +2,15 @@ package com.propertybilling.controller;
 
 import com.propertybilling.dto.property.PropertyCreateRequest;
 import com.propertybilling.dto.property.PropertyIndexResponse;
+import com.propertybilling.dto.property.PropertyShowResponse;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.PropertyService;
 import jakarta.validation.Valid;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,6 +51,23 @@ public class PropertyController {
 		authService.authenticateAccessToken(authorizationHeader);
 
 		return ResponseEntity.ok(propertyService.listProperties(offset, limit, search, status));
+	}
+
+	/**
+	 * Gets one property visible to authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param propertyId property identifier
+	 * @return property detail response
+	 */
+	@GetMapping("/{property_id}")
+	ResponseEntity<PropertyShowResponse> show(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@PathVariable("property_id") UUID propertyId
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+
+		return ResponseEntity.ok(propertyService.getProperty(propertyId));
 	}
 
 	/**

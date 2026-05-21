@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 /*
@@ -34,6 +35,11 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 	}
 
+	@ExceptionHandler(PropertyNotFoundException.class)
+	ResponseEntity<Void> handlePropertyNotFound() {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	ResponseEntity<Void> handleMethodArgumentNotValid() {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
@@ -41,6 +47,11 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	ResponseEntity<Void> handleHttpMessageNotReadable() {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+	}
+
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	ResponseEntity<Void> handleMethodArgumentTypeMismatch() {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 	}
 

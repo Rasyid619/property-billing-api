@@ -427,6 +427,7 @@ paths:
       tags:
         - Properties
       summary: Get property detail.
+      description: Returns one property by ID.
       security:
         - BearerAuth: []
       parameters:
