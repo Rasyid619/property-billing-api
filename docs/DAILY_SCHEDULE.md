@@ -493,7 +493,7 @@ Passed
 
 ## Tomorrow
 
-- Wait for the Issue #65 pull request review and CI before moving to the next module.
+- Wait for pull request review and CI before moving to the next module.
 
 ---
 
