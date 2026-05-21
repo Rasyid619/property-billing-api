@@ -4,6 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -30,6 +32,12 @@ public class User {
 	@Column(nullable = false)
 	private String role;
 
+	@Column(name = "created_at", nullable = false)
+	private OffsetDateTime createdAt;
+
+	@Column(name = "updated_at", nullable = false)
+	private OffsetDateTime updatedAt;
+
 	/**
 	 * Creates a persisted user representation.
 	 *
@@ -46,10 +54,43 @@ public class User {
 			String passwordHash,
 			String role
 	) {
+		this(
+				id,
+				name,
+				email,
+				passwordHash,
+				role,
+				OffsetDateTime.now(ZoneOffset.UTC),
+				OffsetDateTime.now(ZoneOffset.UTC)
+		);
+	}
+
+	/**
+	 * Creates a persisted user representation with explicit timestamps.
+	 *
+	 * @param id unique user identifier
+	 * @param name display name
+	 * @param email login email address
+	 * @param passwordHash hashed password
+	 * @param role authorization role
+	 * @param createdAt creation timestamp
+	 * @param updatedAt latest update timestamp
+	 */
+	public User(
+			UUID id,
+			String name,
+			String email,
+			String passwordHash,
+			String role,
+			OffsetDateTime createdAt,
+			OffsetDateTime updatedAt
+	) {
 		this.id = id;
 		this.name = name;
 		this.email = email;
 		this.passwordHash = passwordHash;
 		this.role = role;
+		this.createdAt = createdAt;
+		this.updatedAt = updatedAt;
 	}
 }

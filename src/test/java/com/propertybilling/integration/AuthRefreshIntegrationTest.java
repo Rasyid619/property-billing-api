@@ -11,24 +11,12 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest(properties = {
-		"spring.datasource.url=jdbc:h2:mem:auth_refresh_test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE",
-		"spring.datasource.driver-class-name=org.h2.Driver",
-		"spring.datasource.username=sa",
-		"spring.datasource.password=",
-		"spring.jpa.hibernate.ddl-auto=create-drop",
-		"spring.flyway.enabled=false",
-		"app.jwt.secret=integration-test-secret"
-})
-@AutoConfigureMockMvc
 /*
  * Integration tests for refresh-token behavior across HTTP, persistence, and token generation.
  */
-class AuthRefreshIntegrationTest {
+class AuthRefreshIntegrationTest extends AbstractIntegrationTest {
 
 	private final MockMvc mockMvc;
 	private final UserRepository userRepository;
