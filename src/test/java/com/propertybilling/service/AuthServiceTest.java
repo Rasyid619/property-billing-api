@@ -129,6 +129,54 @@ class AuthServiceTest {
 				.isInstanceOf(InvalidAccessTokenException.class);
 	}
 
+	@Test
+	void refreshRejectsUserWithUnsupportedRole() {
+		User user = new User(
+				UUID.fromString("00000000-0000-0000-0000-000000000002"),
+				"Tenant User",
+				"tenant@example.com",
+				"password-hash",
+				"tenant"
+		);
+		when(jwtTokenService.readRefreshTokenSubject("refresh-token")).thenReturn(user.getId());
+		when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+
+		assertThatThrownBy(() -> authService.refresh("Bearer refresh-token"))
+				.isInstanceOf(InvalidRefreshTokenException.class);
+	}
+
+	@Test
+	void refreshRejectsBlankBearerToken() {
+		assertThatThrownBy(() -> authService.refresh("Bearer "))
+				.isInstanceOf(InvalidRefreshTokenException.class);
+	}
+
+	@Test
+	void meRejectsMissingUser() {
+		UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000003");
+		when(jwtTokenService.readAccessTokenSubject("access-token")).thenReturn(userId);
+		when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> authService.me("Bearer access-token"))
+				.isInstanceOf(InvalidAccessTokenException.class);
+	}
+
+	@Test
+	void meRejectsUserWithUnsupportedRole() {
+		User user = new User(
+				UUID.fromString("00000000-0000-0000-0000-000000000002"),
+				"Tenant User",
+				"tenant@example.com",
+				"password-hash",
+				"tenant"
+		);
+		when(jwtTokenService.readAccessTokenSubject("access-token")).thenReturn(user.getId());
+		when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+
+		assertThatThrownBy(() -> authService.me("Bearer access-token"))
+				.isInstanceOf(InvalidAccessTokenException.class);
+	}
+
 	private User buildUser() {
 		return new User(
 				UUID.fromString("00000000-0000-0000-0000-000000000001"),

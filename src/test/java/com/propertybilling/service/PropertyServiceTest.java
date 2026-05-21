@@ -74,8 +74,8 @@ class PropertyServiceTest {
 			propertyService.activateProperty(propertyId);
 
 			assertThat(property.isActive()).isTrue();
-			assertThat(property.getUpdatedAt()).isNotNull();
 			verify(propertyRepository, times(1)).findByIdForUpdate(propertyId);
+			verify(propertyRepository, times(1)).save(property);
 		}
 
 		@Test
@@ -110,8 +110,8 @@ class PropertyServiceTest {
 			propertyService.deactivateProperty(propertyId);
 
 			assertThat(property.isActive()).isFalse();
-			assertThat(property.getUpdatedAt()).isNotNull();
 			verify(propertyRepository, times(1)).findByIdForUpdate(propertyId);
+			verify(propertyRepository, times(1)).save(property);
 		}
 
 		@Test
