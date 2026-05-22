@@ -1237,16 +1237,18 @@ components:
       properties:
         unit_number:
           type: string
+          description: Unit number unique inside the property.
           minLength: 1
           maxLength: 50
           example: A-101
         monthly_fee:
-          type: number
-          format: double
-          minimum: 0.01
-          example: 750000
+          type: string
+          description: Monthly fee decimal string greater than zero.
+          pattern: "^(?!0+(?:\\.0+)?$)\\d+(?:\\.\\d{1,2})?$"
+          example: "750000.00"
         due_day:
           type: integer
+          description: Day of month when payment is due.
           minimum: 1
           maximum: 28
           example: 10

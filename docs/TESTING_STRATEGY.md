@@ -83,6 +83,11 @@ Controller tests should verify:
 - Service calls happen once on successful requests
 - Service calls do not happen when authentication or validation rejects the request
 
+Avoid repeating auth-only tests for every endpoint when the same missing-token
+or invalid-token behavior is already covered by shared auth/security tests or a
+representative protected endpoint. Keep endpoint-specific tests for validation,
+not found, conflict, persistence, response shape, and business rules.
+
 ## Migration Tests
 
 Migration tests should verify:

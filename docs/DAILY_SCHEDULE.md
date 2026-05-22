@@ -564,3 +564,38 @@ Passed
 ## Tomorrow
 
 - Open the Issue #32 pull request and wait for CI before moving to the next endpoint issue.
+
+---
+
+## 2026-05-22 (continued) — Issue #33: POST /properties/{property_id}/units
+
+## What I Did
+
+- Pulled latest `main`, created branch `rasyid-33-post-properties-property-id-units`, and re-read the required project docs.
+- Reviewed requirements and database design for creating units inside properties.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller implementation.
+- Changed `UnitCreateRequest.monthly_fee` contract to receive a validated decimal string.
+- Implemented create-unit request DTO, duplicate unit-number conflict exception, repository duplicate check, service create workflow, and authenticated controller endpoint.
+- Persisted units as active by default and stored `monthly_fee` as a decimal string after parsing with `BigDecimal`.
+- Added service, controller, and PostgreSQL integration tests for successful create, duplicate conflict, same unit number in different property, invalid monthly fee, invalid due day, property not found, and auth behavior.
+- Stayed within the Unit create endpoint scope and did not implement future Unit update/delete/detail endpoints.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.UnitServiceTest --tests com.propertybilling.controller.UnitControllerTest --tests com.propertybilling.integration.unit.UnitCreateIntegrationTest --tests com.propertybilling.integration.unit.UnitIndexByPropertyIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/33
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Open the Issue #33 pull request and wait for CI before moving to the next endpoint issue.
