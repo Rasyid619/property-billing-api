@@ -701,3 +701,38 @@ Passed
 ## Tomorrow
 
 - Open the Issue #40 pull request and wait for CI before moving to the next endpoint issue.
+
+---
+
+## 2026-05-22 (continued) — Issue #41: PUT /units/{unit_id}
+
+## What I Did
+
+- Pulled latest `main`, created branch `rasyid-41-put-units-unit-id`, and re-read the required project docs.
+- Updated Issue #41 from `PATCH` to `PUT` so the issue scope matches the implementation pattern used by property updates.
+- Reviewed the Unit module requirements and database design before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to change the unit update operation to `PUT` and document full-field replacement behavior.
+- Added `UnitUpdateRequest`, unit entity update behavior, repository duplicate-check support, and the service workflow for updating unit fields under a write lock.
+- Implemented the authenticated `PUT /api/v1/units/{unit_id}` controller endpoint with validation, not-found handling, and duplicate unit-number conflict handling.
+- Added service, controller, and PostgreSQL integration tests for successful updates, validation failures, not-found behavior, and duplicate-number conflicts.
+- Stayed within the Unit module scope and did not implement unrelated future unit behaviors.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.UnitServiceTest --tests com.propertybilling.controller.UnitControllerTest --tests com.propertybilling.integration.unit.UnitUpdateIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/41
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Open the Issue #41 pull request and wait for CI before moving to the next endpoint issue.

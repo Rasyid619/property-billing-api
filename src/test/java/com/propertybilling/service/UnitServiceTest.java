@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import com.propertybilling.dto.unit.UnitCreateRequest;
 import com.propertybilling.dto.unit.UnitIndexResponse;
 import com.propertybilling.dto.unit.UnitShowResponse;
+import com.propertybilling.dto.unit.UnitUpdateRequest;
 import com.propertybilling.dto.unit.queryresult.UnitIndexQueryResult;
 import com.propertybilling.entity.Property;
 import com.propertybilling.entity.Unit;
@@ -263,6 +264,90 @@ class UnitServiceTest {
 					.isInstanceOf(UnitNotFoundException.class);
 
 			verify(unitRepository, times(1)).findByIdWithProperty(unitId);
+			verifyNoInteractions(propertyRepository);
+		}
+	}
+
+	@Nested
+	/*
+	 * Service tests for updating units.
+	 */
+	class UpdateUnit {
+
+		@Test
+		void updatesUnitFieldsWithWriteLock() {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			Unit unit = buildUnitEntity(
+					"00000000-0000-0000-0000-000000000201",
+					"00000000-0000-0000-0000-000000000101",
+					"A-101",
+					"750000.00",
+					10,
+					true
+			);
+			when(unitRepository.findByIdForUpdate(unitId)).thenReturn(Optional.of(unit));
+			when(unitRepository.existsByPropertyIdAndUnitNumberAndIdNot(
+					UUID.fromString("00000000-0000-0000-0000-000000000101"),
+					"A-102",
+					unitId
+			)).thenReturn(false);
+
+			unitService.updateUnit(unitId, new UnitUpdateRequest("A-102", "800000.00", 15));
+
+			assertThat(unit.getUnitNumber()).isEqualTo("A-102");
+			assertThat(unit.getMonthlyFee()).isEqualTo("800000.00");
+			assertThat(unit.getDueDay()).isEqualTo(15);
+			assertThat(unit.isActive()).isTrue();
+			verify(unitRepository, times(1)).findByIdForUpdate(unitId);
+			verify(unitRepository, times(1)).existsByPropertyIdAndUnitNumberAndIdNot(
+					UUID.fromString("00000000-0000-0000-0000-000000000101"),
+					"A-102",
+					unitId
+			);
+			verify(unitRepository, times(1)).save(unit);
+			verifyNoInteractions(propertyRepository);
+		}
+
+		@Test
+		void throwsNotFoundWhenUnitDoesNotExist() {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(unitRepository.findByIdForUpdate(unitId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> unitService.updateUnit(unitId, new UnitUpdateRequest("A-102", "800000.00", 15)))
+					.isInstanceOf(UnitNotFoundException.class);
+
+			verify(unitRepository, times(1)).findByIdForUpdate(unitId);
+			verifyNoInteractions(propertyRepository);
+		}
+
+		@Test
+		void throwsConflictWhenAnotherUnitUsesNumberInsideProperty() {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			Unit unit = buildUnitEntity(
+					"00000000-0000-0000-0000-000000000201",
+					"00000000-0000-0000-0000-000000000101",
+					"A-101",
+					"750000.00",
+					10,
+					true
+			);
+			when(unitRepository.findByIdForUpdate(unitId)).thenReturn(Optional.of(unit));
+			when(unitRepository.existsByPropertyIdAndUnitNumberAndIdNot(
+					UUID.fromString("00000000-0000-0000-0000-000000000101"),
+					"A-102",
+					unitId
+			)).thenReturn(true);
+
+			assertThatThrownBy(() -> unitService.updateUnit(unitId, new UnitUpdateRequest("A-102", "800000.00", 15)))
+					.isInstanceOf(UnitNumberConflictException.class);
+
+			verify(unitRepository, times(1)).findByIdForUpdate(unitId);
+			verify(unitRepository, times(1)).existsByPropertyIdAndUnitNumberAndIdNot(
+					UUID.fromString("00000000-0000-0000-0000-000000000101"),
+					"A-102",
+					unitId
+			);
+			verify(unitRepository, Mockito.never()).save(Mockito.any());
 			verifyNoInteractions(propertyRepository);
 		}
 	}

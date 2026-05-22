@@ -5,6 +5,7 @@ import com.propertybilling.dto.unit.UnitCreateRequest;
 import com.propertybilling.dto.unit.UnitIndexElement;
 import com.propertybilling.dto.unit.UnitIndexResponse;
 import com.propertybilling.dto.unit.UnitShowResponse;
+import com.propertybilling.dto.unit.UnitUpdateRequest;
 import com.propertybilling.dto.unit.queryresult.UnitIndexQueryResult;
 import com.propertybilling.entity.Property;
 import com.propertybilling.entity.Unit;
@@ -108,6 +109,39 @@ public class UnitService {
 		return unitRepository.findByIdWithProperty(unitId)
 				.map(this::toShowResponse)
 				.orElseThrow(UnitNotFoundException::new);
+	}
+
+	/**
+	 * Replaces the editable fields of one unit using a row lock.
+	 *
+	 * @param unitId unit identifier
+	 * @param request new unit data
+	 * @throws UnitNotFoundException when no unit exists for the ID
+	 * @throws UnitNumberConflictException when another unit already uses the number inside the property
+	 */
+	@Transactional
+	public void updateUnit(UUID unitId, UnitUpdateRequest request) {
+		Unit unit = unitRepository.findByIdForUpdate(unitId)
+				.orElseThrow(UnitNotFoundException::new);
+
+		if (unitRepository.existsByPropertyIdAndUnitNumberAndIdNot(
+				unit.getProperty().getId(),
+				request.unitNumber(),
+				unitId
+		)) {
+			throw new UnitNumberConflictException();
+		}
+
+		try {
+			unit.update(
+					request.unitNumber(),
+					toMonthlyFeeValue(request.monthlyFee()),
+					request.dueDay()
+			);
+			unitRepository.save(unit);
+		} catch (DataIntegrityViolationException exception) {
+			throw new UnitNumberConflictException();
+		}
 	}
 
 	/**

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -15,6 +16,7 @@ import com.propertybilling.config.SecurityConfig;
 import com.propertybilling.dto.unit.UnitIndexElement;
 import com.propertybilling.dto.unit.UnitIndexResponse;
 import com.propertybilling.dto.unit.UnitShowResponse;
+import com.propertybilling.dto.unit.UnitUpdateRequest;
 import com.propertybilling.entity.User;
 import com.propertybilling.exception.GlobalExceptionHandler;
 import com.propertybilling.exception.PropertyNotFoundException;
@@ -327,6 +329,146 @@ class UnitControllerTest {
 
 			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
 			verify(unitService, times(1)).getUnit(unitId);
+		}
+	}
+
+	@Nested
+	/*
+	 * Web-layer tests for updating units.
+	 */
+	class UpdateUnit {
+
+		@Test
+		void returnsNoContent() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+
+			mockMvc.perform(put("/api/v1/units/00000000-0000-0000-0000-000000000201")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "unit_number": "A-102",
+									  "monthly_fee": "800000.00",
+									  "due_day": 15
+									}
+									"""))
+					.andExpect(status().isNoContent())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(unitService, times(1)).updateUnit(
+					Mockito.eq(unitId),
+					Mockito.argThat((UnitUpdateRequest request) ->
+							"A-102".equals(request.unitNumber())
+									&& "800000.00".equals(request.monthlyFee())
+									&& request.dueDay() == 15
+					)
+			);
+		}
+
+		@Test
+		void rejectsBlankUnitNumber() throws Exception {
+			mockMvc.perform(put("/api/v1/units/00000000-0000-0000-0000-000000000201")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "unit_number": " ",
+									  "monthly_fee": "800000.00",
+									  "due_day": 15
+									}
+									"""))
+					.andExpect(status().isBadRequest())
+					.andExpect(content().string(""));
+
+			verifyNoInteractions(authService, unitService);
+		}
+
+		@Test
+		void rejectsInvalidMonthlyFee() throws Exception {
+			mockMvc.perform(put("/api/v1/units/00000000-0000-0000-0000-000000000201")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "unit_number": "A-102",
+									  "monthly_fee": "0",
+									  "due_day": 15
+									}
+									"""))
+					.andExpect(status().isBadRequest())
+					.andExpect(content().string(""));
+
+			verifyNoInteractions(authService, unitService);
+		}
+
+		@Test
+		void rejectsInvalidDueDay() throws Exception {
+			mockMvc.perform(put("/api/v1/units/00000000-0000-0000-0000-000000000201")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "unit_number": "A-102",
+									  "monthly_fee": "800000.00",
+									  "due_day": 29
+									}
+									"""))
+					.andExpect(status().isBadRequest())
+					.andExpect(content().string(""));
+
+			verifyNoInteractions(authService, unitService);
+		}
+
+		@Test
+		void returnsNotFoundWhenUnitDoesNotExist() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new UnitNotFoundException())
+					.when(unitService)
+					.updateUnit(Mockito.eq(unitId), Mockito.any());
+
+			mockMvc.perform(put("/api/v1/units/00000000-0000-0000-0000-000000000999")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "unit_number": "A-102",
+									  "monthly_fee": "800000.00",
+									  "due_day": 15
+									}
+									"""))
+					.andExpect(status().isNotFound())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(unitService, times(1)).updateUnit(Mockito.eq(unitId), Mockito.any());
+		}
+
+		@Test
+		void returnsConflictWhenUnitNumberAlreadyExists() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new UnitNumberConflictException())
+					.when(unitService)
+					.updateUnit(Mockito.eq(unitId), Mockito.any());
+
+			mockMvc.perform(put("/api/v1/units/00000000-0000-0000-0000-000000000201")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "unit_number": "A-102",
+									  "monthly_fee": "800000.00",
+									  "due_day": 15
+									}
+									"""))
+					.andExpect(status().isConflict())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(unitService, times(1)).updateUnit(Mockito.eq(unitId), Mockito.any());
 		}
 	}
 
