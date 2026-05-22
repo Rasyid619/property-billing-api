@@ -94,19 +94,6 @@ class PropertyCreateIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(content().string(""));
 	}
 
-	@Test
-	void createRejectsMissingAuthorizationHeader() throws Exception {
-		mockMvc.perform(post("/api/v1/properties")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content("""
-								{
-								  "name": "Green Residence",
-								  "address": "Bekasi"
-								}
-								"""))
-				.andExpect(status().isUnauthorized());
-	}
-
 	private void assertCreatedProperty(Property property) {
 		assertThat(property.getId()).isNotNull();
 		assertThat(property.getName()).isEqualTo("Green Residence");

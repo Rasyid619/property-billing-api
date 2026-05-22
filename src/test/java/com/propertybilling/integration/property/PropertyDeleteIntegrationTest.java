@@ -87,12 +87,6 @@ class PropertyDeleteIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(content().string(""));
 	}
 
-	@Test
-	void deleteRejectsMissingAuthorizationHeader() throws Exception {
-		mockMvc.perform(delete("/api/v1/properties/00000000-0000-0000-0000-000000000101"))
-				.andExpect(status().isUnauthorized());
-	}
-
 	private Property buildProperty(
 			String id,
 			String name,

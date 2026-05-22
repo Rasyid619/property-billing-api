@@ -121,12 +121,6 @@ class PropertyIndexIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(jsonPath("$.properties").isEmpty());
 	}
 
-	@Test
-	void indexRejectsMissingAuthorizationHeader() throws Exception {
-		mockMvc.perform(get("/api/v1/properties"))
-				.andExpect(status().isUnauthorized());
-	}
-
 	private Property buildProperty(
 			String id,
 			String name,

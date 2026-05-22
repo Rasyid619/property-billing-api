@@ -599,3 +599,37 @@ Passed
 ## Tomorrow
 
 - Open the Issue #33 pull request and wait for CI before moving to the next endpoint issue.
+
+---
+
+## 2026-05-22 (continued) — Issue #75: remove redundant endpoint auth tests
+
+## What I Did
+
+- Pulled latest `main`, created branch `rasyid-75-remove-redundant-endpoint-auth-tests`, and re-read the required project docs.
+- Reviewed Issue #75 and confirmed this is a test cleanup with no API contract or database changes.
+- Audited controller and integration tests for repeated missing-token and invalid-token endpoint cases.
+- Removed redundant auth-only tests from Property and Unit endpoint tests.
+- Kept endpoint-specific tests for validation, not found, filtering, persistence, response shape, and business behavior.
+- Kept auth tests in the Auth module as the representative authentication coverage.
+- Updated `docs/TESTING_STRATEGY.md` to document the no-redundant-auth-test rule.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.controller.UnitControllerTest --tests com.propertybilling.integration.property.PropertyCreateIntegrationTest --tests com.propertybilling.integration.property.PropertyUpdateIntegrationTest --tests com.propertybilling.integration.property.PropertyActivateIntegrationTest --tests com.propertybilling.integration.property.PropertyDeleteIntegrationTest --tests com.propertybilling.integration.property.PropertyShowIntegrationTest --tests com.propertybilling.integration.property.PropertyIndexIntegrationTest --tests com.propertybilling.integration.unit.UnitIndexByPropertyIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/75
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Open the Issue #75 pull request and wait for CI before moving to the next endpoint issue.
