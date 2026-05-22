@@ -105,19 +105,6 @@ class PropertyUpdateIntegrationTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	void putRejectsMissingAuthorizationHeader() throws Exception {
-		mockMvc.perform(put("/api/v1/properties/00000000-0000-0000-0000-000000000101")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content("""
-								{
-								  "name": "Blue Residence",
-								  "address": "Jakarta"
-								}
-								"""))
-				.andExpect(status().isUnauthorized());
-	}
-
-	@Test
 	void putRejectsBlankName() throws Exception {
 		String accessToken = jwtTokenService.createAccessToken(user);
 

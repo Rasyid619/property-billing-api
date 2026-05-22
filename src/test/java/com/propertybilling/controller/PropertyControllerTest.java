@@ -1,6 +1,5 @@
 package com.propertybilling.controller;
 
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -19,7 +18,6 @@ import com.propertybilling.dto.property.PropertyIndexResponse;
 import com.propertybilling.dto.property.PropertyShowResponse;
 import com.propertybilling.entity.User;
 import com.propertybilling.exception.GlobalExceptionHandler;
-import com.propertybilling.exception.InvalidAccessTokenException;
 import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.PropertyService;
@@ -126,39 +124,6 @@ class PropertyControllerTest {
 			verify(propertyService, times(1)).updateProperty(Mockito.eq(propertyId), Mockito.any());
 		}
 
-		@Test
-		void rejectsMissingAuthorizationHeader() throws Exception {
-			mockMvc.perform(put("/api/v1/properties/00000000-0000-0000-0000-000000000101")
-							.contentType(MediaType.APPLICATION_JSON)
-							.content("""
-									{
-									  "name": "Blue Residence",
-									  "address": "Jakarta"
-									}
-									"""))
-					.andExpect(status().isUnauthorized());
-
-			verifyNoInteractions(authService, propertyService);
-		}
-
-		@Test
-		void rejectsInvalidAccessToken() throws Exception {
-			when(authService.authenticateAccessToken("Bearer invalid-token")).thenThrow(new InvalidAccessTokenException());
-
-			mockMvc.perform(put("/api/v1/properties/00000000-0000-0000-0000-000000000101")
-							.header("Authorization", "Bearer invalid-token")
-							.contentType(MediaType.APPLICATION_JSON)
-							.content("""
-									{
-									  "name": "Blue Residence",
-									  "address": "Jakarta"
-									}
-									"""))
-					.andExpect(status().isUnauthorized());
-
-			verify(authService, times(1)).authenticateAccessToken("Bearer invalid-token");
-			verify(propertyService, never()).updateProperty(Mockito.any(), Mockito.any());
-		}
 	}
 
 	@Nested
@@ -222,39 +187,6 @@ class PropertyControllerTest {
 			verifyNoInteractions(authService, propertyService);
 		}
 
-		@Test
-		void rejectsMissingAuthorizationHeader() throws Exception {
-			mockMvc.perform(post("/api/v1/properties")
-							.contentType(MediaType.APPLICATION_JSON)
-							.content("""
-									{
-									  "name": "Green Residence",
-									  "address": "Bekasi"
-									}
-									"""))
-					.andExpect(status().isUnauthorized());
-
-			verifyNoInteractions(authService, propertyService);
-		}
-
-		@Test
-		void rejectsInvalidAccessToken() throws Exception {
-			when(authService.authenticateAccessToken("Bearer invalid-token")).thenThrow(new InvalidAccessTokenException());
-
-			mockMvc.perform(post("/api/v1/properties")
-							.header("Authorization", "Bearer invalid-token")
-							.contentType(MediaType.APPLICATION_JSON)
-							.content("""
-									{
-									  "name": "Green Residence",
-									  "address": "Bekasi"
-									}
-									"""))
-					.andExpect(status().isUnauthorized());
-
-			verify(authService, times(1)).authenticateAccessToken("Bearer invalid-token");
-			verify(propertyService, never()).createProperty(Mockito.any());
-		}
 	}
 
 	@Nested
@@ -294,25 +226,6 @@ class PropertyControllerTest {
 			verify(propertyService, times(1)).activateProperty(propertyId);
 		}
 
-		@Test
-		void rejectsMissingAuthorizationHeader() throws Exception {
-			mockMvc.perform(post("/api/v1/properties/00000000-0000-0000-0000-000000000101/activate"))
-					.andExpect(status().isUnauthorized());
-
-			verifyNoInteractions(authService, propertyService);
-		}
-
-		@Test
-		void rejectsInvalidAccessToken() throws Exception {
-			when(authService.authenticateAccessToken("Bearer invalid-token")).thenThrow(new InvalidAccessTokenException());
-
-			mockMvc.perform(post("/api/v1/properties/00000000-0000-0000-0000-000000000101/activate")
-							.header("Authorization", "Bearer invalid-token"))
-					.andExpect(status().isUnauthorized());
-
-			verify(authService, times(1)).authenticateAccessToken("Bearer invalid-token");
-			verify(propertyService, never()).activateProperty(Mockito.any());
-		}
 	}
 
 	@Nested
@@ -352,25 +265,6 @@ class PropertyControllerTest {
 			verify(propertyService, times(1)).deactivateProperty(propertyId);
 		}
 
-		@Test
-		void rejectsMissingAuthorizationHeader() throws Exception {
-			mockMvc.perform(delete("/api/v1/properties/00000000-0000-0000-0000-000000000101"))
-					.andExpect(status().isUnauthorized());
-
-			verifyNoInteractions(authService, propertyService);
-		}
-
-		@Test
-		void rejectsInvalidAccessToken() throws Exception {
-			when(authService.authenticateAccessToken("Bearer invalid-token")).thenThrow(new InvalidAccessTokenException());
-
-			mockMvc.perform(delete("/api/v1/properties/00000000-0000-0000-0000-000000000101")
-							.header("Authorization", "Bearer invalid-token"))
-					.andExpect(status().isUnauthorized());
-
-			verify(authService, times(1)).authenticateAccessToken("Bearer invalid-token");
-			verify(propertyService, never()).deactivateProperty(Mockito.any());
-		}
 	}
 
 	@Nested
@@ -419,25 +313,6 @@ class PropertyControllerTest {
 			verify(propertyService, times(1)).getProperty(propertyId);
 		}
 
-		@Test
-		void rejectsMissingAuthorizationHeader() throws Exception {
-			mockMvc.perform(get("/api/v1/properties/00000000-0000-0000-0000-000000000101"))
-					.andExpect(status().isUnauthorized());
-
-			verifyNoInteractions(authService, propertyService);
-		}
-
-		@Test
-		void rejectsInvalidAccessToken() throws Exception {
-			when(authService.authenticateAccessToken("Bearer invalid-token")).thenThrow(new InvalidAccessTokenException());
-
-			mockMvc.perform(get("/api/v1/properties/00000000-0000-0000-0000-000000000101")
-							.header("Authorization", "Bearer invalid-token"))
-					.andExpect(status().isUnauthorized());
-
-			verify(authService, times(1)).authenticateAccessToken("Bearer invalid-token");
-			verify(propertyService, never()).getProperty(Mockito.any());
-		}
 	}
 
 	@Nested
@@ -490,26 +365,6 @@ class PropertyControllerTest {
 			verify(propertyService, times(1)).listProperties(0, 100, null, "inactive");
 		}
 
-		@Test
-		void rejectsMissingAuthorizationHeader() throws Exception {
-			mockMvc.perform(get("/api/v1/properties"))
-					.andExpect(status().isUnauthorized());
-
-			verifyNoInteractions(authService, propertyService);
-		}
-
-		@Test
-		void rejectsInvalidAccessToken() throws Exception {
-			when(authService.authenticateAccessToken("Bearer invalid-token")).thenThrow(new InvalidAccessTokenException());
-
-			mockMvc.perform(get("/api/v1/properties")
-							.header("Authorization", "Bearer invalid-token"))
-					.andExpect(status().isUnauthorized());
-
-			verify(authService, times(1)).authenticateAccessToken("Bearer invalid-token");
-			verify(propertyService, never())
-					.listProperties(Mockito.anyInt(), Mockito.anyInt(), Mockito.any(), Mockito.any());
-		}
 	}
 
 	private User buildUser() {

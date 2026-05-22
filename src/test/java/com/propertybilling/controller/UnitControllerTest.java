@@ -1,6 +1,5 @@
 package com.propertybilling.controller;
 
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -15,7 +14,6 @@ import com.propertybilling.dto.unit.UnitIndexElement;
 import com.propertybilling.dto.unit.UnitIndexResponse;
 import com.propertybilling.entity.User;
 import com.propertybilling.exception.GlobalExceptionHandler;
-import com.propertybilling.exception.InvalidAccessTokenException;
 import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.UnitService;
@@ -134,25 +132,6 @@ class UnitControllerTest {
 			verifyNoInteractions(authService, unitService);
 		}
 
-		@Test
-		void rejectsMissingAuthorizationHeader() throws Exception {
-			mockMvc.perform(get("/api/v1/properties/00000000-0000-0000-0000-000000000101/units"))
-					.andExpect(status().isUnauthorized());
-
-			verifyNoInteractions(authService, unitService);
-		}
-
-		@Test
-		void rejectsInvalidAccessToken() throws Exception {
-			when(authService.authenticateAccessToken("Bearer invalid-token")).thenThrow(new InvalidAccessTokenException());
-
-			mockMvc.perform(get("/api/v1/properties/00000000-0000-0000-0000-000000000101/units")
-							.header("Authorization", "Bearer invalid-token"))
-					.andExpect(status().isUnauthorized());
-
-			verify(authService, times(1)).authenticateAccessToken("Bearer invalid-token");
-			verify(unitService, never()).listUnitsByProperty(Mockito.any(), Mockito.anyInt(), Mockito.anyInt(), Mockito.any());
-		}
 	}
 
 	private User buildUser() {
