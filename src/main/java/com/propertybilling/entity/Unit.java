@@ -106,4 +106,11 @@ public class Unit {
 	public void deactivate() {
 		this.active = false;
 	}
+
+	/**
+	 * Marks the unit active.
+	 */
+	public void activate() {
+		this.active = true;
+	}
 }

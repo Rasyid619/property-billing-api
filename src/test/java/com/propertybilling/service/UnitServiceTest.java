@@ -264,6 +264,47 @@ class UnitServiceTest {
 		}
 	}
 
+	@Nested
+	/*
+	 * Service tests for activating units.
+	 */
+	class ActivateUnit {
+
+		@Test
+		void activatesUnitWithWriteLock() {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			Unit unit = buildUnitEntity(
+					"00000000-0000-0000-0000-000000000201",
+					"00000000-0000-0000-0000-000000000101",
+					"A-101",
+					"750000.00",
+					10,
+					false
+			);
+			when(unitRepository.findByIdForUpdate(unitId)).thenReturn(Optional.of(unit));
+
+			unitService.activateUnit(unitId);
+
+			assertThat(unit.isActive()).isTrue();
+			verify(unitRepository, times(1)).findByIdForUpdate(unitId);
+			verify(unitRepository, times(1)).save(unit);
+			verifyNoInteractions(propertyRepository);
+		}
+
+		@Test
+		void throwsNotFoundWhenUnitDoesNotExist() {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(unitRepository.findByIdForUpdate(unitId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> unitService.activateUnit(unitId))
+					.isInstanceOf(UnitNotFoundException.class);
+
+			verify(unitRepository, times(1)).findByIdForUpdate(unitId);
+			verify(unitRepository, Mockito.never()).save(Mockito.any());
+			verifyNoInteractions(propertyRepository);
+		}
+	}
+
 	private UnitIndexQueryResult buildUnit(
 			String id,
 			String propertyId,

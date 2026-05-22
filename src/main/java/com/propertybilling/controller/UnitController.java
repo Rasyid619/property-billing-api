@@ -94,4 +94,22 @@ public class UnitController {
 
 		return ResponseEntity.noContent().build();
 	}
+
+	/**
+	 * Activates one unit for authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param unitId unit identifier
+	 * @return empty no-content response
+	 */
+	@PostMapping("/units/{unit_id}/activate")
+	ResponseEntity<Void> activate(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@PathVariable("unit_id") UUID unitId
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+		unitService.activateUnit(unitId);
+
+		return ResponseEntity.noContent().build();
+	}
 }

@@ -111,6 +111,21 @@ public class UnitService {
 		unitRepository.save(unit);
 	}
 
+	/**
+	 * Marks one unit active using a row lock.
+	 *
+	 * @param unitId unit identifier
+	 * @throws UnitNotFoundException when no unit exists for the ID
+	 */
+	@Transactional
+	public void activateUnit(UUID unitId) {
+		Unit unit = unitRepository.findByIdForUpdate(unitId)
+				.orElseThrow(UnitNotFoundException::new);
+
+		unit.activate();
+		unitRepository.save(unit);
+	}
+
 	private boolean hasUnsupportedStatus(String status, Optional<StatusFilter> statusFilter) {
 		return !StatusFilter.isUnset(status) && statusFilter.isEmpty();
 	}

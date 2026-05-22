@@ -316,6 +316,44 @@ class UnitControllerTest {
 		}
 	}
 
+	@Nested
+	/*
+	 * Web-layer tests for activating units.
+	 */
+	class ActivateUnit {
+
+		@Test
+		void returnsNoContent() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+
+			mockMvc.perform(post("/api/v1/units/00000000-0000-0000-0000-000000000201/activate")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNoContent())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(unitService, times(1)).activateUnit(unitId);
+		}
+
+		@Test
+		void returnsNotFoundWhenUnitDoesNotExist() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new UnitNotFoundException())
+					.when(unitService)
+					.activateUnit(unitId);
+
+			mockMvc.perform(post("/api/v1/units/00000000-0000-0000-0000-000000000999/activate")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNotFound())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(unitService, times(1)).activateUnit(unitId);
+		}
+	}
+
 	private User buildUser() {
 		return new User(
 				UUID.fromString("00000000-0000-0000-0000-000000000001"),

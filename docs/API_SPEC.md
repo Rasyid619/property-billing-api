@@ -782,6 +782,24 @@ paths:
         "409":
           $ref: "#/components/responses/Conflict"
 
+  /units/{unit_id}/activate:
+    post:
+      tags:
+        - Units
+      summary: Activate a unit.
+      description: Marks one inactive unit active again so it can participate in future workflows.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UnitId"
+      responses:
+        "204":
+          $ref: "#/components/responses/NoContent"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /units/{unit_id}/active-tenant:
     get:
       tags:
