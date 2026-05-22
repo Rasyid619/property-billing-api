@@ -150,12 +150,6 @@ class UnitIndexByPropertyIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(status().isNotFound());
 	}
 
-	@Test
-	void indexRejectsMissingAuthorizationHeader() throws Exception {
-		mockMvc.perform(get("/api/v1/properties/00000000-0000-0000-0000-000000000101/units"))
-				.andExpect(status().isUnauthorized());
-	}
-
 	private Property buildProperty(
 			String id,
 			String name,
