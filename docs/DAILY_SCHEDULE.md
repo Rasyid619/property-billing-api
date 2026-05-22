@@ -529,3 +529,38 @@ Passed
 ## Tomorrow
 
 - Open the Issue #68 pull request and wait for CI before moving to the next module.
+
+---
+
+## 2026-05-22 — Issue #32: GET /properties/{property_id}/units
+
+## What I Did
+
+- Pulled latest `main`, created branch `rasyid-32-get-properties-property-id-units`, and re-read the required project docs.
+- Reviewed requirements and database design for the Unit module list-by-property endpoint.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller implementation.
+- Added nullable `status` query filtering for units; omitted, blank, or `status=null` returns all units.
+- Implemented Unit entity mapping, repository projection/query, DTOs, service, and authenticated controller endpoint.
+- Added validation for `offset` and `limit` query parameters.
+- Added service, controller, and PostgreSQL integration tests for listing units by property, status filtering, not found, auth, and validation behavior.
+- Stayed within the Unit list-by-property endpoint scope and did not implement future Unit mutations.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.UnitServiceTest --tests com.propertybilling.controller.UnitControllerTest --tests com.propertybilling.integration.unit.UnitIndexByPropertyIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/32
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Open the Issue #32 pull request and wait for CI before moving to the next endpoint issue.

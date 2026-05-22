@@ -1,5 +1,6 @@
 package com.propertybilling.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -46,6 +47,11 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	ResponseEntity<Void> handleHttpMessageNotReadable() {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+	}
+
+	@ExceptionHandler(ConstraintViolationException.class)
+	ResponseEntity<Void> handleConstraintViolation() {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 	}
 

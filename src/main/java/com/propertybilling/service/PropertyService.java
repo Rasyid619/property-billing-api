@@ -1,10 +1,10 @@
 package com.propertybilling.service;
 
+import com.propertybilling.dto.common.StatusFilter;
 import com.propertybilling.dto.property.PropertyCreateRequest;
 import com.propertybilling.dto.property.PropertyIndexElement;
 import com.propertybilling.dto.property.PropertyIndexResponse;
 import com.propertybilling.dto.property.PropertyShowResponse;
-import com.propertybilling.dto.property.PropertyStatus;
 import com.propertybilling.dto.property.PropertyUpdateRequest;
 import com.propertybilling.dto.property.queryresult.PropertyIndexQueryResult;
 import com.propertybilling.entity.Property;
@@ -52,13 +52,13 @@ public class PropertyService {
 	 * @return property index response
 	 */
 	public PropertyIndexResponse listProperties(int offset, int limit, String search, String status) {
-		Optional<PropertyStatus> propertyStatus = PropertyStatus.fromQueryValue(status);
+		Optional<StatusFilter> statusFilter = StatusFilter.fromQueryValue(status);
 
-		if (hasUnsupportedStatus(status, propertyStatus)) {
+		if (hasUnsupportedStatus(status, statusFilter)) {
 			return emptyIndexResponse();
 		}
 
-		Boolean active = propertyStatus.map(PropertyStatus::isActive).orElse(null);
+		Boolean active = statusFilter.map(StatusFilter::isActive).orElse(null);
 		List<PropertyIndexElement> properties = propertyRepository.findIndex(
 				SearchPatternHelper.containsPattern(search),
 				active,
@@ -130,8 +130,8 @@ public class PropertyService {
 		propertyRepository.save(property);
 	}
 
-	private boolean hasUnsupportedStatus(String status, Optional<PropertyStatus> propertyStatus) {
-		return status != null && !status.isBlank() && propertyStatus.isEmpty();
+	private boolean hasUnsupportedStatus(String status, Optional<StatusFilter> statusFilter) {
+		return !StatusFilter.isUnset(status) && statusFilter.isEmpty();
 	}
 
 	private PropertyIndexResponse emptyIndexResponse() {
