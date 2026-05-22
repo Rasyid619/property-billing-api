@@ -538,12 +538,14 @@ paths:
       tags:
         - Units
       summary: List units by property.
+      description: Returns units for one property filtered by optional active status.
       security:
         - BearerAuth: []
       parameters:
         - $ref: "#/components/parameters/PropertyId"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Status"
       responses:
         "200":
           description: Units were successfully retrieved.
@@ -952,9 +954,9 @@ components:
       name: status
       in: query
       required: false
-      description: Property status filter.
+      description: Active or inactive status filter. Omit this parameter or pass null to include all records.
       schema:
-        $ref: "#/components/schemas/PropertyStatus"
+        $ref: "#/components/schemas/Status"
     Offset:
       name: offset
       in: query
@@ -996,7 +998,6 @@ components:
       schema:
         type: string
         format: uuid
-
   responses:
     BadRequest:
       description: The request is invalid.
@@ -1477,11 +1478,12 @@ components:
         - name
         - active
 
-    PropertyStatus:
+    Status:
       type: string
       enum:
         - active
         - inactive
+        - "null"
       example: active
 
 
