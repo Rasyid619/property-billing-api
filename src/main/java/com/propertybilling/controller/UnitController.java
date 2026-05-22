@@ -3,6 +3,7 @@ package com.propertybilling.controller;
 import com.propertybilling.dto.unit.UnitCreateRequest;
 import com.propertybilling.dto.unit.UnitIndexResponse;
 import com.propertybilling.dto.unit.UnitShowResponse;
+import com.propertybilling.dto.unit.UnitUpdateRequest;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.UnitService;
 import jakarta.validation.Valid;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -93,6 +95,26 @@ public class UnitController {
 		authService.authenticateAccessToken(authorizationHeader);
 
 		return ResponseEntity.ok(unitService.getUnit(unitId));
+	}
+
+	/**
+	 * Updates one unit for authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param unitId unit identifier
+	 * @param request updated unit data
+	 * @return empty no-content response
+	 */
+	@PutMapping("/units/{unit_id}")
+	ResponseEntity<Void> update(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@PathVariable("unit_id") UUID unitId,
+			@Valid @RequestBody UnitUpdateRequest request
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+		unitService.updateUnit(unitId, request);
+
+		return ResponseEntity.noContent().build();
 	}
 
 	/**

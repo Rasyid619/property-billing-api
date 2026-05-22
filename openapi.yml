@@ -711,10 +711,11 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-    patch:
+    put:
       tags:
         - Units
       summary: Update a unit.
+      description: Replaces the editable fields of one unit while keeping the owning property unchanged.
       security:
         - BearerAuth: []
       parameters:

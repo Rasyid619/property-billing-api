@@ -101,6 +101,19 @@ public class Unit {
 	}
 
 	/**
+	 * Replaces the editable fields of the unit.
+	 *
+	 * @param unitNumber new display number unique inside one property
+	 * @param monthlyFee new decimal string monthly fee
+	 * @param dueDay new day of month when payment is due
+	 */
+	public void update(String unitNumber, String monthlyFee, int dueDay) {
+		this.unitNumber = unitNumber;
+		this.monthlyFee = monthlyFee;
+		this.dueDay = dueDay;
+	}
+
+	/**
 	 * Marks the unit inactive.
 	 */
 	public void deactivate() {

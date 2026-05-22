@@ -36,6 +36,27 @@ public interface UnitRepository extends JpaRepository<Unit, UUID> {
 	);
 
 	/**
+	 * Checks whether another unit already uses the submitted number inside one property.
+	 *
+	 * @param propertyId owning property identifier
+	 * @param unitNumber submitted unit number
+	 * @param unitId current unit identifier to exclude from the check
+	 * @return true when another unit already uses the number for the property
+	 */
+	@Query("""
+			SELECT CASE WHEN COUNT(unit) > 0 THEN true ELSE false END
+			FROM Unit unit
+			WHERE unit.property.id = :propertyId
+			AND unit.unitNumber = :unitNumber
+			AND unit.id <> :unitId
+			""")
+	boolean existsByPropertyIdAndUnitNumberAndIdNot(
+			@Param("propertyId") UUID propertyId,
+			@Param("unitNumber") String unitNumber,
+			@Param("unitId") UUID unitId
+	);
+
+	/**
 	 * Finds unit index rows for one property using an optional active-state filter.
 	 *
 	 * @param propertyId owning property identifier
