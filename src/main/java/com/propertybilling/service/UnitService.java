@@ -4,6 +4,7 @@ import com.propertybilling.dto.common.StatusFilter;
 import com.propertybilling.dto.unit.UnitCreateRequest;
 import com.propertybilling.dto.unit.UnitIndexElement;
 import com.propertybilling.dto.unit.UnitIndexResponse;
+import com.propertybilling.dto.unit.UnitShowResponse;
 import com.propertybilling.dto.unit.queryresult.UnitIndexQueryResult;
 import com.propertybilling.entity.Property;
 import com.propertybilling.entity.Unit;
@@ -97,6 +98,19 @@ public class UnitService {
 	}
 
 	/**
+	 * Returns one unit by ID.
+	 *
+	 * @param unitId unit identifier
+	 * @return unit detail response
+	 * @throws UnitNotFoundException when no unit exists for the ID
+	 */
+	public UnitShowResponse getUnit(UUID unitId) {
+		return unitRepository.findByIdWithProperty(unitId)
+				.map(this::toShowResponse)
+				.orElseThrow(UnitNotFoundException::new);
+	}
+
+	/**
 	 * Marks one unit inactive using a row lock.
 	 *
 	 * @param unitId unit identifier
@@ -146,6 +160,17 @@ public class UnitService {
 				new BigDecimal(unit.monthlyFee()),
 				unit.dueDay(),
 				unit.active()
+		);
+	}
+
+	private UnitShowResponse toShowResponse(Unit unit) {
+		return new UnitShowResponse(
+				unit.getId(),
+				unit.getProperty().getId(),
+				unit.getUnitNumber(),
+				new BigDecimal(unit.getMonthlyFee()),
+				unit.getDueDay(),
+				unit.isActive()
 		);
 	}
 }

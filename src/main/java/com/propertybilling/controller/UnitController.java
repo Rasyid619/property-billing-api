@@ -2,6 +2,7 @@ package com.propertybilling.controller;
 
 import com.propertybilling.dto.unit.UnitCreateRequest;
 import com.propertybilling.dto.unit.UnitIndexResponse;
+import com.propertybilling.dto.unit.UnitShowResponse;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.UnitService;
 import jakarta.validation.Valid;
@@ -75,6 +76,23 @@ public class UnitController {
 		authService.authenticateAccessToken(authorizationHeader);
 
 		return ResponseEntity.ok(unitService.listUnitsByProperty(propertyId, offset, limit, status));
+	}
+
+	/**
+	 * Gets one unit visible to authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param unitId unit identifier
+	 * @return unit detail response
+	 */
+	@GetMapping("/units/{unit_id}")
+	ResponseEntity<UnitShowResponse> show(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@PathVariable("unit_id") UUID unitId
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+
+		return ResponseEntity.ok(unitService.getUnit(unitId));
 	}
 
 	/**

@@ -667,3 +667,37 @@ Passed
 ## Tomorrow
 
 - Wait for the expanded Issue #42 pull request checks before moving to the next endpoint issue.
+
+---
+
+## 2026-05-22 (continued) — Issue #40: GET /units/{unit_id}
+
+## What I Did
+
+- Pulled latest `main`, created branch `rasyid-40-get-units-unit-id`, and re-read the required project docs.
+- Reviewed Issue #40, the Unit module requirements, and the database design before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify the unit detail response behavior.
+- Added `UnitShowResponse` for the contracted detail payload and a repository read method that fetches the owning property for detail mapping.
+- Implemented the unit detail service workflow and authenticated controller endpoint for `GET /api/v1/units/{unit_id}`.
+- Added service, controller, and PostgreSQL integration tests for successful unit detail retrieval and unit-not-found behavior.
+- Stayed within the Unit module scope and did not implement future unit update or tenant-assignment detail behavior.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.UnitServiceTest --tests com.propertybilling.controller.UnitControllerTest --tests com.propertybilling.integration.unit.UnitShowIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/40
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Open the Issue #40 pull request and wait for CI before moving to the next endpoint issue.

@@ -695,6 +695,7 @@ paths:
       tags:
         - Units
       summary: Get unit detail.
+      description: Returns one unit with its owning property, monthly fee, due day, and active state.
       security:
         - BearerAuth: []
       parameters:

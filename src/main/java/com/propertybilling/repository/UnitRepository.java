@@ -68,6 +68,20 @@ public interface UnitRepository extends JpaRepository<Unit, UUID> {
 	);
 
 	/**
+	 * Finds one unit and its owning property for read-only detail workflows.
+	 *
+	 * @param unitId unit identifier
+	 * @return matching unit, or empty when it does not exist
+	 */
+	@Query("""
+			SELECT unit
+			FROM Unit unit
+			JOIN FETCH unit.property property
+			WHERE unit.id = :unitId
+			""")
+	Optional<Unit> findByIdWithProperty(@Param("unitId") UUID unitId);
+
+	/**
 	 * Finds one unit using a write lock for mutation workflows.
 	 *
 	 * @param unitId unit identifier
