@@ -40,6 +40,11 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 	}
 
+	@ExceptionHandler(UnitNotFoundException.class)
+	ResponseEntity<Void> handleUnitNotFound() {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+	}
+
 	@ExceptionHandler(UnitNumberConflictException.class)
 	ResponseEntity<Void> handleUnitNumberConflict() {
 		return ResponseEntity.status(HttpStatus.CONFLICT).build();

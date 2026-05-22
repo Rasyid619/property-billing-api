@@ -99,4 +99,18 @@ public class Unit {
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
 	}
+
+	/**
+	 * Marks the unit inactive.
+	 */
+	public void deactivate() {
+		this.active = false;
+	}
+
+	/**
+	 * Marks the unit active.
+	 */
+	public void activate() {
+		this.active = true;
+	}
 }

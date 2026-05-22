@@ -14,8 +14,10 @@ import com.propertybilling.entity.Property;
 import com.propertybilling.entity.Unit;
 import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.exception.UnitNumberConflictException;
+import com.propertybilling.exception.UnitNotFoundException;
 import com.propertybilling.repository.PropertyRepository;
 import com.propertybilling.repository.UnitRepository;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -221,6 +223,88 @@ class UnitServiceTest {
 		}
 	}
 
+	@Nested
+	/*
+	 * Service tests for deactivating units.
+	 */
+	class DeleteUnit {
+
+		@Test
+		void deactivatesUnitWithWriteLock() {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			Unit unit = buildUnitEntity(
+					"00000000-0000-0000-0000-000000000201",
+					"00000000-0000-0000-0000-000000000101",
+					"A-101",
+					"750000.00",
+					10,
+					true
+			);
+			when(unitRepository.findByIdForUpdate(unitId)).thenReturn(Optional.of(unit));
+
+			unitService.deactivateUnit(unitId);
+
+			assertThat(unit.isActive()).isFalse();
+			verify(unitRepository, times(1)).findByIdForUpdate(unitId);
+			verify(unitRepository, times(1)).save(unit);
+			verifyNoInteractions(propertyRepository);
+		}
+
+		@Test
+		void throwsNotFoundWhenUnitDoesNotExist() {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(unitRepository.findByIdForUpdate(unitId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> unitService.deactivateUnit(unitId))
+					.isInstanceOf(UnitNotFoundException.class);
+
+			verify(unitRepository, times(1)).findByIdForUpdate(unitId);
+			verify(unitRepository, Mockito.never()).save(Mockito.any());
+			verifyNoInteractions(propertyRepository);
+		}
+	}
+
+	@Nested
+	/*
+	 * Service tests for activating units.
+	 */
+	class ActivateUnit {
+
+		@Test
+		void activatesUnitWithWriteLock() {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			Unit unit = buildUnitEntity(
+					"00000000-0000-0000-0000-000000000201",
+					"00000000-0000-0000-0000-000000000101",
+					"A-101",
+					"750000.00",
+					10,
+					false
+			);
+			when(unitRepository.findByIdForUpdate(unitId)).thenReturn(Optional.of(unit));
+
+			unitService.activateUnit(unitId);
+
+			assertThat(unit.isActive()).isTrue();
+			verify(unitRepository, times(1)).findByIdForUpdate(unitId);
+			verify(unitRepository, times(1)).save(unit);
+			verifyNoInteractions(propertyRepository);
+		}
+
+		@Test
+		void throwsNotFoundWhenUnitDoesNotExist() {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(unitRepository.findByIdForUpdate(unitId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> unitService.activateUnit(unitId))
+					.isInstanceOf(UnitNotFoundException.class);
+
+			verify(unitRepository, times(1)).findByIdForUpdate(unitId);
+			verify(unitRepository, Mockito.never()).save(Mockito.any());
+			verifyNoInteractions(propertyRepository);
+		}
+	}
+
 	private UnitIndexQueryResult buildUnit(
 			String id,
 			String propertyId,
@@ -245,6 +329,27 @@ class UnitServiceTest {
 				"Green Residence",
 				"Bekasi",
 				true
+		);
+	}
+
+	private Unit buildUnitEntity(
+			String id,
+			String propertyId,
+			String unitNumber,
+			String monthlyFee,
+			int dueDay,
+			boolean active
+	) {
+		OffsetDateTime timestamp = OffsetDateTime.parse("2026-05-22T09:00:00Z");
+		return new Unit(
+				UUID.fromString(id),
+				buildProperty(UUID.fromString(propertyId)),
+				unitNumber,
+				monthlyFee,
+				dueDay,
+				active,
+				timestamp,
+				timestamp
 		);
 	}
 }

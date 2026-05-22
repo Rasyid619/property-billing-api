@@ -4,6 +4,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -17,6 +18,7 @@ import com.propertybilling.entity.User;
 import com.propertybilling.exception.GlobalExceptionHandler;
 import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.exception.UnitNumberConflictException;
+import com.propertybilling.exception.UnitNotFoundException;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.UnitService;
 import java.math.BigDecimal;
@@ -273,6 +275,82 @@ class UnitControllerTest {
 					.andExpect(content().string(""));
 
 			verifyNoInteractions(authService, unitService);
+		}
+	}
+
+	@Nested
+	/*
+	 * Web-layer tests for deactivating units.
+	 */
+	class DeleteUnit {
+
+		@Test
+		void returnsNoContent() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+
+			mockMvc.perform(delete("/api/v1/units/00000000-0000-0000-0000-000000000201")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNoContent())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(unitService, times(1)).deactivateUnit(unitId);
+		}
+
+		@Test
+		void returnsNotFoundWhenUnitDoesNotExist() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new UnitNotFoundException())
+					.when(unitService)
+					.deactivateUnit(unitId);
+
+			mockMvc.perform(delete("/api/v1/units/00000000-0000-0000-0000-000000000999")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNotFound())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(unitService, times(1)).deactivateUnit(unitId);
+		}
+	}
+
+	@Nested
+	/*
+	 * Web-layer tests for activating units.
+	 */
+	class ActivateUnit {
+
+		@Test
+		void returnsNoContent() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+
+			mockMvc.perform(post("/api/v1/units/00000000-0000-0000-0000-000000000201/activate")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNoContent())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(unitService, times(1)).activateUnit(unitId);
+		}
+
+		@Test
+		void returnsNotFoundWhenUnitDoesNotExist() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new UnitNotFoundException())
+					.when(unitService)
+					.activateUnit(unitId);
+
+			mockMvc.perform(post("/api/v1/units/00000000-0000-0000-0000-000000000999/activate")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNotFound())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(unitService, times(1)).activateUnit(unitId);
 		}
 	}
 
