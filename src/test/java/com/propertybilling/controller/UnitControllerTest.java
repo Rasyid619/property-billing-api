@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.propertybilling.config.SecurityConfig;
 import com.propertybilling.dto.unit.UnitIndexElement;
 import com.propertybilling.dto.unit.UnitIndexResponse;
+import com.propertybilling.dto.unit.UnitShowResponse;
 import com.propertybilling.entity.User;
 import com.propertybilling.exception.GlobalExceptionHandler;
 import com.propertybilling.exception.PropertyNotFoundException;
@@ -275,6 +276,57 @@ class UnitControllerTest {
 					.andExpect(content().string(""));
 
 			verifyNoInteractions(authService, unitService);
+		}
+	}
+
+	@Nested
+	/*
+	 * Web-layer tests for showing one unit.
+	 */
+	class ShowUnit {
+
+		@Test
+		void returnsUnit() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			when(unitService.getUnit(unitId)).thenReturn(new UnitShowResponse(
+					unitId,
+					UUID.fromString("00000000-0000-0000-0000-000000000101"),
+					"A-101",
+					new BigDecimal("750000.00"),
+					10,
+					true
+			));
+
+			mockMvc.perform(get("/api/v1/units/00000000-0000-0000-0000-000000000201")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isOk())
+					.andExpect(jsonPath("$.id").value("00000000-0000-0000-0000-000000000201"))
+					.andExpect(jsonPath("$.property_id").value("00000000-0000-0000-0000-000000000101"))
+					.andExpect(jsonPath("$.unit_number").value("A-101"))
+					.andExpect(jsonPath("$.monthly_fee").value(750000.00))
+					.andExpect(jsonPath("$.due_day").value(10))
+					.andExpect(jsonPath("$.active").value(true))
+					.andExpect(jsonPath("$.created_at").doesNotExist())
+					.andExpect(jsonPath("$.updated_at").doesNotExist());
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(unitService, times(1)).getUnit(unitId);
+		}
+
+		@Test
+		void returnsNotFoundWhenUnitDoesNotExist() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			when(unitService.getUnit(unitId)).thenThrow(new UnitNotFoundException());
+
+			mockMvc.perform(get("/api/v1/units/00000000-0000-0000-0000-000000000999")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNotFound())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(unitService, times(1)).getUnit(unitId);
 		}
 	}
 

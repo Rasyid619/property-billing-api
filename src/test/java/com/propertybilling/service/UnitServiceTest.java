@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.propertybilling.dto.unit.UnitCreateRequest;
 import com.propertybilling.dto.unit.UnitIndexResponse;
+import com.propertybilling.dto.unit.UnitShowResponse;
 import com.propertybilling.dto.unit.queryresult.UnitIndexQueryResult;
 import com.propertybilling.entity.Property;
 import com.propertybilling.entity.Unit;
@@ -220,6 +221,49 @@ class UnitServiceTest {
 					.findIndexByPropertyId(Mockito.eq(propertyId), Mockito.isNull(), pageableCaptor.capture());
 			assertThat(pageableCaptor.getValue().getPageNumber()).isEqualTo(2);
 			assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(100);
+		}
+	}
+
+	@Nested
+	/*
+	 * Service tests for showing one unit.
+	 */
+	class ShowUnit {
+
+		@Test
+		void returnsUnit() {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			when(unitRepository.findByIdWithProperty(unitId)).thenReturn(Optional.of(buildUnitEntity(
+					"00000000-0000-0000-0000-000000000201",
+					"00000000-0000-0000-0000-000000000101",
+					"A-101",
+					"750000.00",
+					10,
+					true
+			)));
+
+			UnitShowResponse response = unitService.getUnit(unitId);
+
+			assertThat(response.id()).isEqualTo(unitId);
+			assertThat(response.propertyId()).isEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000101"));
+			assertThat(response.unitNumber()).isEqualTo("A-101");
+			assertThat(response.monthlyFee()).isEqualByComparingTo("750000.00");
+			assertThat(response.dueDay()).isEqualTo(10);
+			assertThat(response.active()).isTrue();
+			verify(unitRepository, times(1)).findByIdWithProperty(unitId);
+			verifyNoInteractions(propertyRepository);
+		}
+
+		@Test
+		void throwsNotFoundWhenUnitDoesNotExist() {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(unitRepository.findByIdWithProperty(unitId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> unitService.getUnit(unitId))
+					.isInstanceOf(UnitNotFoundException.class);
+
+			verify(unitRepository, times(1)).findByIdWithProperty(unitId);
+			verifyNoInteractions(propertyRepository);
 		}
 	}
 
