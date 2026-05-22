@@ -1,16 +1,21 @@
 package com.propertybilling.service;
 
 import com.propertybilling.dto.common.StatusFilter;
+import com.propertybilling.dto.unit.UnitCreateRequest;
 import com.propertybilling.dto.unit.UnitIndexElement;
 import com.propertybilling.dto.unit.UnitIndexResponse;
 import com.propertybilling.dto.unit.queryresult.UnitIndexQueryResult;
+import com.propertybilling.entity.Property;
+import com.propertybilling.entity.Unit;
 import com.propertybilling.exception.PropertyNotFoundException;
+import com.propertybilling.exception.UnitNumberConflictException;
 import com.propertybilling.repository.PropertyRepository;
 import com.propertybilling.repository.UnitRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +29,36 @@ public class UnitService {
 
 	private final PropertyRepository propertyRepository;
 	private final UnitRepository unitRepository;
+
+	/**
+	 * Creates an active unit inside one property.
+	 *
+	 * @param propertyId owning property identifier
+	 * @param request unit data to persist
+	 * @throws PropertyNotFoundException when no property exists for the ID
+	 * @throws UnitNumberConflictException when the unit number already exists inside the property
+	 */
+	public void createUnit(UUID propertyId, UnitCreateRequest request) {
+		Property property = propertyRepository.findById(propertyId)
+				.orElseThrow(PropertyNotFoundException::new);
+
+		if (unitRepository.existsByPropertyIdAndUnitNumber(propertyId, request.unitNumber())) {
+			throw new UnitNumberConflictException();
+		}
+
+		try {
+			unitRepository.save(new Unit(
+					UUID.randomUUID(),
+					property,
+					request.unitNumber(),
+					toMonthlyFeeValue(request.monthlyFee()),
+					request.dueDay(),
+					true
+			));
+		} catch (DataIntegrityViolationException exception) {
+			throw new UnitNumberConflictException();
+		}
+	}
 
 	/**
 	 * Lists units that belong to one property.
@@ -65,6 +100,10 @@ public class UnitService {
 
 	private UnitIndexResponse emptyIndexResponse() {
 		return new UnitIndexResponse(0, List.of());
+	}
+
+	private String toMonthlyFeeValue(String monthlyFee) {
+		return new BigDecimal(monthlyFee).toPlainString();
 	}
 
 	private UnitIndexElement toIndexElement(UnitIndexQueryResult unit) {

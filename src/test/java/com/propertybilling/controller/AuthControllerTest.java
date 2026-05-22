@@ -13,6 +13,7 @@ import com.propertybilling.dto.auth.AuthMeResponse;
 import com.propertybilling.dto.auth.AuthTokenResponse;
 import com.propertybilling.exception.GlobalExceptionHandler;
 import com.propertybilling.exception.InvalidCredentialsException;
+import com.propertybilling.exception.InvalidAccessTokenException;
 import com.propertybilling.exception.InvalidRefreshTokenException;
 import com.propertybilling.service.AuthService;
 import java.util.UUID;
@@ -125,6 +126,15 @@ class AuthControllerTest {
 	@Test
 	void meRejectsMissingAuthorizationHeader() throws Exception {
 		mockMvc.perform(get("/api/v1/auth/me"))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void meRejectsInvalidAccessToken() throws Exception {
+		when(authService.me("Bearer invalid-token")).thenThrow(new InvalidAccessTokenException());
+
+		mockMvc.perform(get("/api/v1/auth/me")
+						.header("Authorization", "Bearer invalid-token"))
 				.andExpect(status().isUnauthorized());
 	}
 }

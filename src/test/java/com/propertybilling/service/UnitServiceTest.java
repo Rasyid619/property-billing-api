@@ -7,17 +7,23 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.propertybilling.dto.unit.UnitCreateRequest;
 import com.propertybilling.dto.unit.UnitIndexResponse;
 import com.propertybilling.dto.unit.queryresult.UnitIndexQueryResult;
+import com.propertybilling.entity.Property;
+import com.propertybilling.entity.Unit;
 import com.propertybilling.exception.PropertyNotFoundException;
+import com.propertybilling.exception.UnitNumberConflictException;
 import com.propertybilling.repository.PropertyRepository;
 import com.propertybilling.repository.UnitRepository;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 
 /*
@@ -28,6 +34,85 @@ class UnitServiceTest {
 	private final PropertyRepository propertyRepository = Mockito.mock(PropertyRepository.class);
 	private final UnitRepository unitRepository = Mockito.mock(UnitRepository.class);
 	private final UnitService unitService = new UnitService(propertyRepository, unitRepository);
+
+	@Nested
+	/*
+	 * Service tests for creating units.
+	 */
+	class CreateUnit {
+
+		@Test
+		void createsActiveUnit() {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+			Property property = buildProperty(propertyId);
+			ArgumentCaptor<Unit> unitCaptor = ArgumentCaptor.forClass(Unit.class);
+			when(propertyRepository.findById(propertyId)).thenReturn(Optional.of(property));
+			when(unitRepository.existsByPropertyIdAndUnitNumber(propertyId, "A-101")).thenReturn(false);
+
+			unitService.createUnit(propertyId, new UnitCreateRequest("A-101", "750000.00", 10));
+
+			verify(propertyRepository, times(1)).findById(propertyId);
+			verify(unitRepository, times(1)).existsByPropertyIdAndUnitNumber(propertyId, "A-101");
+			verify(unitRepository, times(1)).save(unitCaptor.capture());
+			assertThat(unitCaptor.getValue().getId()).isNotNull();
+			assertThat(unitCaptor.getValue().getProperty()).isEqualTo(property);
+			assertThat(unitCaptor.getValue().getUnitNumber()).isEqualTo("A-101");
+			assertThat(unitCaptor.getValue().getMonthlyFee()).isEqualTo("750000.00");
+			assertThat(unitCaptor.getValue().getDueDay()).isEqualTo(10);
+			assertThat(unitCaptor.getValue().isActive()).isTrue();
+			assertThat(unitCaptor.getValue().getCreatedAt()).isNull();
+			assertThat(unitCaptor.getValue().getUpdatedAt()).isNull();
+		}
+
+		@Test
+		void throwsNotFoundWhenPropertyDoesNotExist() {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(propertyRepository.findById(propertyId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> unitService.createUnit(
+					propertyId,
+					new UnitCreateRequest("A-101", "750000.00", 10)
+			)).isInstanceOf(PropertyNotFoundException.class);
+
+			verify(propertyRepository, times(1)).findById(propertyId);
+			verifyNoInteractions(unitRepository);
+		}
+
+		@Test
+		void throwsConflictWhenUnitNumberExistsInProperty() {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+			when(propertyRepository.findById(propertyId)).thenReturn(Optional.of(buildProperty(propertyId)));
+			when(unitRepository.existsByPropertyIdAndUnitNumber(propertyId, "A-101")).thenReturn(true);
+
+			assertThatThrownBy(() -> unitService.createUnit(
+					propertyId,
+					new UnitCreateRequest("A-101", "750000.00", 10)
+			)).isInstanceOf(UnitNumberConflictException.class);
+
+			verify(propertyRepository, times(1)).findById(propertyId);
+			verify(unitRepository, times(1)).existsByPropertyIdAndUnitNumber(propertyId, "A-101");
+			verify(unitRepository, Mockito.never()).save(Mockito.any());
+		}
+
+		@Test
+		void throwsConflictWhenDatabaseUniqueConstraintRejectsUnitNumber() {
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+			when(propertyRepository.findById(propertyId)).thenReturn(Optional.of(buildProperty(propertyId)));
+			when(unitRepository.existsByPropertyIdAndUnitNumber(propertyId, "A-101")).thenReturn(false);
+			Mockito.doThrow(new DataIntegrityViolationException("duplicate unit number"))
+					.when(unitRepository)
+					.save(Mockito.any());
+
+			assertThatThrownBy(() -> unitService.createUnit(
+					propertyId,
+					new UnitCreateRequest("A-101", "750000.00", 10)
+			)).isInstanceOf(UnitNumberConflictException.class);
+
+			verify(propertyRepository, times(1)).findById(propertyId);
+			verify(unitRepository, times(1)).existsByPropertyIdAndUnitNumber(propertyId, "A-101");
+			verify(unitRepository, times(1)).save(Mockito.any());
+		}
+	}
 
 	@Nested
 	/*
@@ -151,6 +236,15 @@ class UnitServiceTest {
 				monthlyFee,
 				dueDay,
 				active
+		);
+	}
+
+	private Property buildProperty(UUID propertyId) {
+		return new Property(
+				propertyId,
+				"Green Residence",
+				"Bekasi",
+				true
 		);
 	}
 }

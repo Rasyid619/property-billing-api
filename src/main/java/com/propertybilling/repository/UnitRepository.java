@@ -15,6 +15,24 @@ import org.springframework.data.repository.query.Param;
 public interface UnitRepository extends JpaRepository<Unit, UUID> {
 
 	/**
+	 * Checks whether a unit number is already used inside one property.
+	 *
+	 * @param propertyId owning property identifier
+	 * @param unitNumber submitted unit number
+	 * @return true when the unit number already exists for the property
+	 */
+	@Query("""
+			SELECT CASE WHEN COUNT(unit) > 0 THEN true ELSE false END
+			FROM Unit unit
+			WHERE unit.property.id = :propertyId
+			AND unit.unitNumber = :unitNumber
+			""")
+	boolean existsByPropertyIdAndUnitNumber(
+			@Param("propertyId") UUID propertyId,
+			@Param("unitNumber") String unitNumber
+	);
+
+	/**
 	 * Finds unit index rows for one property using an optional active-state filter.
 	 *
 	 * @param propertyId owning property identifier

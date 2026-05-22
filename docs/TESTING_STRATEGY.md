@@ -85,8 +85,10 @@ Controller tests should verify:
 
 Avoid repeating auth-only tests for every endpoint when the same missing-token
 or invalid-token behavior is already covered by shared auth/security tests or a
-representative protected endpoint. Keep endpoint-specific tests for validation,
-not found, conflict, persistence, response shape, and business rules.
+representative protected endpoint. The suite must still retain at least one
+HTTP-layer protected-endpoint test for missing-token behavior and one for
+invalid-token behavior. Keep endpoint-specific tests for validation, not found,
+conflict, persistence, response shape, and business rules.
 
 ## Migration Tests
 
