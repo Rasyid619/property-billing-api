@@ -633,3 +633,37 @@ Passed
 ## Tomorrow
 
 - Open the Issue #75 pull request and wait for CI before moving to the next endpoint issue.
+
+---
+
+## 2026-05-22 (continued) — Issue #42: DELETE /units/{unit_id}
+
+## What I Did
+
+- Pulled latest `main`, created branch `rasyid-42-delete-units-unit-id`, and re-read the required project docs.
+- Reviewed Issue #42, the Unit module requirements, and the database design before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to document that unit deactivation keeps historical records.
+- Followed the existing property deactivation pattern for the unit module by adding a row-locked repository lookup, service workflow, and authenticated controller endpoint.
+- Added unit-level deactivation support in the entity and introduced a dedicated `UnitNotFoundException` mapped to `404`.
+- Added service, controller, and PostgreSQL integration tests for successful unit deactivation and unit-not-found behavior.
+- Stayed within the Unit module scope and did not implement unit activation or other future unit endpoints.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.UnitServiceTest --tests com.propertybilling.controller.UnitControllerTest --tests com.propertybilling.integration.unit.UnitDeleteIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/42
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Open the Issue #42 pull request and wait for CI before moving to the next endpoint issue.

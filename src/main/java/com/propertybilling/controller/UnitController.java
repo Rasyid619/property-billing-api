@@ -11,6 +11,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,9 +25,9 @@ import lombok.RequiredArgsConstructor;
 @Validated
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/properties/{property_id}/units")
+@RequestMapping("/api/v1")
 /*
- * HTTP boundary for property unit endpoints.
+ * HTTP boundary for unit endpoints.
  */
 public class UnitController {
 
@@ -41,7 +42,7 @@ public class UnitController {
 	 * @param request unit data
 	 * @return empty created response
 	 */
-	@PostMapping
+	@PostMapping("/properties/{property_id}/units")
 	ResponseEntity<Void> create(
 			@RequestHeader("Authorization") String authorizationHeader,
 			@PathVariable("property_id") UUID propertyId,
@@ -63,7 +64,7 @@ public class UnitController {
 	 * @param status optional active-state filter
 	 * @return unit index response
 	 */
-	@GetMapping
+	@GetMapping("/properties/{property_id}/units")
 	ResponseEntity<UnitIndexResponse> indexByProperty(
 			@RequestHeader("Authorization") String authorizationHeader,
 			@PathVariable("property_id") UUID propertyId,
@@ -74,5 +75,23 @@ public class UnitController {
 		authService.authenticateAccessToken(authorizationHeader);
 
 		return ResponseEntity.ok(unitService.listUnitsByProperty(propertyId, offset, limit, status));
+	}
+
+	/**
+	 * Deactivates one unit for authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param unitId unit identifier
+	 * @return empty no-content response
+	 */
+	@DeleteMapping("/units/{unit_id}")
+	ResponseEntity<Void> delete(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@PathVariable("unit_id") UUID unitId
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+		unitService.deactivateUnit(unitId);
+
+		return ResponseEntity.noContent().build();
 	}
 }

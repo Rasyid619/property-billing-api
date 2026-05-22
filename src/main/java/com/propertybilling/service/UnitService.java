@@ -9,6 +9,7 @@ import com.propertybilling.entity.Property;
 import com.propertybilling.entity.Unit;
 import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.exception.UnitNumberConflictException;
+import com.propertybilling.exception.UnitNotFoundException;
 import com.propertybilling.repository.PropertyRepository;
 import com.propertybilling.repository.UnitRepository;
 import java.math.BigDecimal;
@@ -18,6 +19,7 @@ import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -92,6 +94,21 @@ public class UnitService {
 				.toList();
 
 		return new UnitIndexResponse(units.size(), units);
+	}
+
+	/**
+	 * Marks one unit inactive using a row lock.
+	 *
+	 * @param unitId unit identifier
+	 * @throws UnitNotFoundException when no unit exists for the ID
+	 */
+	@Transactional
+	public void deactivateUnit(UUID unitId) {
+		Unit unit = unitRepository.findByIdForUpdate(unitId)
+				.orElseThrow(UnitNotFoundException::new);
+
+		unit.deactivate();
+		unitRepository.save(unit);
 	}
 
 	private boolean hasUnsupportedStatus(String status, Optional<StatusFilter> statusFilter) {

@@ -2,10 +2,13 @@ package com.propertybilling.repository;
 
 import com.propertybilling.dto.unit.queryresult.UnitIndexQueryResult;
 import com.propertybilling.entity.Unit;
+import jakarta.persistence.LockModeType;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -63,4 +66,18 @@ public interface UnitRepository extends JpaRepository<Unit, UUID> {
 			@Param("active") Boolean active,
 			Pageable pageable
 	);
+
+	/**
+	 * Finds one unit using a write lock for mutation workflows.
+	 *
+	 * @param unitId unit identifier
+	 * @return matching unit, or empty when it does not exist
+	 */
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("""
+			SELECT unit
+			FROM Unit unit
+			WHERE unit.id = :unitId
+			""")
+	Optional<Unit> findByIdForUpdate(@Param("unitId") UUID unitId);
 }

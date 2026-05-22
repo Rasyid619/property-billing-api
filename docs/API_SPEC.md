@@ -725,6 +725,7 @@ paths:
       tags:
         - Units
       summary: Deactivate a unit.
+      description: Marks one unit inactive while keeping existing records available for history.
       security:
         - BearerAuth: []
       parameters:
