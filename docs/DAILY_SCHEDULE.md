@@ -1,5 +1,39 @@
 # Daily Schedule
 
+## 2026-05-25 (continued) — Issue #36: POST /tenants
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #36, and created branch `rasyid-36-post-tenants`.
+- Re-read the required project docs and confirmed the current scope is the Tenant module create endpoint only.
+- Reviewed the tenant requirements, database design, and existing property/unit create patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify tenant creation stores data records only and does not create login accounts.
+- Added `TenantCreateRequest`, the tenant creation service workflow, and authenticated controller support for `POST /api/v1/tenants`.
+- Added service, controller, and PostgreSQL integration tests for successful tenant creation, validation failure, and persistence.
+- Stayed within the Tenant module scope and did not implement tenant detail, update, assignment, or login behavior.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.TenantServiceTest --tests com.propertybilling.controller.TenantControllerTest --tests com.propertybilling.integration.tenant.TenantCreateIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/36
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Open the Issue #36 pull request and wait for CI before moving to the next tenant endpoint.
+
+---
+
 ## 2026-05-25 — Issue #35: GET /tenants
 
 ## What I Did

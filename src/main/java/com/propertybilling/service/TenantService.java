@@ -1,11 +1,14 @@
 package com.propertybilling.service;
 
+import com.propertybilling.dto.tenant.TenantCreateRequest;
 import com.propertybilling.dto.tenant.TenantIndexElement;
 import com.propertybilling.dto.tenant.TenantIndexResponse;
 import com.propertybilling.dto.tenant.queryresult.TenantIndexQueryResult;
+import com.propertybilling.entity.Tenant;
 import com.propertybilling.helper.SearchPatternHelper;
 import com.propertybilling.repository.TenantRepository;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,20 @@ import lombok.RequiredArgsConstructor;
 public class TenantService {
 
 	private final TenantRepository tenantRepository;
+
+	/**
+	 * Creates a tenant data record without creating a login account.
+	 *
+	 * @param request tenant data to persist
+	 */
+	public void createTenant(TenantCreateRequest request) {
+		tenantRepository.save(new Tenant(
+				UUID.randomUUID(),
+				request.name(),
+				request.phone(),
+				request.email()
+		));
+	}
 
 	/**
 	 * Lists tenant data records using optional text search and offset pagination.

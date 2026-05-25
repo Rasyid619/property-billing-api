@@ -636,6 +636,7 @@ paths:
       tags:
         - Tenants
       summary: Create a tenant.
+      description: Creates a tenant data record only. Tenants do not have login accounts in MVP.
       security:
         - BearerAuth: []
       requestBody:
