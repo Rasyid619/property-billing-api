@@ -1,5 +1,39 @@
 # Daily Schedule
 
+## 2026-05-25 — Issue #35: GET /tenants
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #35, and created branch `rasyid-35-get-tenants`.
+- Re-read the required project docs and confirmed the current scope is the Tenant module list endpoint only.
+- Reviewed the tenant requirements, database design, and existing property/unit index patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify optional tenant search behavior.
+- Added tenant entity, repository projection query, DTOs, service workflow, and authenticated controller endpoint for `GET /api/v1/tenants`.
+- Added service, controller, and PostgreSQL integration tests for listing tenants, search filtering, validation, and authentication behavior.
+- Stayed within the Tenant module scope and did not implement tenant create, detail, update, assignment, or login behavior.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.TenantServiceTest --tests com.propertybilling.controller.TenantControllerTest --tests com.propertybilling.integration.tenant.TenantIndexIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/35
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Push the Issue #35 branch, open the pull request, and wait for CI before moving to the next tenant endpoint.
+
+---
+
 ## Purpose
 
 This schedule is used to treat the project like a full-time job while looking for a new backend engineering opportunity.

@@ -614,7 +614,7 @@ paths:
       tags:
         - Tenants
       summary: List tenants.
-      description: Returns tenant data records. Tenants do not have login accounts in MVP.
+      description: Returns tenant data records filtered by optional search text. Tenants do not have login accounts in MVP.
       security:
         - BearerAuth: []
       parameters:
@@ -628,6 +628,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TenantIndexResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
     post:
