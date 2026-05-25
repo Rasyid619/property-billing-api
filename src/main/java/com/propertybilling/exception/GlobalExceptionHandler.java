@@ -50,6 +50,11 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.CONFLICT).build();
 	}
 
+	@ExceptionHandler(TenantContactConflictException.class)
+	ResponseEntity<Void> handleTenantContactConflict() {
+		return ResponseEntity.status(HttpStatus.CONFLICT).build();
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	ResponseEntity<Void> handleMethodArgumentNotValid() {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();

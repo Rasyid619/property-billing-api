@@ -1,12 +1,17 @@
 package com.propertybilling.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.propertybilling.dto.tenant.TenantCreateRequest;
 import com.propertybilling.dto.tenant.TenantIndexResponse;
 import com.propertybilling.dto.tenant.queryresult.TenantIndexQueryResult;
+import com.propertybilling.entity.Tenant;
+import com.propertybilling.exception.TenantContactConflictException;
 import com.propertybilling.repository.TenantRepository;
 import java.util.List;
 import java.util.UUID;
@@ -14,6 +19,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 
 /*
@@ -23,6 +29,77 @@ class TenantServiceTest {
 
 	private final TenantRepository tenantRepository = Mockito.mock(TenantRepository.class);
 	private final TenantService tenantService = new TenantService(tenantRepository);
+
+	@Nested
+	/*
+	 * Service tests for creating tenants.
+	 */
+	class CreateTenant {
+
+		@Test
+		void createsTenantDataRecord() {
+			ArgumentCaptor<Tenant> tenantCaptor = ArgumentCaptor.forClass(Tenant.class);
+
+			tenantService.createTenant(new TenantCreateRequest(
+					"Budi",
+					"08123456789",
+					"budi@example.com"
+			));
+
+			verify(tenantRepository, times(1)).save(tenantCaptor.capture());
+			assertThat(tenantCaptor.getValue().getId()).isNotNull();
+			assertThat(tenantCaptor.getValue().getName()).isEqualTo("Budi");
+			assertThat(tenantCaptor.getValue().getPhone()).isEqualTo("08123456789");
+			assertThat(tenantCaptor.getValue().getEmail()).isEqualTo("budi@example.com");
+			assertThat(tenantCaptor.getValue().getCreatedAt()).isNull();
+			assertThat(tenantCaptor.getValue().getUpdatedAt()).isNull();
+		}
+
+		@Test
+		void throwsConflictWhenPhoneAlreadyExists() {
+			when(tenantRepository.existsByPhone("08123456789")).thenReturn(true);
+
+			assertThatThrownBy(() -> tenantService.createTenant(new TenantCreateRequest(
+					"Budi",
+					"08123456789",
+					"budi@example.com"
+			))).isInstanceOf(TenantContactConflictException.class);
+
+			verify(tenantRepository, times(1)).existsByPhone("08123456789");
+			verify(tenantRepository, never()).save(Mockito.any());
+		}
+
+		@Test
+		void throwsConflictWhenEmailAlreadyExists() {
+			when(tenantRepository.existsByPhone("08123456789")).thenReturn(false);
+			when(tenantRepository.existsByEmail("budi@example.com")).thenReturn(true);
+
+			assertThatThrownBy(() -> tenantService.createTenant(new TenantCreateRequest(
+					"Budi",
+					"08123456789",
+					"budi@example.com"
+			))).isInstanceOf(TenantContactConflictException.class);
+
+			verify(tenantRepository, times(1)).existsByPhone("08123456789");
+			verify(tenantRepository, times(1)).existsByEmail("budi@example.com");
+			verify(tenantRepository, never()).save(Mockito.any());
+		}
+
+		@Test
+		void throwsConflictWhenUniqueConstraintRejectsTenant() {
+			when(tenantRepository.existsByPhone("08123456789")).thenReturn(false);
+			when(tenantRepository.existsByEmail("budi@example.com")).thenReturn(false);
+			when(tenantRepository.save(Mockito.any())).thenThrow(new DataIntegrityViolationException("duplicate"));
+
+			assertThatThrownBy(() -> tenantService.createTenant(new TenantCreateRequest(
+					"Budi",
+					"08123456789",
+					"budi@example.com"
+			))).isInstanceOf(TenantContactConflictException.class);
+
+			verify(tenantRepository, times(1)).save(Mockito.any());
+		}
+	}
 
 	@Nested
 	/*

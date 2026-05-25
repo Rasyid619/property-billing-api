@@ -153,12 +153,21 @@ Stores tenant or resident data.
 | created_at | TIMESTAMP | Required |
 | updated_at | TIMESTAMP | Required |
 
+Constraints:
+
+```text
+UNIQUE(phone) WHERE phone IS NOT NULL
+UNIQUE(email) WHERE email IS NOT NULL
+```
+
 Business rules:
 
 - Tenant can be assigned to a unit.
 - Tenant data should remain even after move out.
 - Tenant does not login in MVP.
 - Tenant is not the same as Unit.
+- Tenant phone must be unique when provided.
+- Tenant email must be unique when provided.
 
 ## unit_tenants
 

@@ -1,14 +1,19 @@
 package com.propertybilling.controller;
 
+import com.propertybilling.dto.tenant.TenantCreateRequest;
 import com.propertybilling.dto.tenant.TenantIndexResponse;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.TenantService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -46,5 +51,23 @@ public class TenantController {
 		authService.authenticateAccessToken(authorizationHeader);
 
 		return ResponseEntity.ok(tenantService.listTenants(offset, limit, search));
+	}
+
+	/**
+	 * Creates a tenant data record for authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param request tenant data
+	 * @return empty created response
+	 */
+	@PostMapping
+	ResponseEntity<Void> create(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@Valid @RequestBody TenantCreateRequest request
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+		tenantService.createTenant(request);
+
+		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 }
