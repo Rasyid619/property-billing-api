@@ -628,6 +628,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TenantIndexResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
     post:
