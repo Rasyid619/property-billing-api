@@ -3,6 +3,7 @@ package com.propertybilling.controller;
 import com.propertybilling.dto.tenant.TenantCreateRequest;
 import com.propertybilling.dto.tenant.TenantIndexResponse;
 import com.propertybilling.dto.tenant.TenantShowResponse;
+import com.propertybilling.dto.tenant.TenantUpdateRequest;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.TenantService;
 import jakarta.validation.Valid;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -89,5 +91,25 @@ public class TenantController {
 		authService.authenticateAccessToken(authorizationHeader);
 
 		return ResponseEntity.ok(tenantService.getTenant(tenantId));
+	}
+
+	/**
+	 * Updates one tenant data record for authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param tenantId tenant identifier
+	 * @param request updated tenant data
+	 * @return empty no-content response
+	 */
+	@PatchMapping("/{tenant_id}")
+	ResponseEntity<Void> update(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@PathVariable("tenant_id") UUID tenantId,
+			@Valid @RequestBody TenantUpdateRequest request
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+		tenantService.updateTenant(tenantId, request);
+
+		return ResponseEntity.noContent().build();
 	}
 }

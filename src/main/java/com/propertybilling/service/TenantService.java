@@ -4,6 +4,7 @@ import com.propertybilling.dto.tenant.TenantCreateRequest;
 import com.propertybilling.dto.tenant.TenantIndexElement;
 import com.propertybilling.dto.tenant.TenantIndexResponse;
 import com.propertybilling.dto.tenant.TenantShowResponse;
+import com.propertybilling.dto.tenant.TenantUpdateRequest;
 import com.propertybilling.dto.tenant.queryresult.TenantIndexQueryResult;
 import com.propertybilling.entity.Tenant;
 import com.propertybilling.exception.TenantContactConflictException;
@@ -15,6 +16,7 @@ import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -81,12 +83,45 @@ public class TenantService {
 				.orElseThrow(TenantNotFoundException::new);
 	}
 
+	/**
+	 * Replaces one tenant data record using a row lock.
+	 *
+	 * @param tenantId tenant identifier
+	 * @param request updated tenant data
+	 * @throws TenantNotFoundException when no tenant exists for the ID
+	 * @throws TenantContactConflictException when another tenant already uses the phone or email
+	 */
+	@Transactional
+	public void updateTenant(UUID tenantId, TenantUpdateRequest request) {
+		Tenant tenant = tenantRepository.findByIdForUpdate(tenantId)
+				.orElseThrow(TenantNotFoundException::new);
+
+		if (hasDuplicatePhone(request.phone(), tenantId) || hasDuplicateEmail(request.email(), tenantId)) {
+			throw new TenantContactConflictException();
+		}
+
+		try {
+			tenant.update(request.name(), request.phone(), request.email());
+			tenantRepository.save(tenant);
+		} catch (DataIntegrityViolationException exception) {
+			throw new TenantContactConflictException();
+		}
+	}
+
 	private boolean hasDuplicatePhone(String phone) {
 		return phone != null && tenantRepository.existsByPhone(phone);
 	}
 
 	private boolean hasDuplicateEmail(String email) {
 		return email != null && tenantRepository.existsByEmail(email);
+	}
+
+	private boolean hasDuplicatePhone(String phone, UUID tenantId) {
+		return phone != null && tenantRepository.existsByPhoneAndIdNot(phone, tenantId);
+	}
+
+	private boolean hasDuplicateEmail(String email, UUID tenantId) {
+		return email != null && tenantRepository.existsByEmailAndIdNot(email, tenantId);
 	}
 
 	private TenantIndexElement toIndexElement(TenantIndexQueryResult tenant) {
