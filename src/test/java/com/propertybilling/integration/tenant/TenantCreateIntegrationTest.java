@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.propertybilling.entity.Tenant;
 import com.propertybilling.entity.User;
 import com.propertybilling.integration.AbstractIntegrationTest;
 import com.propertybilling.repository.TenantRepository;
@@ -98,5 +99,57 @@ class TenantCreateIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(status().isBadRequest());
 
 		assertThat(tenantRepository.findAll()).isEmpty();
+	}
+
+	@Test
+	void createRejectsDuplicatePhone() throws Exception {
+		String accessToken = jwtTokenService.createAccessToken(user);
+		tenantRepository.save(new Tenant(
+				UUID.fromString("00000000-0000-0000-0000-000000000301"),
+				"Andi",
+				"08123456789",
+				"andi@example.com"
+		));
+
+		mockMvc.perform(post("/api/v1/tenants")
+						.header("Authorization", "Bearer " + accessToken)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "name": "Budi",
+								  "phone": "08123456789",
+								  "email": "budi@example.com"
+								}
+								"""))
+				.andExpect(status().isConflict())
+				.andExpect(content().string(""));
+
+		assertThat(tenantRepository.findAll()).hasSize(1);
+	}
+
+	@Test
+	void createRejectsDuplicateEmail() throws Exception {
+		String accessToken = jwtTokenService.createAccessToken(user);
+		tenantRepository.save(new Tenant(
+				UUID.fromString("00000000-0000-0000-0000-000000000301"),
+				"Andi",
+				"08111111111",
+				"budi@example.com"
+		));
+
+		mockMvc.perform(post("/api/v1/tenants")
+						.header("Authorization", "Bearer " + accessToken)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "name": "Budi",
+								  "phone": "08123456789",
+								  "email": "budi@example.com"
+								}
+								"""))
+				.andExpect(status().isConflict())
+				.andExpect(content().string(""));
+
+		assertThat(tenantRepository.findAll()).hasSize(1);
 	}
 }

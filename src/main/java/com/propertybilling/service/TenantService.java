@@ -5,10 +5,12 @@ import com.propertybilling.dto.tenant.TenantIndexElement;
 import com.propertybilling.dto.tenant.TenantIndexResponse;
 import com.propertybilling.dto.tenant.queryresult.TenantIndexQueryResult;
 import com.propertybilling.entity.Tenant;
+import com.propertybilling.exception.TenantContactConflictException;
 import com.propertybilling.helper.SearchPatternHelper;
 import com.propertybilling.repository.TenantRepository;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -28,12 +30,20 @@ public class TenantService {
 	 * @param request tenant data to persist
 	 */
 	public void createTenant(TenantCreateRequest request) {
-		tenantRepository.save(new Tenant(
-				UUID.randomUUID(),
-				request.name(),
-				request.phone(),
-				request.email()
-		));
+		if (hasDuplicatePhone(request.phone()) || hasDuplicateEmail(request.email())) {
+			throw new TenantContactConflictException();
+		}
+
+		try {
+			tenantRepository.save(new Tenant(
+					UUID.randomUUID(),
+					request.name(),
+					request.phone(),
+					request.email()
+			));
+		} catch (DataIntegrityViolationException exception) {
+			throw new TenantContactConflictException();
+		}
 	}
 
 	/**
@@ -54,6 +64,14 @@ public class TenantService {
 				.toList();
 
 		return new TenantIndexResponse(tenants.size(), tenants);
+	}
+
+	private boolean hasDuplicatePhone(String phone) {
+		return phone != null && tenantRepository.existsByPhone(phone);
+	}
+
+	private boolean hasDuplicateEmail(String email) {
+		return email != null && tenantRepository.existsByEmail(email);
 	}
 
 	private TenantIndexElement toIndexElement(TenantIndexQueryResult tenant) {

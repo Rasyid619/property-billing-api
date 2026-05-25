@@ -652,6 +652,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
   /tenants/{tenant_id}:
     get:
@@ -1245,11 +1247,13 @@ components:
         phone:
           type: string
           nullable: true
+          description: Optional phone number. Must be unique when provided.
           maxLength: 30
           example: "08123456789"
         email:
           type: string
           nullable: true
+          description: Optional email address. Must be unique when provided.
           format: email
           maxLength: 150
           example: budi@example.com

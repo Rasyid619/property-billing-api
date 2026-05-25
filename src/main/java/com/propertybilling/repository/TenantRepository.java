@@ -15,6 +15,22 @@ import org.springframework.data.repository.query.Param;
 public interface TenantRepository extends JpaRepository<Tenant, UUID> {
 
 	/**
+	 * Checks whether a tenant already uses the phone number.
+	 *
+	 * @param phone phone number to check
+	 * @return true when the phone number is already used
+	 */
+	boolean existsByPhone(String phone);
+
+	/**
+	 * Checks whether a tenant already uses the email address.
+	 *
+	 * @param email email address to check
+	 * @return true when the email address is already used
+	 */
+	boolean existsByEmail(String email);
+
+	/**
 	 * Finds tenant index rows using an optional search filter.
 	 *
 	 * @param searchPattern optional LIKE pattern matched against name, phone, and email

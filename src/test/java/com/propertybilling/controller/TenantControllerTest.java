@@ -15,6 +15,7 @@ import com.propertybilling.dto.tenant.TenantIndexElement;
 import com.propertybilling.dto.tenant.TenantIndexResponse;
 import com.propertybilling.entity.User;
 import com.propertybilling.exception.GlobalExceptionHandler;
+import com.propertybilling.exception.TenantContactConflictException;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.TenantService;
 import java.util.List;
@@ -130,6 +131,30 @@ class TenantControllerTest {
 					.andExpect(content().string(""));
 
 			verifyNoInteractions(authService, tenantService);
+		}
+
+		@Test
+		void returnsConflictWhenPhoneOrEmailAlreadyExists() throws Exception {
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new TenantContactConflictException())
+					.when(tenantService)
+					.createTenant(Mockito.any());
+
+			mockMvc.perform(post("/api/v1/tenants")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "name": "Budi",
+									  "phone": "08123456789",
+									  "email": "budi@example.com"
+									}
+									"""))
+					.andExpect(status().isConflict())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(tenantService, times(1)).createTenant(Mockito.any());
 		}
 	}
 

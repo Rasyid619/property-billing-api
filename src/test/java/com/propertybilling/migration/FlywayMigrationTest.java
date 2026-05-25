@@ -1,6 +1,7 @@
 package com.propertybilling.migration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -197,6 +198,46 @@ class FlywayMigrationTest {
 		assertThat(userUpdatedAt).isNotNull();
 		assertThat(propertyCreatedAt).isNotNull();
 		assertThat(propertyUpdatedAt).isNotNull();
+	}
+
+	@Test
+	void tenantContactValuesAreUniqueWhenProvided() throws SQLException {
+		try (var connection = dataSource.getConnection()) {
+			try (var insert = connection.prepareStatement("""
+					INSERT INTO tenants (
+					    id,
+					    name,
+					    phone,
+					    email
+					)
+					VALUES (
+					    ?,
+					    ?,
+					    ?,
+					    ?
+					)
+					""")) {
+				insert.setObject(1, java.util.UUID.fromString("00000000-0000-0000-0000-000000000301"));
+				insert.setString(2, "Budi");
+				insert.setString(3, "08123456789");
+				insert.setString(4, "budi@example.com");
+				insert.executeUpdate();
+
+				insert.setObject(1, java.util.UUID.fromString("00000000-0000-0000-0000-000000000302"));
+				insert.setString(2, "Andi");
+				insert.setString(3, "08123456789");
+				insert.setString(4, "andi@example.com");
+
+				assertThatThrownBy(insert::executeUpdate).isInstanceOf(SQLException.class);
+
+				insert.setObject(1, java.util.UUID.fromString("00000000-0000-0000-0000-000000000303"));
+				insert.setString(2, "Sari");
+				insert.setString(3, "08111111111");
+				insert.setString(4, "budi@example.com");
+
+				assertThatThrownBy(insert::executeUpdate).isInstanceOf(SQLException.class);
+			}
+		}
 	}
 
 	@Test
