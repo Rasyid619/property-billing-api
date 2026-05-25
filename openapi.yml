@@ -568,7 +568,7 @@ paths:
       tags:
         - Tenants
       summary: List tenants.
-      description: Returns tenant data records. Tenants do not have login accounts in MVP.
+      description: Returns tenant data records filtered by optional search text. Tenants do not have login accounts in MVP.
       security:
         - BearerAuth: []
       parameters:
