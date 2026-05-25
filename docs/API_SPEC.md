@@ -680,6 +680,7 @@ paths:
       tags:
         - Tenants
       summary: Update a tenant.
+      description: Replaces one tenant data record's name, phone, and email. Duplicate phone or email values are rejected.
       security:
         - BearerAuth: []
       parameters:
@@ -699,6 +700,8 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
 
   /unit-tenant-assignments/{assignmentId}/move-out:
     patch:

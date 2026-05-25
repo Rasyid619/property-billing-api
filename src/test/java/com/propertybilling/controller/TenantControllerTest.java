@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -50,6 +51,125 @@ class TenantControllerTest {
 	@Autowired
 	TenantControllerTest(MockMvc mockMvc) {
 		this.mockMvc = mockMvc;
+	}
+
+	@Nested
+	/*
+	 * Web-layer tests for updating tenants.
+	 */
+	class UpdateTenant {
+
+		@Test
+		void returnsNoContent() throws Exception {
+			UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000301");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+
+			mockMvc.perform(patch("/api/v1/tenants/00000000-0000-0000-0000-000000000301")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "name": "Andi",
+									  "phone": "08111111111",
+									  "email": "andi@example.com"
+									}
+									"""))
+					.andExpect(status().isNoContent())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(tenantService, times(1)).updateTenant(Mockito.eq(tenantId), Mockito.argThat(request ->
+					"Andi".equals(request.name())
+							&& "08111111111".equals(request.phone())
+							&& "andi@example.com".equals(request.email())
+			));
+		}
+
+		@Test
+		void rejectsBlankName() throws Exception {
+			mockMvc.perform(patch("/api/v1/tenants/00000000-0000-0000-0000-000000000301")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "name": " ",
+									  "phone": "08111111111",
+									  "email": "andi@example.com"
+									}
+									"""))
+					.andExpect(status().isBadRequest())
+					.andExpect(content().string(""));
+
+			verifyNoInteractions(authService, tenantService);
+		}
+
+		@Test
+		void rejectsInvalidEmail() throws Exception {
+			mockMvc.perform(patch("/api/v1/tenants/00000000-0000-0000-0000-000000000301")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "name": "Andi",
+									  "phone": "08111111111",
+									  "email": "not-an-email"
+									}
+									"""))
+					.andExpect(status().isBadRequest())
+					.andExpect(content().string(""));
+
+			verifyNoInteractions(authService, tenantService);
+		}
+
+		@Test
+		void returnsNotFoundWhenTenantDoesNotExist() throws Exception {
+			UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new TenantNotFoundException())
+					.when(tenantService)
+					.updateTenant(Mockito.eq(tenantId), Mockito.any());
+
+			mockMvc.perform(patch("/api/v1/tenants/00000000-0000-0000-0000-000000000999")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "name": "Andi",
+									  "phone": "08111111111",
+									  "email": "andi@example.com"
+									}
+									"""))
+					.andExpect(status().isNotFound())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(tenantService, times(1)).updateTenant(Mockito.eq(tenantId), Mockito.any());
+		}
+
+		@Test
+		void returnsConflictWhenPhoneOrEmailAlreadyExists() throws Exception {
+			UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000301");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new TenantContactConflictException())
+					.when(tenantService)
+					.updateTenant(Mockito.eq(tenantId), Mockito.any());
+
+			mockMvc.perform(patch("/api/v1/tenants/00000000-0000-0000-0000-000000000301")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "name": "Andi",
+									  "phone": "08111111111",
+									  "email": "andi@example.com"
+									}
+									"""))
+					.andExpect(status().isConflict())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(tenantService, times(1)).updateTenant(Mockito.eq(tenantId), Mockito.any());
+		}
 	}
 
 	@Nested

@@ -77,4 +77,17 @@ public class Tenant {
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
 	}
+
+	/**
+	 * Replaces tenant data fields.
+	 *
+	 * @param name new tenant display name
+	 * @param phone new optional phone number
+	 * @param email new optional email address
+	 */
+	public void update(String name, String phone, String email) {
+		this.name = name;
+		this.phone = phone;
+		this.email = email;
+	}
 }

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import com.propertybilling.dto.tenant.TenantCreateRequest;
 import com.propertybilling.dto.tenant.TenantIndexResponse;
 import com.propertybilling.dto.tenant.TenantShowResponse;
+import com.propertybilling.dto.tenant.TenantUpdateRequest;
 import com.propertybilling.dto.tenant.queryresult.TenantIndexQueryResult;
 import com.propertybilling.entity.Tenant;
 import com.propertybilling.exception.TenantContactConflictException;
@@ -102,6 +103,118 @@ class TenantServiceTest {
 			))).isInstanceOf(TenantContactConflictException.class);
 
 			verify(tenantRepository, times(1)).save(Mockito.any());
+		}
+	}
+
+	@Nested
+	/*
+	 * Service tests for updating tenants.
+	 */
+	class UpdateTenant {
+
+		@Test
+		void updatesTenantFieldsWithWriteLock() {
+			UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000301");
+			Tenant tenant = buildEntity(
+					"00000000-0000-0000-0000-000000000301",
+					"Budi",
+					"08123456789",
+					"budi@example.com"
+			);
+			when(tenantRepository.findByIdForUpdate(tenantId)).thenReturn(Optional.of(tenant));
+			when(tenantRepository.existsByPhoneAndIdNot("08111111111", tenantId)).thenReturn(false);
+			when(tenantRepository.existsByEmailAndIdNot("andi@example.com", tenantId)).thenReturn(false);
+
+			tenantService.updateTenant(tenantId, new TenantUpdateRequest(
+					"Andi",
+					"08111111111",
+					"andi@example.com"
+			));
+
+			assertThat(tenant.getName()).isEqualTo("Andi");
+			assertThat(tenant.getPhone()).isEqualTo("08111111111");
+			assertThat(tenant.getEmail()).isEqualTo("andi@example.com");
+			verify(tenantRepository, times(1)).findByIdForUpdate(tenantId);
+			verify(tenantRepository, times(1)).existsByPhoneAndIdNot("08111111111", tenantId);
+			verify(tenantRepository, times(1)).existsByEmailAndIdNot("andi@example.com", tenantId);
+			verify(tenantRepository, times(1)).save(tenant);
+		}
+
+		@Test
+		void throwsNotFoundWhenTenantDoesNotExist() {
+			UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(tenantRepository.findByIdForUpdate(tenantId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> tenantService.updateTenant(
+					tenantId,
+					new TenantUpdateRequest("Andi", "08111111111", "andi@example.com")
+			)).isInstanceOf(TenantNotFoundException.class);
+
+			verify(tenantRepository, times(1)).findByIdForUpdate(tenantId);
+			verify(tenantRepository, never()).save(Mockito.any());
+		}
+
+		@Test
+		void throwsConflictWhenPhoneAlreadyExists() {
+			UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000301");
+			when(tenantRepository.findByIdForUpdate(tenantId)).thenReturn(Optional.of(buildEntity(
+					"00000000-0000-0000-0000-000000000301",
+					"Budi",
+					"08123456789",
+					"budi@example.com"
+			)));
+			when(tenantRepository.existsByPhoneAndIdNot("08111111111", tenantId)).thenReturn(true);
+
+			assertThatThrownBy(() -> tenantService.updateTenant(
+					tenantId,
+					new TenantUpdateRequest("Andi", "08111111111", "andi@example.com")
+			)).isInstanceOf(TenantContactConflictException.class);
+
+			verify(tenantRepository, times(1)).existsByPhoneAndIdNot("08111111111", tenantId);
+			verify(tenantRepository, never()).save(Mockito.any());
+		}
+
+		@Test
+		void throwsConflictWhenEmailAlreadyExists() {
+			UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000301");
+			when(tenantRepository.findByIdForUpdate(tenantId)).thenReturn(Optional.of(buildEntity(
+					"00000000-0000-0000-0000-000000000301",
+					"Budi",
+					"08123456789",
+					"budi@example.com"
+			)));
+			when(tenantRepository.existsByPhoneAndIdNot("08111111111", tenantId)).thenReturn(false);
+			when(tenantRepository.existsByEmailAndIdNot("andi@example.com", tenantId)).thenReturn(true);
+
+			assertThatThrownBy(() -> tenantService.updateTenant(
+					tenantId,
+					new TenantUpdateRequest("Andi", "08111111111", "andi@example.com")
+			)).isInstanceOf(TenantContactConflictException.class);
+
+			verify(tenantRepository, times(1)).existsByEmailAndIdNot("andi@example.com", tenantId);
+			verify(tenantRepository, never()).save(Mockito.any());
+		}
+
+		@Test
+		void throwsConflictWhenUniqueConstraintRejectsTenant() {
+			UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000301");
+			Tenant tenant = buildEntity(
+					"00000000-0000-0000-0000-000000000301",
+					"Budi",
+					"08123456789",
+					"budi@example.com"
+			);
+			when(tenantRepository.findByIdForUpdate(tenantId)).thenReturn(Optional.of(tenant));
+			when(tenantRepository.existsByPhoneAndIdNot("08111111111", tenantId)).thenReturn(false);
+			when(tenantRepository.existsByEmailAndIdNot("andi@example.com", tenantId)).thenReturn(false);
+			when(tenantRepository.save(tenant)).thenThrow(new DataIntegrityViolationException("duplicate"));
+
+			assertThatThrownBy(() -> tenantService.updateTenant(
+					tenantId,
+					new TenantUpdateRequest("Andi", "08111111111", "andi@example.com")
+			)).isInstanceOf(TenantContactConflictException.class);
+
+			verify(tenantRepository, times(1)).save(tenant);
 		}
 	}
 

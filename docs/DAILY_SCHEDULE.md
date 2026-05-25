@@ -1,5 +1,39 @@
 # Daily Schedule
 
+## 2026-05-25 (continued) — Issue #38: PATCH /tenants/{tenant_id}
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #38, and created branch `rasyid-38-patch-tenants-tenant-id`.
+- Re-read the required project docs and confirmed the current scope is the Tenant module update endpoint only.
+- Reviewed the tenant requirements, database design, uniqueness rules, and existing create/detail patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify tenant update replaces name, phone, and email, and rejects duplicate contact values with `409`.
+- Added `TenantUpdateRequest`, tenant entity update behavior, row-locked repository lookup, duplicate contact checks, and authenticated controller support for `PATCH /api/v1/tenants/{tenant_id}`.
+- Added service, controller, and PostgreSQL integration tests for successful tenant update, validation failure, tenant-not-found behavior, and duplicate phone/email conflicts.
+- Stayed within the Tenant module scope and did not implement tenant assignment or login behavior.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.TenantServiceTest --tests com.propertybilling.controller.TenantControllerTest --tests com.propertybilling.integration.tenant.TenantUpdateIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/38
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Open the Issue #38 pull request and wait for CI before moving to the next tenant endpoint.
+
+---
+
 ## 2026-05-25 (continued) — Issue #37: GET /tenants/{tenant_id}
 
 ## What I Did
