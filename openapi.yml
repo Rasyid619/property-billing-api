@@ -614,6 +614,7 @@ paths:
       tags:
         - Tenants
       summary: Get tenant detail.
+      description: Returns one tenant data record. Tenants do not have login accounts in MVP.
       security:
         - BearerAuth: []
       parameters:

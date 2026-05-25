@@ -9,11 +9,15 @@ import static org.mockito.Mockito.when;
 
 import com.propertybilling.dto.tenant.TenantCreateRequest;
 import com.propertybilling.dto.tenant.TenantIndexResponse;
+import com.propertybilling.dto.tenant.TenantShowResponse;
 import com.propertybilling.dto.tenant.queryresult.TenantIndexQueryResult;
 import com.propertybilling.entity.Tenant;
 import com.propertybilling.exception.TenantContactConflictException;
+import com.propertybilling.exception.TenantNotFoundException;
 import com.propertybilling.repository.TenantRepository;
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -103,6 +107,43 @@ class TenantServiceTest {
 
 	@Nested
 	/*
+	 * Service tests for showing one tenant.
+	 */
+	class ShowTenant {
+
+		@Test
+		void returnsTenant() {
+			UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000301");
+			when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(buildEntity(
+					"00000000-0000-0000-0000-000000000301",
+					"Budi",
+					"08123456789",
+					"budi@example.com"
+			)));
+
+			TenantShowResponse response = tenantService.getTenant(tenantId);
+
+			assertThat(response.id()).isEqualTo(tenantId);
+			assertThat(response.name()).isEqualTo("Budi");
+			assertThat(response.phone()).isEqualTo("08123456789");
+			assertThat(response.email()).isEqualTo("budi@example.com");
+			verify(tenantRepository, times(1)).findById(tenantId);
+		}
+
+		@Test
+		void throwsNotFoundWhenTenantDoesNotExist() {
+			UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(tenantRepository.findById(tenantId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> tenantService.getTenant(tenantId))
+					.isInstanceOf(TenantNotFoundException.class);
+
+			verify(tenantRepository, times(1)).findById(tenantId);
+		}
+	}
+
+	@Nested
+	/*
 	 * Service tests for listing tenants.
 	 */
 	class IndexTenants {
@@ -175,5 +216,22 @@ class TenantServiceTest {
 			String email
 	) {
 		return new TenantIndexQueryResult(UUID.fromString(id), name, phone, email);
+	}
+
+	private Tenant buildEntity(
+			String id,
+			String name,
+			String phone,
+			String email
+	) {
+		OffsetDateTime timestamp = OffsetDateTime.parse("2026-05-25T09:00:00Z");
+		return new Tenant(
+				UUID.fromString(id),
+				name,
+				phone,
+				email,
+				timestamp,
+				timestamp
+		);
 	}
 }

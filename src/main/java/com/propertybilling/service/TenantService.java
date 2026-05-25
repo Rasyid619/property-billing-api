@@ -3,9 +3,11 @@ package com.propertybilling.service;
 import com.propertybilling.dto.tenant.TenantCreateRequest;
 import com.propertybilling.dto.tenant.TenantIndexElement;
 import com.propertybilling.dto.tenant.TenantIndexResponse;
+import com.propertybilling.dto.tenant.TenantShowResponse;
 import com.propertybilling.dto.tenant.queryresult.TenantIndexQueryResult;
 import com.propertybilling.entity.Tenant;
 import com.propertybilling.exception.TenantContactConflictException;
+import com.propertybilling.exception.TenantNotFoundException;
 import com.propertybilling.helper.SearchPatternHelper;
 import com.propertybilling.repository.TenantRepository;
 import java.util.List;
@@ -66,6 +68,19 @@ public class TenantService {
 		return new TenantIndexResponse(tenants.size(), tenants);
 	}
 
+	/**
+	 * Returns one tenant data record by ID.
+	 *
+	 * @param tenantId tenant identifier
+	 * @return tenant detail response
+	 * @throws TenantNotFoundException when no tenant exists for the ID
+	 */
+	public TenantShowResponse getTenant(UUID tenantId) {
+		return tenantRepository.findById(tenantId)
+				.map(this::toShowResponse)
+				.orElseThrow(TenantNotFoundException::new);
+	}
+
 	private boolean hasDuplicatePhone(String phone) {
 		return phone != null && tenantRepository.existsByPhone(phone);
 	}
@@ -80,6 +95,15 @@ public class TenantService {
 				tenant.name(),
 				tenant.phone(),
 				tenant.email()
+		);
+	}
+
+	private TenantShowResponse toShowResponse(Tenant tenant) {
+		return new TenantShowResponse(
+				tenant.getId(),
+				tenant.getName(),
+				tenant.getPhone(),
+				tenant.getEmail()
 		);
 	}
 }

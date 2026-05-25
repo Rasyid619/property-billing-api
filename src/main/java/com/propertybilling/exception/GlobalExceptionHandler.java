@@ -45,6 +45,11 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 	}
 
+	@ExceptionHandler(TenantNotFoundException.class)
+	ResponseEntity<Void> handleTenantNotFound() {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+	}
+
 	@ExceptionHandler(UnitNumberConflictException.class)
 	ResponseEntity<Void> handleUnitNumberConflict() {
 		return ResponseEntity.status(HttpStatus.CONFLICT).build();

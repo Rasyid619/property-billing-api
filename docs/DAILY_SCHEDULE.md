@@ -1,5 +1,39 @@
 # Daily Schedule
 
+## 2026-05-25 (continued) — Issue #37: GET /tenants/{tenant_id}
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #37, and created branch `rasyid-37-get-tenants-tenant-id`.
+- Re-read the required project docs and confirmed the current scope is the Tenant module detail endpoint only.
+- Reviewed the tenant requirements, database design, and existing tenant/property detail patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify tenant detail returns data records only and does not involve tenant login accounts.
+- Added `TenantShowResponse`, a tenant not-found exception mapped to `404`, the tenant detail service workflow, and authenticated controller support for `GET /api/v1/tenants/{tenant_id}`.
+- Added service, controller, and PostgreSQL integration tests for successful tenant detail retrieval and tenant-not-found behavior.
+- Stayed within the Tenant module scope and did not implement tenant update, assignment, or login behavior.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.TenantServiceTest --tests com.propertybilling.controller.TenantControllerTest --tests com.propertybilling.integration.tenant.TenantShowIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/37
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Open the Issue #37 pull request and wait for CI before moving to the next tenant endpoint.
+
+---
+
 ## 2026-05-25 (continued) — Issue #36: POST /tenants
 
 ## What I Did

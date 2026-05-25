@@ -13,9 +13,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.propertybilling.config.SecurityConfig;
 import com.propertybilling.dto.tenant.TenantIndexElement;
 import com.propertybilling.dto.tenant.TenantIndexResponse;
+import com.propertybilling.dto.tenant.TenantShowResponse;
 import com.propertybilling.entity.User;
 import com.propertybilling.exception.GlobalExceptionHandler;
 import com.propertybilling.exception.TenantContactConflictException;
+import com.propertybilling.exception.TenantNotFoundException;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.TenantService;
 import java.util.List;
@@ -48,6 +50,53 @@ class TenantControllerTest {
 	@Autowired
 	TenantControllerTest(MockMvc mockMvc) {
 		this.mockMvc = mockMvc;
+	}
+
+	@Nested
+	/*
+	 * Web-layer tests for showing one tenant.
+	 */
+	class ShowTenant {
+
+		@Test
+		void returnsTenant() throws Exception {
+			UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000301");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			when(tenantService.getTenant(tenantId)).thenReturn(new TenantShowResponse(
+					tenantId,
+					"Budi",
+					"08123456789",
+					"budi@example.com"
+			));
+
+			mockMvc.perform(get("/api/v1/tenants/00000000-0000-0000-0000-000000000301")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isOk())
+					.andExpect(jsonPath("$.id").value("00000000-0000-0000-0000-000000000301"))
+					.andExpect(jsonPath("$.name").value("Budi"))
+					.andExpect(jsonPath("$.phone").value("08123456789"))
+					.andExpect(jsonPath("$.email").value("budi@example.com"))
+					.andExpect(jsonPath("$.created_at").doesNotExist())
+					.andExpect(jsonPath("$.updated_at").doesNotExist());
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(tenantService, times(1)).getTenant(tenantId);
+		}
+
+		@Test
+		void returnsNotFoundWhenTenantDoesNotExist() throws Exception {
+			UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			when(tenantService.getTenant(tenantId)).thenThrow(new TenantNotFoundException());
+
+			mockMvc.perform(get("/api/v1/tenants/00000000-0000-0000-0000-000000000999")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNotFound())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(tenantService, times(1)).getTenant(tenantId);
+		}
 	}
 
 	@Nested
