@@ -816,6 +816,7 @@ paths:
       tags:
         - Tenant Assignments
       summary: Get the active tenant for a unit.
+      description: Returns the active tenant assignment for a unit.
       security:
         - BearerAuth: []
       parameters:
