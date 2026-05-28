@@ -118,9 +118,12 @@ public class TenantAssignmentService {
 	@Transactional
 	public void moveOutTenantAssignment(UUID assignmentId) {
 		TenantAssignment tenantAssignment = tenantAssignmentRepository.findByIdForUpdate(assignmentId)
-				.filter(TenantAssignment::isActive)
-				.filter(assignment -> assignment.getEndDate() == null)
 				.orElseThrow(TenantAssignmentNotFoundException::new);
+
+		if (!tenantAssignment.isActive() || tenantAssignment.getEndDate() != null) {
+			throw new TenantAssignmentNotFoundException();
+		}
+
 		LocalDate endDate = LocalDate.now();
 
 		if (endDate.isBefore(tenantAssignment.getStartDate())) {
