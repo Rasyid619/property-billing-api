@@ -1,5 +1,39 @@
 # Daily Schedule
 
+## 2026-05-28 — Issue #43: GET /units/{unit_id}/active-tenant
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #43, and created branch `rasyid-43-get-units-unit-id-active-tenant`.
+- Re-read the required project docs and confirmed the current scope is only `GET /units/{unit_id}/active-tenant`.
+- Reviewed the unit, tenant, and tenant assignment requirements, database design, existing OpenAPI contract, and current unit/tenant implementation patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to add the active tenant assignment behavior description.
+- Added the tenant assignment entity, repository lookup, response DTO, service workflow, authenticated controller endpoint, and not-found exception mapping for active tenant lookup.
+- Added service, controller, and PostgreSQL integration tests for successful active tenant retrieval, missing unit behavior, missing active assignment behavior, authentication, and inactive assignment filtering.
+- Stayed within the Issue #43 tenant assignment endpoint scope and did not implement other tenant assignment endpoints or future tenant login behavior.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.TenantAssignmentServiceTest --tests com.propertybilling.controller.TenantAssignmentControllerTest --tests com.propertybilling.integration.tenantassignment.TenantAssignmentActiveTenantIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/43
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Push the Issue #43 branch, open the pull request, and wait for CI before moving to the next endpoint.
+
+---
+
 ## 2026-05-25 (continued) — Issue #38: PATCH /tenants/{tenant_id}
 
 ## What I Did
