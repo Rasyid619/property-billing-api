@@ -5,15 +5,19 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.propertybilling.config.SecurityConfig;
+import com.propertybilling.dto.tenantassignment.TenantAssignmentCreateRequest;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentShowResponse;
 import com.propertybilling.entity.User;
 import com.propertybilling.exception.GlobalExceptionHandler;
+import com.propertybilling.exception.TenantAssignmentConflictException;
 import com.propertybilling.exception.TenantAssignmentNotFoundException;
+import com.propertybilling.exception.TenantNotFoundException;
 import com.propertybilling.exception.UnitNotFoundException;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.TenantAssignmentService;
@@ -25,6 +29,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -46,6 +51,145 @@ class TenantAssignmentControllerTest {
 	@Autowired
 	TenantAssignmentControllerTest(MockMvc mockMvc) {
 		this.mockMvc = mockMvc;
+	}
+
+	@Nested
+	/*
+	 * Web-layer tests for creating tenant assignments.
+	 */
+	class CreateTenantAssignment {
+
+		@Test
+		void returnsCreated() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000301");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+
+			mockMvc.perform(post("/api/v1/units/00000000-0000-0000-0000-000000000201/tenant-assignments")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "tenant_id": "00000000-0000-0000-0000-000000000301",
+									  "start_date": "2026-05-01"
+									}
+									"""))
+					.andExpect(status().isCreated())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(tenantAssignmentService, times(1)).createTenantAssignment(
+					Mockito.eq(unitId),
+					Mockito.argThat((TenantAssignmentCreateRequest request) ->
+							tenantId.equals(request.tenantId())
+									&& LocalDate.parse("2026-05-01").equals(request.startDate())
+					)
+			);
+		}
+
+		@Test
+		void rejectsMissingTenantId() throws Exception {
+			mockMvc.perform(post("/api/v1/units/00000000-0000-0000-0000-000000000201/tenant-assignments")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "start_date": "2026-05-01"
+									}
+									"""))
+					.andExpect(status().isBadRequest())
+					.andExpect(content().string(""));
+
+			verifyNoInteractions(authService, tenantAssignmentService);
+		}
+
+		@Test
+		void rejectsMissingStartDate() throws Exception {
+			mockMvc.perform(post("/api/v1/units/00000000-0000-0000-0000-000000000201/tenant-assignments")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "tenant_id": "00000000-0000-0000-0000-000000000301"
+									}
+									"""))
+					.andExpect(status().isBadRequest())
+					.andExpect(content().string(""));
+
+			verifyNoInteractions(authService, tenantAssignmentService);
+		}
+
+		@Test
+		void returnsNotFoundWhenUnitDoesNotExist() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new UnitNotFoundException())
+					.when(tenantAssignmentService)
+					.createTenantAssignment(Mockito.eq(unitId), Mockito.any());
+
+			mockMvc.perform(post("/api/v1/units/00000000-0000-0000-0000-000000000999/tenant-assignments")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "tenant_id": "00000000-0000-0000-0000-000000000301",
+									  "start_date": "2026-05-01"
+									}
+									"""))
+					.andExpect(status().isNotFound())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(tenantAssignmentService, times(1)).createTenantAssignment(Mockito.eq(unitId), Mockito.any());
+		}
+
+		@Test
+		void returnsNotFoundWhenTenantDoesNotExist() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new TenantNotFoundException())
+					.when(tenantAssignmentService)
+					.createTenantAssignment(Mockito.eq(unitId), Mockito.any());
+
+			mockMvc.perform(post("/api/v1/units/00000000-0000-0000-0000-000000000201/tenant-assignments")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "tenant_id": "00000000-0000-0000-0000-000000000999",
+									  "start_date": "2026-05-01"
+									}
+									"""))
+					.andExpect(status().isNotFound())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(tenantAssignmentService, times(1)).createTenantAssignment(Mockito.eq(unitId), Mockito.any());
+		}
+
+		@Test
+		void returnsConflictWhenUnitAlreadyHasActiveTenantAssignment() throws Exception {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new TenantAssignmentConflictException())
+					.when(tenantAssignmentService)
+					.createTenantAssignment(Mockito.eq(unitId), Mockito.any());
+
+			mockMvc.perform(post("/api/v1/units/00000000-0000-0000-0000-000000000201/tenant-assignments")
+							.header("Authorization", "Bearer access-token")
+							.contentType(MediaType.APPLICATION_JSON)
+							.content("""
+									{
+									  "tenant_id": "00000000-0000-0000-0000-000000000301",
+									  "start_date": "2026-05-01"
+									}
+									"""))
+					.andExpect(status().isConflict())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(tenantAssignmentService, times(1)).createTenantAssignment(Mockito.eq(unitId), Mockito.any());
+		}
 	}
 
 	@Nested

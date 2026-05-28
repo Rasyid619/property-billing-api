@@ -1,5 +1,40 @@
 # Daily Schedule
 
+## 2026-05-28 — Issue #45: POST /units/{unit_id}/tenant-assignments
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #45, and created branch `rasyid-45-post-units-unit-id-tenant-assignments`.
+- Re-read the required project docs and confirmed the current scope is only `POST /units/{unit_id}/tenant-assignments`.
+- Reviewed the tenant assignment requirements, database design, existing OpenAPI contract, and current unit/tenant assignment patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify tenant assignment create request fields.
+- Added `TenantAssignmentCreateRequest`, active assignment conflict handling, authenticated controller support, and service logic that locks the unit row before assignment creation.
+- Added a PostgreSQL partial unique index to enforce one active tenant assignment per unit at the database layer.
+- Added service, controller, integration, and migration tests for successful assignment, request validation, missing unit/tenant behavior, duplicate active assignment conflict, and database constraint coverage.
+- Stayed within the Issue #45 tenant assignment create endpoint scope and did not implement move-out or history endpoints.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.TenantAssignmentServiceTest --tests com.propertybilling.controller.TenantAssignmentControllerTest --tests com.propertybilling.integration.tenantassignment.TenantAssignmentCreateIntegrationTest --tests com.propertybilling.migration.FlywayMigrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/45
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Wait for Issue #45 CI before moving to the next tenant assignment endpoint.
+
+---
+
 ## 2026-05-28 — Issue #43: GET /units/{unit_id}/active-tenant
 
 ## What I Did

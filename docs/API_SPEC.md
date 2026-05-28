@@ -1061,9 +1061,11 @@ components:
         tenant_id:
           type: string
           format: uuid
+          description: UUID of the tenant to assign to the unit.
         start_date:
           type: string
           format: date
+          description: First date of the tenant assignment.
           example: "2026-05-01"
       required:
         - tenant_id
