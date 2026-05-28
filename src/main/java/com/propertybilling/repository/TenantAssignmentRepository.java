@@ -1,6 +1,7 @@
 package com.propertybilling.repository;
 
 import com.propertybilling.entity.TenantAssignment;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,6 +27,22 @@ public interface TenantAssignmentRepository extends JpaRepository<TenantAssignme
 			AND tenantAssignment.endDate IS NULL
 			""")
 	boolean existsActiveByUnitId(@Param("unitId") UUID unitId);
+
+	/**
+	 * Finds tenant assignment history for one unit.
+	 *
+	 * @param unitId assigned unit identifier
+	 * @return matching assignments ordered by newest start date first
+	 */
+	@Query("""
+			SELECT tenantAssignment
+			FROM TenantAssignment tenantAssignment
+			JOIN FETCH tenantAssignment.unit unit
+			JOIN FETCH tenantAssignment.tenant tenant
+			WHERE unit.id = :unitId
+			ORDER BY tenantAssignment.startDate DESC, tenantAssignment.id DESC
+			""")
+	List<TenantAssignment> findHistoryByUnitId(@Param("unitId") UUID unitId);
 
 	/**
 	 * Finds the active assignment for one unit with unit and tenant references loaded.

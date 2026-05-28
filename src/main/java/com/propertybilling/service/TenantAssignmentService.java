@@ -1,6 +1,8 @@
 package com.propertybilling.service;
 
 import com.propertybilling.dto.tenantassignment.TenantAssignmentCreateRequest;
+import com.propertybilling.dto.tenantassignment.TenantAssignmentIndexElement;
+import com.propertybilling.dto.tenantassignment.TenantAssignmentIndexResponse;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentShowResponse;
 import com.propertybilling.entity.Tenant;
 import com.propertybilling.entity.TenantAssignment;
@@ -12,6 +14,7 @@ import com.propertybilling.exception.UnitNotFoundException;
 import com.propertybilling.repository.TenantAssignmentRepository;
 import com.propertybilling.repository.TenantRepository;
 import com.propertybilling.repository.UnitRepository;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -80,6 +83,38 @@ public class TenantAssignmentService {
 		return tenantAssignmentRepository.findActiveByUnitId(unitId)
 				.map(this::toShowResponse)
 				.orElseThrow(TenantAssignmentNotFoundException::new);
+	}
+
+	/**
+	 * Lists tenant assignment history for one unit.
+	 *
+	 * @param unitId unit identifier
+	 * @return tenant assignment index response
+	 * @throws UnitNotFoundException when no unit exists for the ID
+	 */
+	@Transactional(readOnly = true)
+	public TenantAssignmentIndexResponse listTenantAssignments(UUID unitId) {
+		if (!unitRepository.existsById(unitId)) {
+			throw new UnitNotFoundException();
+		}
+
+		List<TenantAssignmentIndexElement> tenantAssignments = tenantAssignmentRepository.findHistoryByUnitId(unitId)
+				.stream()
+				.map(this::toIndexElement)
+				.toList();
+
+		return new TenantAssignmentIndexResponse(tenantAssignments.size(), tenantAssignments);
+	}
+
+	private TenantAssignmentIndexElement toIndexElement(TenantAssignment tenantAssignment) {
+		return new TenantAssignmentIndexElement(
+				tenantAssignment.getId(),
+				tenantAssignment.getUnit().getId(),
+				tenantAssignment.getTenant().getId(),
+				tenantAssignment.getStartDate(),
+				tenantAssignment.getEndDate(),
+				tenantAssignment.isActive()
+		);
 	}
 
 	private TenantAssignmentShowResponse toShowResponse(TenantAssignment tenantAssignment) {

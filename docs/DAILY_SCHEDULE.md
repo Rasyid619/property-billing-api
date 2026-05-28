@@ -1,5 +1,39 @@
 # Daily Schedule
 
+## 2026-05-28 — Issue #44: GET /units/{unit_id}/tenant-assignments
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #44, and created branch `rasyid-44-get-units-unit-id-tenant-assignments`.
+- Re-read the required project docs and confirmed the current scope is only `GET /units/{unit_id}/tenant-assignments`.
+- Reviewed tenant assignment requirements, database design, existing OpenAPI contract, and current tenant assignment create/active lookup patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify tenant assignment history list behavior.
+- Added tenant assignment index DTOs, repository history lookup, service workflow, and authenticated controller endpoint for listing assignment history by unit.
+- Added service, controller, and PostgreSQL integration tests for assignment history response shape, newest-first ordering, empty history, and missing-unit behavior.
+- Stayed within the Issue #44 tenant assignment history endpoint scope and did not implement move-out or other future endpoints.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.TenantAssignmentServiceTest --tests com.propertybilling.controller.TenantAssignmentControllerTest --tests com.propertybilling.integration.tenantassignment.TenantAssignmentIndexIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/44
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Wait for Issue #44 CI before moving to the next tenant assignment endpoint.
+
+---
+
 ## 2026-05-28 — Issue #45: POST /units/{unit_id}/tenant-assignments
 
 ## What I Did

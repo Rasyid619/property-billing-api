@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.propertybilling.dto.tenantassignment.TenantAssignmentCreateRequest;
+import com.propertybilling.dto.tenantassignment.TenantAssignmentIndexResponse;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentShowResponse;
 import com.propertybilling.entity.Property;
 import com.propertybilling.entity.Tenant;
@@ -22,6 +23,7 @@ import com.propertybilling.repository.TenantRepository;
 import com.propertybilling.repository.UnitRepository;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
@@ -211,6 +213,78 @@ class TenantAssignmentServiceTest {
 
 			verify(unitRepository, times(1)).existsById(unitId);
 			verify(tenantAssignmentRepository, times(1)).findActiveByUnitId(unitId);
+		}
+	}
+
+	@Nested
+	/*
+	 * Service tests for listing tenant assignment history.
+	 */
+	class ListTenantAssignments {
+
+		@Test
+		void listsTenantAssignmentHistory() {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			when(unitRepository.existsById(unitId)).thenReturn(true);
+			when(tenantAssignmentRepository.findHistoryByUnitId(unitId)).thenReturn(List.of(
+					buildTenantAssignment(
+							"00000000-0000-0000-0000-000000000402",
+							"00000000-0000-0000-0000-000000000201",
+							"00000000-0000-0000-0000-000000000302",
+							true,
+							null
+					),
+					buildTenantAssignment(
+							"00000000-0000-0000-0000-000000000401",
+							"00000000-0000-0000-0000-000000000201",
+							"00000000-0000-0000-0000-000000000301",
+							false,
+							LocalDate.parse("2026-04-30")
+					)
+			));
+
+			TenantAssignmentIndexResponse response = tenantAssignmentService.listTenantAssignments(unitId);
+
+			assertThat(response.count()).isEqualTo(2);
+			assertThat(response.tenantAssignments()).hasSize(2);
+			assertThat(response.tenantAssignments().getFirst().id())
+					.isEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000402"));
+			assertThat(response.tenantAssignments().getFirst().unitId()).isEqualTo(unitId);
+			assertThat(response.tenantAssignments().getFirst().tenantId())
+					.isEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000302"));
+			assertThat(response.tenantAssignments().getFirst().startDate()).isEqualTo(LocalDate.parse("2026-05-01"));
+			assertThat(response.tenantAssignments().getFirst().endDate()).isNull();
+			assertThat(response.tenantAssignments().getFirst().active()).isTrue();
+			assertThat(response.tenantAssignments().get(1).endDate()).isEqualTo(LocalDate.parse("2026-04-30"));
+			assertThat(response.tenantAssignments().get(1).active()).isFalse();
+			verify(unitRepository, times(1)).existsById(unitId);
+			verify(tenantAssignmentRepository, times(1)).findHistoryByUnitId(unitId);
+		}
+
+		@Test
+		void returnsEmptyHistoryWhenUnitHasNoAssignments() {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			when(unitRepository.existsById(unitId)).thenReturn(true);
+			when(tenantAssignmentRepository.findHistoryByUnitId(unitId)).thenReturn(List.of());
+
+			TenantAssignmentIndexResponse response = tenantAssignmentService.listTenantAssignments(unitId);
+
+			assertThat(response.count()).isZero();
+			assertThat(response.tenantAssignments()).isEmpty();
+			verify(unitRepository, times(1)).existsById(unitId);
+			verify(tenantAssignmentRepository, times(1)).findHistoryByUnitId(unitId);
+		}
+
+		@Test
+		void throwsNotFoundWhenUnitDoesNotExist() {
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(unitRepository.existsById(unitId)).thenReturn(false);
+
+			assertThatThrownBy(() -> tenantAssignmentService.listTenantAssignments(unitId))
+					.isInstanceOf(UnitNotFoundException.class);
+
+			verify(unitRepository, times(1)).existsById(unitId);
+			verify(tenantAssignmentRepository, Mockito.never()).findHistoryByUnitId(Mockito.any());
 		}
 	}
 

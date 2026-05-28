@@ -838,6 +838,7 @@ paths:
       tags:
         - Tenant Assignments
       summary: List tenant assignment history for a unit.
+      description: Returns tenant assignment history for a unit.
       security:
         - BearerAuth: []
       parameters:
