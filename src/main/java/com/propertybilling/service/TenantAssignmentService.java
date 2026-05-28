@@ -8,12 +8,14 @@ import com.propertybilling.entity.Tenant;
 import com.propertybilling.entity.TenantAssignment;
 import com.propertybilling.entity.Unit;
 import com.propertybilling.exception.TenantAssignmentConflictException;
+import com.propertybilling.exception.TenantAssignmentMoveOutDateException;
 import com.propertybilling.exception.TenantAssignmentNotFoundException;
 import com.propertybilling.exception.TenantNotFoundException;
 import com.propertybilling.exception.UnitNotFoundException;
 import com.propertybilling.repository.TenantAssignmentRepository;
 import com.propertybilling.repository.TenantRepository;
 import com.propertybilling.repository.UnitRepository;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -104,6 +106,32 @@ public class TenantAssignmentService {
 				.toList();
 
 		return new TenantAssignmentIndexResponse(tenantAssignments.size(), tenantAssignments);
+	}
+
+	/**
+	 * Closes an active tenant assignment.
+	 *
+	 * @param assignmentId assignment identifier
+	 * @throws TenantAssignmentNotFoundException when no active assignment exists for the ID
+	 * @throws TenantAssignmentMoveOutDateException when today's date is before the assignment start date
+	 */
+	@Transactional
+	public void moveOutTenantAssignment(UUID assignmentId) {
+		TenantAssignment tenantAssignment = tenantAssignmentRepository.findByIdForUpdate(assignmentId)
+				.orElseThrow(TenantAssignmentNotFoundException::new);
+
+		if (!tenantAssignment.isActive() || tenantAssignment.getEndDate() != null) {
+			throw new TenantAssignmentNotFoundException();
+		}
+
+		LocalDate endDate = LocalDate.now();
+
+		if (endDate.isBefore(tenantAssignment.getStartDate())) {
+			throw new TenantAssignmentMoveOutDateException();
+		}
+
+		tenantAssignment.moveOut(endDate);
+		tenantAssignmentRepository.save(tenantAssignment);
 	}
 
 	private TenantAssignmentIndexElement toIndexElement(TenantAssignment tenantAssignment) {

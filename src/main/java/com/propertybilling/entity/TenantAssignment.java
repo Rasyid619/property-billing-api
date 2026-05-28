@@ -101,4 +101,14 @@ public class TenantAssignment {
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
 	}
+
+	/**
+	 * Closes the assignment while preserving its history row.
+	 *
+	 * @param endDate final date of the assignment
+	 */
+	public void moveOut(LocalDate endDate) {
+		this.endDate = endDate;
+		this.active = false;
+	}
 }

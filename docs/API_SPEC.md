@@ -713,12 +713,6 @@ paths:
         - BearerAuth: []
       parameters:
         - $ref: "#/components/parameters/AssignmentId"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TenantAssignmentMoveOutRequest"
       responses:
         "204":
           $ref: "#/components/responses/NoContent"
@@ -1425,16 +1419,6 @@ components:
       required:
         - email
         - password
-
-    TenantAssignmentMoveOutRequest:
-      type: object
-      properties:
-        end_date:
-          type: string
-          format: date
-          example: "2026-05-31"
-      required:
-        - end_date
 
     PaymentIndexResponse:
       type: object

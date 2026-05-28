@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -18,6 +19,7 @@ import com.propertybilling.dto.tenantassignment.TenantAssignmentShowResponse;
 import com.propertybilling.entity.User;
 import com.propertybilling.exception.GlobalExceptionHandler;
 import com.propertybilling.exception.TenantAssignmentConflictException;
+import com.propertybilling.exception.TenantAssignmentMoveOutDateException;
 import com.propertybilling.exception.TenantAssignmentNotFoundException;
 import com.propertybilling.exception.TenantNotFoundException;
 import com.propertybilling.exception.UnitNotFoundException;
@@ -344,6 +346,61 @@ class TenantAssignmentControllerTest {
 					.andExpect(content().string(""));
 
 			verifyNoInteractions(authService, tenantAssignmentService);
+		}
+	}
+
+	@Nested
+	/*
+	 * Web-layer tests for moving tenants out.
+	 */
+	class MoveOutTenantAssignment {
+
+		@Test
+		void returnsNoContent() throws Exception {
+			UUID assignmentId = UUID.fromString("00000000-0000-0000-0000-000000000401");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+
+			mockMvc.perform(patch("/api/v1/unit-tenant-assignments/00000000-0000-0000-0000-000000000401/move-out")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNoContent())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(tenantAssignmentService, times(1)).moveOutTenantAssignment(assignmentId);
+		}
+
+		@Test
+		void returnsBadRequestWhenGeneratedEndDateIsBeforeStartDate() throws Exception {
+			UUID assignmentId = UUID.fromString("00000000-0000-0000-0000-000000000401");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new TenantAssignmentMoveOutDateException())
+					.when(tenantAssignmentService)
+					.moveOutTenantAssignment(assignmentId);
+
+			mockMvc.perform(patch("/api/v1/unit-tenant-assignments/00000000-0000-0000-0000-000000000401/move-out")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isBadRequest())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(tenantAssignmentService, times(1)).moveOutTenantAssignment(assignmentId);
+		}
+
+		@Test
+		void returnsNotFoundWhenAssignmentDoesNotExist() throws Exception {
+			UUID assignmentId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+			Mockito.doThrow(new TenantAssignmentNotFoundException())
+					.when(tenantAssignmentService)
+					.moveOutTenantAssignment(assignmentId);
+
+			mockMvc.perform(patch("/api/v1/unit-tenant-assignments/00000000-0000-0000-0000-000000000999/move-out")
+							.header("Authorization", "Bearer access-token"))
+					.andExpect(status().isNotFound())
+					.andExpect(content().string(""));
+
+			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+			verify(tenantAssignmentService, times(1)).moveOutTenantAssignment(assignmentId);
 		}
 	}
 
