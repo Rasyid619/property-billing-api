@@ -1,6 +1,7 @@
 package com.propertybilling.controller;
 
 import com.propertybilling.dto.tenantassignment.TenantAssignmentCreateRequest;
+import com.propertybilling.dto.tenantassignment.TenantAssignmentIndexResponse;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentShowResponse;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.TenantAssignmentService;
@@ -65,5 +66,22 @@ public class TenantAssignmentController {
 		authService.authenticateAccessToken(authorizationHeader);
 
 		return ResponseEntity.ok(tenantAssignmentService.getActiveTenant(unitId));
+	}
+
+	/**
+	 * Lists tenant assignment history for a unit visible to authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param unitId unit identifier
+	 * @return tenant assignment history response
+	 */
+	@GetMapping("/units/{unit_id}/tenant-assignments")
+	ResponseEntity<TenantAssignmentIndexResponse> indexByUnit(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@PathVariable("unit_id") UUID unitId
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+
+		return ResponseEntity.ok(tenantAssignmentService.listTenantAssignments(unitId));
 	}
 }
