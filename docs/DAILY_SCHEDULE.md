@@ -7,9 +7,9 @@
 - Pulled latest `main`, reviewed Issue #39, and created branch `rasyid-39-patch-unit-tenant-assignments-assignmentid-move-out`.
 - Re-read the required project docs and confirmed the current scope is only `PATCH /unit-tenant-assignments/{assignmentId}/move-out`.
 - Reviewed tenant assignment requirements, database design, existing OpenAPI contract, and current tenant assignment create/history/active lookup patterns before changing code.
-- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify the `end_date` move-out validation.
-- Added `TenantAssignmentMoveOutRequest`, row-locked assignment lookup, entity move-out behavior, service validation, authenticated controller endpoint, and invalid move-out date handling.
-- Added service, controller, and PostgreSQL integration tests for successful move-out, missing `end_date`, invalid end date, missing assignment, and already-closed assignment behavior.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to make move-out bodyless.
+- Added row-locked assignment lookup, entity move-out behavior, service validation, authenticated controller endpoint, and generated move-out date handling.
+- Added service, controller, and PostgreSQL integration tests for successful move-out, invalid generated end date, missing assignment, and already-closed assignment behavior.
 - Stayed within the Issue #39 tenant assignment move-out endpoint scope and did not implement future tenant login or invoice behavior.
 
 ## Test Results

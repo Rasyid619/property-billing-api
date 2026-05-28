@@ -2,7 +2,6 @@ package com.propertybilling.controller;
 
 import com.propertybilling.dto.tenantassignment.TenantAssignmentCreateRequest;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentIndexResponse;
-import com.propertybilling.dto.tenantassignment.TenantAssignmentMoveOutRequest;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentShowResponse;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.TenantAssignmentService;
@@ -92,17 +91,15 @@ public class TenantAssignmentController {
 	 *
 	 * @param authorizationHeader bearer access token
 	 * @param assignmentId assignment identifier
-	 * @param request move-out data
 	 * @return empty no-content response
 	 */
 	@PatchMapping("/unit-tenant-assignments/{assignmentId}/move-out")
 	ResponseEntity<Void> moveOut(
 			@RequestHeader("Authorization") String authorizationHeader,
-			@PathVariable UUID assignmentId,
-			@Valid @RequestBody TenantAssignmentMoveOutRequest request
+			@PathVariable UUID assignmentId
 	) {
 		authService.authenticateAccessToken(authorizationHeader);
-		tenantAssignmentService.moveOutTenantAssignment(assignmentId, request);
+		tenantAssignmentService.moveOutTenantAssignment(assignmentId);
 
 		return ResponseEntity.noContent().build();
 	}

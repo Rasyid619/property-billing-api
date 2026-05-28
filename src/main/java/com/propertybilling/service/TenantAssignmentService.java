@@ -3,7 +3,6 @@ package com.propertybilling.service;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentCreateRequest;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentIndexElement;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentIndexResponse;
-import com.propertybilling.dto.tenantassignment.TenantAssignmentMoveOutRequest;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentShowResponse;
 import com.propertybilling.entity.Tenant;
 import com.propertybilling.entity.TenantAssignment;
@@ -16,6 +15,7 @@ import com.propertybilling.exception.UnitNotFoundException;
 import com.propertybilling.repository.TenantAssignmentRepository;
 import com.propertybilling.repository.TenantRepository;
 import com.propertybilling.repository.UnitRepository;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -112,22 +112,22 @@ public class TenantAssignmentService {
 	 * Closes an active tenant assignment.
 	 *
 	 * @param assignmentId assignment identifier
-	 * @param request move-out data
 	 * @throws TenantAssignmentNotFoundException when no active assignment exists for the ID
-	 * @throws TenantAssignmentMoveOutDateException when end date is before the assignment start date
+	 * @throws TenantAssignmentMoveOutDateException when today's date is before the assignment start date
 	 */
 	@Transactional
-	public void moveOutTenantAssignment(UUID assignmentId, TenantAssignmentMoveOutRequest request) {
+	public void moveOutTenantAssignment(UUID assignmentId) {
 		TenantAssignment tenantAssignment = tenantAssignmentRepository.findByIdForUpdate(assignmentId)
 				.filter(TenantAssignment::isActive)
 				.filter(assignment -> assignment.getEndDate() == null)
 				.orElseThrow(TenantAssignmentNotFoundException::new);
+		LocalDate endDate = LocalDate.now();
 
-		if (request.endDate().isBefore(tenantAssignment.getStartDate())) {
+		if (endDate.isBefore(tenantAssignment.getStartDate())) {
 			throw new TenantAssignmentMoveOutDateException();
 		}
 
-		tenantAssignment.moveOut(request.endDate());
+		tenantAssignment.moveOut(endDate);
 		tenantAssignmentRepository.save(tenantAssignment);
 	}
 

@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import com.propertybilling.dto.tenantassignment.TenantAssignmentCreateRequest;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentIndexResponse;
-import com.propertybilling.dto.tenantassignment.TenantAssignmentMoveOutRequest;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentShowResponse;
 import com.propertybilling.entity.Property;
 import com.propertybilling.entity.Tenant;
@@ -308,12 +307,9 @@ class TenantAssignmentServiceTest {
 			);
 			when(tenantAssignmentRepository.findByIdForUpdate(assignmentId)).thenReturn(Optional.of(tenantAssignment));
 
-			tenantAssignmentService.moveOutTenantAssignment(
-					assignmentId,
-					new TenantAssignmentMoveOutRequest(LocalDate.parse("2026-05-31"))
-			);
+			tenantAssignmentService.moveOutTenantAssignment(assignmentId);
 
-			assertThat(tenantAssignment.getEndDate()).isEqualTo(LocalDate.parse("2026-05-31"));
+			assertThat(tenantAssignment.getEndDate()).isEqualTo(LocalDate.now());
 			assertThat(tenantAssignment.isActive()).isFalse();
 			verify(tenantAssignmentRepository, times(1)).findByIdForUpdate(assignmentId);
 			verify(tenantAssignmentRepository, times(1)).save(tenantAssignment);
@@ -325,10 +321,8 @@ class TenantAssignmentServiceTest {
 			UUID assignmentId = UUID.fromString("00000000-0000-0000-0000-000000000999");
 			when(tenantAssignmentRepository.findByIdForUpdate(assignmentId)).thenReturn(Optional.empty());
 
-			assertThatThrownBy(() -> tenantAssignmentService.moveOutTenantAssignment(
-					assignmentId,
-					new TenantAssignmentMoveOutRequest(LocalDate.parse("2026-05-31"))
-			)).isInstanceOf(TenantAssignmentNotFoundException.class);
+			assertThatThrownBy(() -> tenantAssignmentService.moveOutTenantAssignment(assignmentId))
+					.isInstanceOf(TenantAssignmentNotFoundException.class);
 
 			verify(tenantAssignmentRepository, times(1)).findByIdForUpdate(assignmentId);
 			verify(tenantAssignmentRepository, Mockito.never()).save(Mockito.any());
@@ -346,10 +340,8 @@ class TenantAssignmentServiceTest {
 					LocalDate.parse("2026-04-30")
 			)));
 
-			assertThatThrownBy(() -> tenantAssignmentService.moveOutTenantAssignment(
-					assignmentId,
-					new TenantAssignmentMoveOutRequest(LocalDate.parse("2026-05-31"))
-			)).isInstanceOf(TenantAssignmentNotFoundException.class);
+			assertThatThrownBy(() -> tenantAssignmentService.moveOutTenantAssignment(assignmentId))
+					.isInstanceOf(TenantAssignmentNotFoundException.class);
 
 			verify(tenantAssignmentRepository, times(1)).findByIdForUpdate(assignmentId);
 			verify(tenantAssignmentRepository, Mockito.never()).save(Mockito.any());
@@ -363,14 +355,13 @@ class TenantAssignmentServiceTest {
 					"00000000-0000-0000-0000-000000000201",
 					"00000000-0000-0000-0000-000000000301",
 					true,
-					null
+					null,
+					LocalDate.now().plusDays(1)
 			);
 			when(tenantAssignmentRepository.findByIdForUpdate(assignmentId)).thenReturn(Optional.of(tenantAssignment));
 
-			assertThatThrownBy(() -> tenantAssignmentService.moveOutTenantAssignment(
-					assignmentId,
-					new TenantAssignmentMoveOutRequest(LocalDate.parse("2026-04-30"))
-			)).isInstanceOf(TenantAssignmentMoveOutDateException.class);
+			assertThatThrownBy(() -> tenantAssignmentService.moveOutTenantAssignment(assignmentId))
+					.isInstanceOf(TenantAssignmentMoveOutDateException.class);
 
 			assertThat(tenantAssignment.getEndDate()).isNull();
 			assertThat(tenantAssignment.isActive()).isTrue();
@@ -386,13 +377,24 @@ class TenantAssignmentServiceTest {
 			boolean active,
 			LocalDate endDate
 	) {
+		return buildTenantAssignment(id, unitId, tenantId, active, endDate, LocalDate.parse("2026-05-01"));
+	}
+
+	private TenantAssignment buildTenantAssignment(
+			String id,
+			String unitId,
+			String tenantId,
+			boolean active,
+			LocalDate endDate,
+			LocalDate startDate
+	) {
 		OffsetDateTime timestamp = OffsetDateTime.parse("2026-05-22T09:00:00Z");
 
 		return new TenantAssignment(
 				UUID.fromString(id),
 				buildUnit(unitId),
 				buildTenant(tenantId),
-				LocalDate.parse("2026-05-01"),
+				startDate,
 				endDate,
 				active,
 				timestamp,

@@ -15,7 +15,6 @@ import com.propertybilling.config.SecurityConfig;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentCreateRequest;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentIndexElement;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentIndexResponse;
-import com.propertybilling.dto.tenantassignment.TenantAssignmentMoveOutRequest;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentShowResponse;
 import com.propertybilling.entity.User;
 import com.propertybilling.exception.GlobalExceptionHandler;
@@ -362,58 +361,29 @@ class TenantAssignmentControllerTest {
 			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
 
 			mockMvc.perform(patch("/api/v1/unit-tenant-assignments/00000000-0000-0000-0000-000000000401/move-out")
-							.header("Authorization", "Bearer access-token")
-							.contentType(MediaType.APPLICATION_JSON)
-							.content("""
-									{
-									  "end_date": "2026-05-31"
-									}
-									"""))
+							.header("Authorization", "Bearer access-token"))
 					.andExpect(status().isNoContent())
 					.andExpect(content().string(""));
 
 			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
-			verify(tenantAssignmentService, times(1)).moveOutTenantAssignment(
-					Mockito.eq(assignmentId),
-					Mockito.argThat((TenantAssignmentMoveOutRequest request) ->
-							LocalDate.parse("2026-05-31").equals(request.endDate())
-					)
-			);
+			verify(tenantAssignmentService, times(1)).moveOutTenantAssignment(assignmentId);
 		}
 
 		@Test
-		void rejectsMissingEndDate() throws Exception {
-			mockMvc.perform(patch("/api/v1/unit-tenant-assignments/00000000-0000-0000-0000-000000000401/move-out")
-							.header("Authorization", "Bearer access-token")
-							.contentType(MediaType.APPLICATION_JSON)
-							.content("{}"))
-					.andExpect(status().isBadRequest())
-					.andExpect(content().string(""));
-
-			verifyNoInteractions(authService, tenantAssignmentService);
-		}
-
-		@Test
-		void returnsBadRequestWhenEndDateIsBeforeStartDate() throws Exception {
+		void returnsBadRequestWhenGeneratedEndDateIsBeforeStartDate() throws Exception {
 			UUID assignmentId = UUID.fromString("00000000-0000-0000-0000-000000000401");
 			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
 			Mockito.doThrow(new TenantAssignmentMoveOutDateException())
 					.when(tenantAssignmentService)
-					.moveOutTenantAssignment(Mockito.eq(assignmentId), Mockito.any());
+					.moveOutTenantAssignment(assignmentId);
 
 			mockMvc.perform(patch("/api/v1/unit-tenant-assignments/00000000-0000-0000-0000-000000000401/move-out")
-							.header("Authorization", "Bearer access-token")
-							.contentType(MediaType.APPLICATION_JSON)
-							.content("""
-									{
-									  "end_date": "2026-04-30"
-									}
-									"""))
+							.header("Authorization", "Bearer access-token"))
 					.andExpect(status().isBadRequest())
 					.andExpect(content().string(""));
 
 			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
-			verify(tenantAssignmentService, times(1)).moveOutTenantAssignment(Mockito.eq(assignmentId), Mockito.any());
+			verify(tenantAssignmentService, times(1)).moveOutTenantAssignment(assignmentId);
 		}
 
 		@Test
@@ -422,21 +392,15 @@ class TenantAssignmentControllerTest {
 			when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
 			Mockito.doThrow(new TenantAssignmentNotFoundException())
 					.when(tenantAssignmentService)
-					.moveOutTenantAssignment(Mockito.eq(assignmentId), Mockito.any());
+					.moveOutTenantAssignment(assignmentId);
 
 			mockMvc.perform(patch("/api/v1/unit-tenant-assignments/00000000-0000-0000-0000-000000000999/move-out")
-							.header("Authorization", "Bearer access-token")
-							.contentType(MediaType.APPLICATION_JSON)
-							.content("""
-									{
-									  "end_date": "2026-05-31"
-									}
-									"""))
+							.header("Authorization", "Bearer access-token"))
 					.andExpect(status().isNotFound())
 					.andExpect(content().string(""));
 
 			verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
-			verify(tenantAssignmentService, times(1)).moveOutTenantAssignment(Mockito.eq(assignmentId), Mockito.any());
+			verify(tenantAssignmentService, times(1)).moveOutTenantAssignment(assignmentId);
 		}
 	}
 

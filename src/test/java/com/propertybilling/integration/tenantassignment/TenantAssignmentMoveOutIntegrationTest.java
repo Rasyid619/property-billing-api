@@ -24,7 +24,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 /*
@@ -116,55 +115,31 @@ class TenantAssignmentMoveOutIntegrationTest extends AbstractIntegrationTest {
 		String accessToken = jwtTokenService.createAccessToken(user);
 
 		mockMvc.perform(patch("/api/v1/unit-tenant-assignments/00000000-0000-0000-0000-000000000401/move-out")
-						.header("Authorization", "Bearer " + accessToken)
-						.contentType(MediaType.APPLICATION_JSON)
-						.content("""
-								{
-								  "end_date": "2026-05-31"
-								}
-								"""))
+						.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isNoContent())
 				.andExpect(content().string(""));
 
 		TenantAssignment tenantAssignment = tenantAssignmentRepository.findById(
 				UUID.fromString("00000000-0000-0000-0000-000000000401")
 		).orElseThrow();
-		assertThat(tenantAssignment.getEndDate()).isEqualTo(LocalDate.parse("2026-05-31"));
+		assertThat(tenantAssignment.getEndDate()).isEqualTo(LocalDate.now());
 		assertThat(tenantAssignment.isActive()).isFalse();
 	}
 
 	@Test
-	void moveOutRejectsMissingEndDate() throws Exception {
-		String accessToken = jwtTokenService.createAccessToken(user);
-
-		mockMvc.perform(patch("/api/v1/unit-tenant-assignments/00000000-0000-0000-0000-000000000401/move-out")
-						.header("Authorization", "Bearer " + accessToken)
-						.contentType(MediaType.APPLICATION_JSON)
-						.content("{}"))
-				.andExpect(status().isBadRequest())
-				.andExpect(content().string(""));
-	}
-
-	@Test
-	void moveOutRejectsEndDateBeforeStartDate() throws Exception {
+	void moveOutRejectsGeneratedEndDateBeforeStartDate() throws Exception {
 		tenantAssignmentRepository.save(new TenantAssignment(
 				UUID.fromString("00000000-0000-0000-0000-000000000401"),
 				unit,
 				tenant,
-				LocalDate.parse("2026-05-01"),
+				LocalDate.now().plusDays(1),
 				null,
 				true
 		));
 		String accessToken = jwtTokenService.createAccessToken(user);
 
 		mockMvc.perform(patch("/api/v1/unit-tenant-assignments/00000000-0000-0000-0000-000000000401/move-out")
-						.header("Authorization", "Bearer " + accessToken)
-						.contentType(MediaType.APPLICATION_JSON)
-						.content("""
-								{
-								  "end_date": "2026-04-30"
-								}
-								"""))
+						.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isBadRequest())
 				.andExpect(content().string(""));
 
@@ -180,13 +155,7 @@ class TenantAssignmentMoveOutIntegrationTest extends AbstractIntegrationTest {
 		String accessToken = jwtTokenService.createAccessToken(user);
 
 		mockMvc.perform(patch("/api/v1/unit-tenant-assignments/00000000-0000-0000-0000-000000000999/move-out")
-						.header("Authorization", "Bearer " + accessToken)
-						.contentType(MediaType.APPLICATION_JSON)
-						.content("""
-								{
-								  "end_date": "2026-05-31"
-								}
-								"""))
+						.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isNotFound())
 				.andExpect(content().string(""));
 	}
@@ -204,13 +173,7 @@ class TenantAssignmentMoveOutIntegrationTest extends AbstractIntegrationTest {
 		String accessToken = jwtTokenService.createAccessToken(user);
 
 		mockMvc.perform(patch("/api/v1/unit-tenant-assignments/00000000-0000-0000-0000-000000000401/move-out")
-						.header("Authorization", "Bearer " + accessToken)
-						.contentType(MediaType.APPLICATION_JSON)
-						.content("""
-								{
-								  "end_date": "2026-06-30"
-								}
-								"""))
+						.header("Authorization", "Bearer " + accessToken))
 				.andExpect(status().isNotFound())
 				.andExpect(content().string(""));
 	}
