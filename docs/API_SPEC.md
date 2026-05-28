@@ -1432,6 +1432,7 @@ components:
         end_date:
           type: string
           format: date
+          description: Final date of the tenant assignment. It must not be before the assignment start date.
           example: "2026-05-31"
       required:
         - end_date

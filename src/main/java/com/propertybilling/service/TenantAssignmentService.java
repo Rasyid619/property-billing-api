@@ -3,11 +3,13 @@ package com.propertybilling.service;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentCreateRequest;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentIndexElement;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentIndexResponse;
+import com.propertybilling.dto.tenantassignment.TenantAssignmentMoveOutRequest;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentShowResponse;
 import com.propertybilling.entity.Tenant;
 import com.propertybilling.entity.TenantAssignment;
 import com.propertybilling.entity.Unit;
 import com.propertybilling.exception.TenantAssignmentConflictException;
+import com.propertybilling.exception.TenantAssignmentMoveOutDateException;
 import com.propertybilling.exception.TenantAssignmentNotFoundException;
 import com.propertybilling.exception.TenantNotFoundException;
 import com.propertybilling.exception.UnitNotFoundException;
@@ -104,6 +106,29 @@ public class TenantAssignmentService {
 				.toList();
 
 		return new TenantAssignmentIndexResponse(tenantAssignments.size(), tenantAssignments);
+	}
+
+	/**
+	 * Closes an active tenant assignment.
+	 *
+	 * @param assignmentId assignment identifier
+	 * @param request move-out data
+	 * @throws TenantAssignmentNotFoundException when no active assignment exists for the ID
+	 * @throws TenantAssignmentMoveOutDateException when end date is before the assignment start date
+	 */
+	@Transactional
+	public void moveOutTenantAssignment(UUID assignmentId, TenantAssignmentMoveOutRequest request) {
+		TenantAssignment tenantAssignment = tenantAssignmentRepository.findByIdForUpdate(assignmentId)
+				.filter(TenantAssignment::isActive)
+				.filter(assignment -> assignment.getEndDate() == null)
+				.orElseThrow(TenantAssignmentNotFoundException::new);
+
+		if (request.endDate().isBefore(tenantAssignment.getStartDate())) {
+			throw new TenantAssignmentMoveOutDateException();
+		}
+
+		tenantAssignment.moveOut(request.endDate());
+		tenantAssignmentRepository.save(tenantAssignment);
 	}
 
 	private TenantAssignmentIndexElement toIndexElement(TenantAssignment tenantAssignment) {

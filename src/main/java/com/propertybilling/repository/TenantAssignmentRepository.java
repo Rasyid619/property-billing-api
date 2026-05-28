@@ -1,10 +1,12 @@
 package com.propertybilling.repository;
 
 import com.propertybilling.entity.TenantAssignment;
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -60,4 +62,18 @@ public interface TenantAssignmentRepository extends JpaRepository<TenantAssignme
 			AND tenantAssignment.endDate IS NULL
 			""")
 	Optional<TenantAssignment> findActiveByUnitId(@Param("unitId") UUID unitId);
+
+	/**
+	 * Finds one tenant assignment using a write lock for mutation workflows.
+	 *
+	 * @param assignmentId assignment identifier
+	 * @return matching assignment, or empty when it does not exist
+	 */
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("""
+			SELECT tenantAssignment
+			FROM TenantAssignment tenantAssignment
+			WHERE tenantAssignment.id = :assignmentId
+			""")
+	Optional<TenantAssignment> findByIdForUpdate(@Param("assignmentId") UUID assignmentId);
 }

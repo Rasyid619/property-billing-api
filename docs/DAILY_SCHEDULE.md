@@ -1,5 +1,39 @@
 # Daily Schedule
 
+## 2026-05-28 — Issue #39: PATCH /unit-tenant-assignments/{assignmentId}/move-out
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #39, and created branch `rasyid-39-patch-unit-tenant-assignments-assignmentid-move-out`.
+- Re-read the required project docs and confirmed the current scope is only `PATCH /unit-tenant-assignments/{assignmentId}/move-out`.
+- Reviewed tenant assignment requirements, database design, existing OpenAPI contract, and current tenant assignment create/history/active lookup patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify the `end_date` move-out validation.
+- Added `TenantAssignmentMoveOutRequest`, row-locked assignment lookup, entity move-out behavior, service validation, authenticated controller endpoint, and invalid move-out date handling.
+- Added service, controller, and PostgreSQL integration tests for successful move-out, missing `end_date`, invalid end date, missing assignment, and already-closed assignment behavior.
+- Stayed within the Issue #39 tenant assignment move-out endpoint scope and did not implement future tenant login or invoice behavior.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.TenantAssignmentServiceTest --tests com.propertybilling.controller.TenantAssignmentControllerTest --tests com.propertybilling.integration.tenantassignment.TenantAssignmentMoveOutIntegrationTest
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/39
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Wait for Issue #39 CI before moving to the next endpoint.
+
+---
+
 ## 2026-05-28 — Issue #44: GET /units/{unit_id}/tenant-assignments
 
 ## What I Did

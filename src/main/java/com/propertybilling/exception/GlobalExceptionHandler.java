@@ -60,6 +60,11 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.CONFLICT).build();
 	}
 
+	@ExceptionHandler(TenantAssignmentMoveOutDateException.class)
+	ResponseEntity<Void> handleTenantAssignmentMoveOutDate() {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+	}
+
 	@ExceptionHandler(UnitNumberConflictException.class)
 	ResponseEntity<Void> handleUnitNumberConflict() {
 		return ResponseEntity.status(HttpStatus.CONFLICT).build();
