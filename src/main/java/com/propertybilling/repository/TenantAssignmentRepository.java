@@ -13,6 +13,21 @@ import org.springframework.data.repository.query.Param;
 public interface TenantAssignmentRepository extends JpaRepository<TenantAssignment, UUID> {
 
 	/**
+	 * Checks whether one unit already has an active tenant assignment.
+	 *
+	 * @param unitId assigned unit identifier
+	 * @return true when an active assignment already exists
+	 */
+	@Query("""
+			SELECT CASE WHEN COUNT(tenantAssignment) > 0 THEN true ELSE false END
+			FROM TenantAssignment tenantAssignment
+			WHERE tenantAssignment.unit.id = :unitId
+			AND tenantAssignment.active = true
+			AND tenantAssignment.endDate IS NULL
+			""")
+	boolean existsActiveByUnitId(@Param("unitId") UUID unitId);
+
+	/**
 	 * Finds the active assignment for one unit with unit and tenant references loaded.
 	 *
 	 * @param unitId assigned unit identifier

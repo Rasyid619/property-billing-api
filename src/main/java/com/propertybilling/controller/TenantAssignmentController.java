@@ -1,13 +1,18 @@
 package com.propertybilling.controller;
 
+import com.propertybilling.dto.tenantassignment.TenantAssignmentCreateRequest;
 import com.propertybilling.dto.tenantassignment.TenantAssignmentShowResponse;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.TenantAssignmentService;
+import jakarta.validation.Valid;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +29,26 @@ public class TenantAssignmentController {
 
 	private final AuthService authService;
 	private final TenantAssignmentService tenantAssignmentService;
+
+	/**
+	 * Assigns a tenant to a unit for authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param unitId unit identifier
+	 * @param request assignment data
+	 * @return empty created response
+	 */
+	@PostMapping("/units/{unit_id}/tenant-assignments")
+	ResponseEntity<Void> create(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@PathVariable("unit_id") UUID unitId,
+			@Valid @RequestBody TenantAssignmentCreateRequest request
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+		tenantAssignmentService.createTenantAssignment(unitId, request);
+
+		return ResponseEntity.status(HttpStatus.CREATED).build();
+	}
 
 	/**
 	 * Gets the active tenant assignment for a unit visible to authenticated admin and staff users.

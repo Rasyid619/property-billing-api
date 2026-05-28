@@ -241,6 +241,106 @@ class FlywayMigrationTest {
 	}
 
 	@Test
+	void unitCanOnlyHaveOneActiveTenantAssignment() throws SQLException {
+		try (var connection = dataSource.getConnection()) {
+			try (var insertProperty = connection.prepareStatement("""
+					INSERT INTO properties (
+					    id,
+					    name,
+					    address,
+					    is_active
+					)
+					VALUES (
+					    '00000000-0000-0000-0000-000000000401',
+					    'Green Residence',
+					    'Bekasi',
+					    TRUE
+					)
+					""")) {
+				insertProperty.executeUpdate();
+			}
+
+			try (var insertUnit = connection.prepareStatement("""
+					INSERT INTO units (
+					    id,
+					    property_id,
+					    unit_number,
+					    monthly_fee,
+					    due_day,
+					    is_active
+					)
+					VALUES (
+					    '00000000-0000-0000-0000-000000000402',
+					    '00000000-0000-0000-0000-000000000401',
+					    'A-101',
+					    '750000.00',
+					    10,
+					    TRUE
+					)
+					""")) {
+				insertUnit.executeUpdate();
+			}
+
+			try (var insertTenant = connection.prepareStatement("""
+					INSERT INTO tenants (
+					    id,
+					    name,
+					    phone,
+					    email
+					)
+					VALUES (
+					    ?,
+					    ?,
+					    ?,
+					    ?
+					)
+					""")) {
+				insertTenant.setObject(1, java.util.UUID.fromString("00000000-0000-0000-0000-000000000403"));
+				insertTenant.setString(2, "Budi");
+				insertTenant.setString(3, "08222222222");
+				insertTenant.setString(4, "budi-assignment@example.com");
+				insertTenant.executeUpdate();
+
+				insertTenant.setObject(1, java.util.UUID.fromString("00000000-0000-0000-0000-000000000404"));
+				insertTenant.setString(2, "Andi");
+				insertTenant.setString(3, "08333333333");
+				insertTenant.setString(4, "andi-assignment@example.com");
+				insertTenant.executeUpdate();
+			}
+
+			try (var insertAssignment = connection.prepareStatement("""
+					INSERT INTO unit_tenants (
+					    id,
+					    unit_id,
+					    tenant_id,
+					    start_date,
+					    end_date,
+					    is_active
+					)
+					VALUES (
+					    ?,
+					    '00000000-0000-0000-0000-000000000402',
+					    ?,
+					    ?,
+					    NULL,
+					    TRUE
+					)
+					""")) {
+				insertAssignment.setObject(1, java.util.UUID.fromString("00000000-0000-0000-0000-000000000405"));
+				insertAssignment.setObject(2, java.util.UUID.fromString("00000000-0000-0000-0000-000000000403"));
+				insertAssignment.setObject(3, java.time.LocalDate.parse("2026-05-01"));
+				insertAssignment.executeUpdate();
+
+				insertAssignment.setObject(1, java.util.UUID.fromString("00000000-0000-0000-0000-000000000406"));
+				insertAssignment.setObject(2, java.util.UUID.fromString("00000000-0000-0000-0000-000000000404"));
+				insertAssignment.setObject(3, java.time.LocalDate.parse("2026-06-01"));
+
+				assertThatThrownBy(insertAssignment::executeUpdate).isInstanceOf(SQLException.class);
+			}
+		}
+	}
+
+	@Test
 	void migrationSeedsInitialAdminFromEnvironmentBackedPlaceholders() throws SQLException {
 		try (var connection = dataSource.getConnection();
 				var select = connection.prepareStatement("""
