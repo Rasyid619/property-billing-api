@@ -56,6 +56,31 @@ public class Invoice {
 	private OffsetDateTime updatedAt;
 
 	/**
+	 * Creates a new invoice that relies on database-managed timestamps.
+	 *
+	 * @param id unique invoice identifier
+	 * @param unit billed unit
+	 * @param tenant billed tenant
+	 * @param billingMonth first day of the billed month
+	 * @param invoiceNumber unique invoice number
+	 * @param amount decimal string invoice amount
+	 * @param dueDate invoice due date
+	 * @param status current invoice status
+	 */
+	public Invoice(
+			UUID id,
+			Unit unit,
+			Tenant tenant,
+			LocalDate billingMonth,
+			String invoiceNumber,
+			String amount,
+			LocalDate dueDate,
+			String status
+	) {
+		this(id, unit, tenant, billingMonth, invoiceNumber, amount, dueDate, status, null, null);
+	}
+
+	/**
 	 * Creates a persisted invoice representation.
 	 *
 	 * @param id unique invoice identifier

@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -14,6 +15,8 @@ import com.propertybilling.dto.invoice.InvoiceIndexElement;
 import com.propertybilling.dto.invoice.InvoiceIndexResponse;
 import com.propertybilling.entity.User;
 import com.propertybilling.exception.GlobalExceptionHandler;
+import com.propertybilling.exception.InvoiceGenerationConflictException;
+import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.InvoiceService;
 import java.math.BigDecimal;
@@ -25,6 +28,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -46,6 +50,93 @@ class InvoiceControllerTest {
 	@Autowired
 	InvoiceControllerTest(MockMvc mockMvc) {
 		this.mockMvc = mockMvc;
+	}
+
+	@Test
+	void generateMonthlyReturnsCreated() throws Exception {
+		UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+		when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+
+		mockMvc.perform(post("/api/v1/invoices/generate-monthly")
+						.header("Authorization", "Bearer access-token")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "property_id": "00000000-0000-0000-0000-000000000101",
+								  "billing_month": "2026-05-01"
+								}
+								"""))
+				.andExpect(status().isCreated())
+				.andExpect(content().string(""));
+
+		verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+		verify(invoiceService, times(1)).generateMonthlyInvoices(Mockito.argThat(request ->
+				propertyId.equals(request.propertyId())
+						&& LocalDate.parse("2026-05-01").equals(request.billingMonth())
+		));
+	}
+
+	@Test
+	void generateMonthlyRejectsBillingMonthThatIsNotFirstDay() throws Exception {
+		mockMvc.perform(post("/api/v1/invoices/generate-monthly")
+						.header("Authorization", "Bearer access-token")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "property_id": "00000000-0000-0000-0000-000000000101",
+								  "billing_month": "2026-05-02"
+								}
+								"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(content().string(""));
+
+		verifyNoInteractions(authService, invoiceService);
+	}
+
+	@Test
+	void generateMonthlyReturnsNotFoundWhenPropertyDoesNotExist() throws Exception {
+		when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+		Mockito.doThrow(new PropertyNotFoundException())
+				.when(invoiceService)
+				.generateMonthlyInvoices(Mockito.any());
+
+		mockMvc.perform(post("/api/v1/invoices/generate-monthly")
+						.header("Authorization", "Bearer access-token")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "property_id": "00000000-0000-0000-0000-000000000999",
+								  "billing_month": "2026-05-01"
+								}
+								"""))
+				.andExpect(status().isNotFound())
+				.andExpect(content().string(""));
+
+		verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+		verify(invoiceService, times(1)).generateMonthlyInvoices(Mockito.any());
+	}
+
+	@Test
+	void generateMonthlyReturnsConflictWhenGenerationConflicts() throws Exception {
+		when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+		Mockito.doThrow(new InvoiceGenerationConflictException())
+				.when(invoiceService)
+				.generateMonthlyInvoices(Mockito.any());
+
+		mockMvc.perform(post("/api/v1/invoices/generate-monthly")
+						.header("Authorization", "Bearer access-token")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "property_id": "00000000-0000-0000-0000-000000000101",
+								  "billing_month": "2026-05-01"
+								}
+								"""))
+				.andExpect(status().isConflict())
+				.andExpect(content().string(""));
+
+		verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+		verify(invoiceService, times(1)).generateMonthlyInvoices(Mockito.any());
 	}
 
 	@Test

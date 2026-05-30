@@ -1,6 +1,7 @@
 package com.propertybilling.repository;
 
 import com.propertybilling.dto.unit.queryresult.UnitIndexQueryResult;
+import com.propertybilling.dto.invoice.queryresult.InvoiceGenerationTargetQueryResult;
 import com.propertybilling.entity.Unit;
 import jakarta.persistence.LockModeType;
 import java.util.List;
@@ -115,4 +116,32 @@ public interface UnitRepository extends JpaRepository<Unit, UUID> {
 			WHERE unit.id = :unitId
 			""")
 	Optional<Unit> findByIdForUpdate(@Param("unitId") UUID unitId);
+
+	/**
+	 * Finds active units with active tenants for monthly invoice generation.
+	 *
+	 * @param propertyId owning property identifier
+	 * @return active unit and tenant pairs ordered by unit number and identifier
+	 */
+	@Query("""
+			SELECT new com.propertybilling.dto.invoice.queryresult.InvoiceGenerationTargetQueryResult(
+			    unit.id,
+			    tenant.id,
+			    unit.unitNumber,
+			    unit.monthlyFee,
+			    unit.dueDay
+			)
+			FROM Unit unit
+			JOIN unit.property property
+			JOIN TenantAssignment tenantAssignment ON tenantAssignment.unit = unit
+			JOIN tenantAssignment.tenant tenant
+			WHERE property.id = :propertyId
+			AND unit.active = true
+			AND tenantAssignment.active = true
+			AND tenantAssignment.endDate IS NULL
+			ORDER BY unit.unitNumber ASC, unit.id ASC
+			""")
+	List<InvoiceGenerationTargetQueryResult> findMonthlyInvoiceGenerationTargets(
+			@Param("propertyId") UUID propertyId
+	);
 }

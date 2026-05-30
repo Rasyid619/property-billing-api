@@ -1,15 +1,20 @@
 package com.propertybilling.controller;
 
+import com.propertybilling.dto.invoice.InvoiceGenerateMonthlyRequest;
 import com.propertybilling.dto.invoice.InvoiceIndexResponse;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.InvoiceService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,6 +32,24 @@ public class InvoiceController {
 
 	private final AuthService authService;
 	private final InvoiceService invoiceService;
+
+	/**
+	 * Generates monthly invoices for authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param request generation request
+	 * @return empty created response
+	 */
+	@PostMapping("/invoices/generate-monthly")
+	ResponseEntity<Void> generateMonthly(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@Valid @RequestBody InvoiceGenerateMonthlyRequest request
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+		invoiceService.generateMonthlyInvoices(request);
+
+		return ResponseEntity.status(HttpStatus.CREATED).build();
+	}
 
 	/**
 	 * Lists invoices visible to authenticated admin and staff users.
