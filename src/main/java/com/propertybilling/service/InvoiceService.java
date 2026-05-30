@@ -3,7 +3,7 @@ package com.propertybilling.service;
 import com.propertybilling.dto.invoice.InvoiceIndexElement;
 import com.propertybilling.dto.invoice.InvoiceIndexResponse;
 import com.propertybilling.dto.invoice.queryresult.InvoiceIndexQueryResult;
-import com.propertybilling.repository.InvoiceRepository;
+import com.propertybilling.repository.InvoiceQueryRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
  */
 public class InvoiceService {
 
-	private final InvoiceRepository invoiceRepository;
+	private final InvoiceQueryRepository invoiceQueryRepository;
 
 	/**
 	 * Lists invoices using optional filters.
@@ -44,7 +44,7 @@ public class InvoiceService {
 			int limit
 	) {
 		LocalDate billingMonth = toBillingMonth(month);
-		List<InvoiceIndexElement> invoices = invoiceRepository.findIndex(
+		List<InvoiceIndexElement> invoices = invoiceQueryRepository.findIndex(
 				propertyId,
 				unitId,
 				tenantId,

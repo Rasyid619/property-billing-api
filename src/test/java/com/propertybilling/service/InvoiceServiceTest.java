@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.propertybilling.dto.invoice.InvoiceIndexResponse;
 import com.propertybilling.dto.invoice.queryresult.InvoiceIndexQueryResult;
-import com.propertybilling.repository.InvoiceRepository;
+import com.propertybilling.repository.InvoiceQueryRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -21,15 +21,15 @@ import org.springframework.data.domain.Pageable;
  */
 class InvoiceServiceTest {
 
-	private final InvoiceRepository invoiceRepository = Mockito.mock(InvoiceRepository.class);
-	private final InvoiceService invoiceService = new InvoiceService(invoiceRepository);
+	private final InvoiceQueryRepository invoiceQueryRepository = Mockito.mock(InvoiceQueryRepository.class);
+	private final InvoiceService invoiceService = new InvoiceService(invoiceQueryRepository);
 
 	@Test
 	void listsInvoicesWithFilters() {
 		UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
 		UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
 		UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000301");
-		when(invoiceRepository.findIndex(
+		when(invoiceQueryRepository.findIndex(
 				Mockito.eq(propertyId),
 				Mockito.eq(unitId),
 				Mockito.eq(tenantId),
@@ -68,7 +68,7 @@ class InvoiceServiceTest {
 		assertThat(response.invoices().getFirst().amount()).isEqualByComparingTo("750000.00");
 		assertThat(response.invoices().getFirst().dueDate()).isEqualTo(LocalDate.parse("2026-05-10"));
 		assertThat(response.invoices().getFirst().status()).isEqualTo("unpaid");
-		verify(invoiceRepository, times(1)).findIndex(
+		verify(invoiceQueryRepository, times(1)).findIndex(
 				Mockito.eq(propertyId),
 				Mockito.eq(unitId),
 				Mockito.eq(tenantId),
@@ -80,7 +80,7 @@ class InvoiceServiceTest {
 
 	@Test
 	void passesNullFiltersWhenOptionalFiltersAreUnset() {
-		when(invoiceRepository.findIndex(
+		when(invoiceQueryRepository.findIndex(
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
@@ -93,7 +93,7 @@ class InvoiceServiceTest {
 
 		assertThat(response.count()).isZero();
 		assertThat(response.invoices()).isEmpty();
-		verify(invoiceRepository, times(1)).findIndex(
+		verify(invoiceQueryRepository, times(1)).findIndex(
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
@@ -106,7 +106,7 @@ class InvoiceServiceTest {
 	@Test
 	void passesPageRequestToRepository() {
 		ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-		when(invoiceRepository.findIndex(
+		when(invoiceQueryRepository.findIndex(
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
@@ -117,7 +117,7 @@ class InvoiceServiceTest {
 
 		invoiceService.listInvoices(null, null, null, null, null, 200, 100);
 
-		verify(invoiceRepository, times(1)).findIndex(
+		verify(invoiceQueryRepository, times(1)).findIndex(
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),

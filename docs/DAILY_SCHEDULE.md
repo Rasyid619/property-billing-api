@@ -11,6 +11,7 @@
 - Added invoice entity mapping, repository projection query, DTOs, service workflow, and authenticated controller endpoint for listing invoices.
 - Added service, controller, and PostgreSQL integration tests for invoice index response shape, filters, validation, and newest-month ordering.
 - Fixed CI integration-test data cleanup by clearing shared PostgreSQL test tables in foreign-key-safe order before each integration test.
+- Replaced the invoice index static nullable-parameter JPQL with a Criteria API query so PostgreSQL only receives bound filters that are actually present.
 - Stayed within the Issue #22 invoice index endpoint scope and did not implement invoice generation, invoice detail, payments, expenses, or credit rollover behavior.
 
 ## Test Results
