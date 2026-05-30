@@ -1,5 +1,47 @@
 # Daily Schedule
 
+## 2026-05-31 — Issue #23: POST /invoices/generate-monthly
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #23, and created branch `rasyid-23-implement-post-invoices-generate-monthly`.
+- Re-read the required project docs and confirmed the current scope is only `POST /invoices/generate-monthly`.
+- Reviewed invoice generation requirements, database design, existing OpenAPI contract, and current invoice index/tenant assignment patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify first-day billing month validation, active-property generation, skipped units without active tenants, duplicate invoice conflict behavior, and bodyless `201`.
+- Added `InvoiceGenerateMonthlyRequest`, generation target query projection, invoice generation service workflow, duplicate invoice conflict handling, authenticated controller endpoint, and conflict exception mapping.
+- Added service, controller, and PostgreSQL integration tests for successful generation, skipped ineligible units, first-day billing month validation, missing property, inactive property, duplicate invoice conflicts, due date calculation, monthly fee copying, and stored unit/tenant references.
+- Stayed within the Issue #23 invoice generation endpoint scope and did not implement invoice detail, payments, expenses, reports, cash balances, or credit rollover behavior.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.InvoiceServiceTest --tests com.propertybilling.controller.InvoiceControllerTest
+Passed
+
+./gradlew test --tests com.propertybilling.integration.invoice.InvoiceGenerateMonthlyIntegrationTest
+Passed
+
+./gradlew test --tests com.propertybilling.service.InvoiceServiceTest --tests com.propertybilling.controller.InvoiceControllerTest --tests com.propertybilling.integration.invoice.InvoiceIndexIntegrationTest --tests com.propertybilling.integration.invoice.InvoiceGenerateMonthlyIntegrationTest
+Passed
+
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/23
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Wait for Issue #23 CI before moving to the next invoice endpoint.
+
+---
+
 ## 2026-05-31 — Issue #22: GET /invoices
 
 ## What I Did

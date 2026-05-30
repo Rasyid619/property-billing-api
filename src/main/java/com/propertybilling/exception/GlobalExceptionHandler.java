@@ -75,6 +75,11 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.CONFLICT).build();
 	}
 
+	@ExceptionHandler(InvoiceGenerationConflictException.class)
+	ResponseEntity<Void> handleInvoiceGenerationConflict() {
+		return ResponseEntity.status(HttpStatus.CONFLICT).build();
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	ResponseEntity<Void> handleMethodArgumentNotValid() {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
