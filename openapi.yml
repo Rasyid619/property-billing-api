@@ -249,7 +249,7 @@ paths:
       tags:
         - Invoices
       summary: List invoices.
-      description: Returns invoices filtered by property, unit, tenant, month, or status.
+      description: Returns invoices filtered by property, unit, tenant, month, or status, ordered by newest billing month first.
       security:
         - BearerAuth: []
       parameters:
@@ -867,17 +867,17 @@ components:
       name: status
       in: query
       required: false
-      description: Invoice status filter.
+      description: Invoice status filter. Omit this parameter to include every invoice status.
       schema:
         $ref: "#/components/schemas/InvoiceStatus"
     MonthQuery:
       name: month
       in: query
       required: false
-      description: Month in YYYY-MM format.
+      description: Month in YYYY-MM format. The filter matches invoices whose billing month is the first day of that month.
       schema:
         type: string
-        pattern: "^\\d{4}-\\d{2}$"
+        pattern: "^\\d{4}-(0[1-9]|1[0-2])$"
         example: "2026-05"
     MonthQueryRequired:
       name: month
@@ -886,7 +886,7 @@ components:
       description: Month in YYYY-MM format.
       schema:
         type: string
-        pattern: "^\\d{4}-\\d{2}$"
+        pattern: "^\\d{4}-(0[1-9]|1[0-2])$"
         example: "2026-05"
     Limit:
       name: limit
