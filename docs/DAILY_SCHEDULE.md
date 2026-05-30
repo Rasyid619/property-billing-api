@@ -10,12 +10,16 @@
 - Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify invoice index ordering and month/status query validation.
 - Added invoice entity mapping, repository projection query, DTOs, service workflow, and authenticated controller endpoint for listing invoices.
 - Added service, controller, and PostgreSQL integration tests for invoice index response shape, filters, validation, and newest-month ordering.
+- Fixed CI integration-test data cleanup by clearing shared PostgreSQL test tables in foreign-key-safe order before each integration test.
 - Stayed within the Issue #22 invoice index endpoint scope and did not implement invoice generation, invoice detail, payments, expenses, or credit rollover behavior.
 
 ## Test Results
 
 ```text
 ./gradlew test --tests com.propertybilling.service.InvoiceServiceTest --tests com.propertybilling.controller.InvoiceControllerTest
+Passed
+
+./gradlew compileTestJava
 Passed
 
 ./gradlew test --tests com.propertybilling.service.InvoiceServiceTest --tests com.propertybilling.controller.InvoiceControllerTest --tests com.propertybilling.integration.invoice.InvoiceIndexIntegrationTest
