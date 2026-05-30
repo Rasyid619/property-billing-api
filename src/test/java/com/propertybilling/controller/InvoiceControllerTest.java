@@ -1,0 +1,138 @@
+package com.propertybilling.controller;
+
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.propertybilling.config.SecurityConfig;
+import com.propertybilling.dto.invoice.InvoiceIndexElement;
+import com.propertybilling.dto.invoice.InvoiceIndexResponse;
+import com.propertybilling.entity.User;
+import com.propertybilling.exception.GlobalExceptionHandler;
+import com.propertybilling.service.AuthService;
+import com.propertybilling.service.InvoiceService;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+@WebMvcTest(InvoiceController.class)
+@Import({ SecurityConfig.class, GlobalExceptionHandler.class })
+/*
+ * Web-layer tests for invoice endpoints.
+ */
+class InvoiceControllerTest {
+
+	private final MockMvc mockMvc;
+
+	@MockitoBean
+	private AuthService authService;
+
+	@MockitoBean
+	private InvoiceService invoiceService;
+
+	@Autowired
+	InvoiceControllerTest(MockMvc mockMvc) {
+		this.mockMvc = mockMvc;
+	}
+
+	@Test
+	void returnsInvoices() throws Exception {
+		UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+		UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+		UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000301");
+		when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+		when(invoiceService.listInvoices(propertyId, unitId, tenantId, "2026-05", "unpaid", 0, 100))
+				.thenReturn(new InvoiceIndexResponse(
+						1,
+						List.of(new InvoiceIndexElement(
+								UUID.fromString("00000000-0000-0000-0000-000000000401"),
+								unitId,
+								tenantId,
+								LocalDate.parse("2026-05-01"),
+								"INV-202605-A101",
+								new BigDecimal("750000.00"),
+								LocalDate.parse("2026-05-10"),
+								"unpaid"
+						))
+				));
+
+		mockMvc.perform(get("/api/v1/invoices")
+						.header("Authorization", "Bearer access-token")
+						.param("property_id", "00000000-0000-0000-0000-000000000101")
+						.param("unit_id", "00000000-0000-0000-0000-000000000201")
+						.param("tenant_id", "00000000-0000-0000-0000-000000000301")
+						.param("month", "2026-05")
+						.param("status", "unpaid"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.count").value(1))
+				.andExpect(jsonPath("$.invoices[0].id").value("00000000-0000-0000-0000-000000000401"))
+				.andExpect(jsonPath("$.invoices[0].unit_id").value("00000000-0000-0000-0000-000000000201"))
+				.andExpect(jsonPath("$.invoices[0].tenant_id").value("00000000-0000-0000-0000-000000000301"))
+				.andExpect(jsonPath("$.invoices[0].billing_month").value("2026-05-01"))
+				.andExpect(jsonPath("$.invoices[0].invoice_number").value("INV-202605-A101"))
+				.andExpect(jsonPath("$.invoices[0].amount").value(750000.00))
+				.andExpect(jsonPath("$.invoices[0].due_date").value("2026-05-10"))
+				.andExpect(jsonPath("$.invoices[0].status").value("unpaid"))
+				.andExpect(jsonPath("$.invoices[0].created_at").doesNotExist())
+				.andExpect(jsonPath("$.invoices[0].updated_at").doesNotExist());
+
+		verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+		verify(invoiceService, times(1)).listInvoices(propertyId, unitId, tenantId, "2026-05", "unpaid", 0, 100);
+	}
+
+	@Test
+	void rejectsInvalidMonth() throws Exception {
+		mockMvc.perform(get("/api/v1/invoices")
+						.header("Authorization", "Bearer access-token")
+						.param("month", "2026-13"))
+				.andExpect(status().isBadRequest())
+				.andExpect(content().string(""));
+
+		verifyNoInteractions(authService, invoiceService);
+	}
+
+	@Test
+	void rejectsInvalidStatus() throws Exception {
+		mockMvc.perform(get("/api/v1/invoices")
+						.header("Authorization", "Bearer access-token")
+						.param("status", "archived"))
+				.andExpect(status().isBadRequest())
+				.andExpect(content().string(""));
+
+		verifyNoInteractions(authService, invoiceService);
+	}
+
+	@Test
+	void rejectsInvalidLimit() throws Exception {
+		mockMvc.perform(get("/api/v1/invoices")
+						.header("Authorization", "Bearer access-token")
+						.param("limit", "0"))
+				.andExpect(status().isBadRequest())
+				.andExpect(content().string(""));
+
+		verifyNoInteractions(authService, invoiceService);
+	}
+
+	private User buildUser() {
+		return new User(
+				UUID.fromString("00000000-0000-0000-0000-000000000001"),
+				"Admin User",
+				"admin@example.com",
+				"password-hash",
+				"admin"
+		);
+	}
+}

@@ -1,5 +1,44 @@
 # Daily Schedule
 
+## 2026-05-31 — Issue #22: GET /invoices
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #22, and created branch `rasyid-22-implement-get-invoices`.
+- Re-read the required project docs and confirmed the current scope is only `GET /invoices`.
+- Reviewed invoice requirements, database design, existing OpenAPI contract, and current index endpoint patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify invoice index ordering and month/status query validation.
+- Added invoice entity mapping, repository projection query, DTOs, service workflow, and authenticated controller endpoint for listing invoices.
+- Added service, controller, and PostgreSQL integration tests for invoice index response shape, filters, validation, and newest-month ordering.
+- Stayed within the Issue #22 invoice index endpoint scope and did not implement invoice generation, invoice detail, payments, expenses, or credit rollover behavior.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.InvoiceServiceTest --tests com.propertybilling.controller.InvoiceControllerTest
+Passed
+
+./gradlew test --tests com.propertybilling.service.InvoiceServiceTest --tests com.propertybilling.controller.InvoiceControllerTest --tests com.propertybilling.integration.invoice.InvoiceIndexIntegrationTest
+Failed: Testcontainers could not find a valid Docker environment.
+
+./gradlew clean test
+Failed: Testcontainers could not find a valid Docker environment; Docker is not installed or integrated in this WSL distro.
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/22
+
+## Blockers
+
+- Local Docker/Testcontainers verification is blocked because the `docker` command is unavailable in this WSL distro.
+
+## Tomorrow
+
+- Wait for Issue #22 CI before moving to the next invoice endpoint.
+
+---
+
 ## 2026-05-28 — Issue #39: PATCH /unit-tenant-assignments/{assignmentId}/move-out
 
 ## What I Did
