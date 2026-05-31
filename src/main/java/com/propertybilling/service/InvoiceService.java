@@ -186,7 +186,7 @@ public class InvoiceService {
 				.orElseThrow(InvoiceNotFoundException::new);
 		InvoiceSettlement settlement = getSettlement(lockedSelectedInvoice);
 		BigDecimal outstandingAmount = getOutstandingAmount(lockedSelectedInvoice, settlement);
-		BigDecimal surplusAmount = request.amount().subtract(outstandingAmount).max(BigDecimal.ZERO);
+		BigDecimal surplusCreditAmount = getSurplusCreditAmount(request.amount(), outstandingAmount);
 
 		paymentRepository.save(toPayment(lockedSelectedInvoice, request.amount(), request));
 		updateAndSaveInvoiceStatus(
@@ -195,14 +195,12 @@ public class InvoiceService {
 				settlement.creditAppliedAmount()
 		);
 
-		boolean hasNoSurplusCredit = surplusAmount.signum() <= 0;
-
-		if (hasNoSurplusCredit) {
+		if (hasNoSurplusCredit(surplusCreditAmount)) {
 			return;
 		}
 
 		TenantUnitCredit credit = findOrCreateCredit(lockedSelectedInvoice);
-		credit.increaseBalance(surplusAmount);
+		credit.increaseBalance(surplusCreditAmount);
 		tenantUnitCreditRepository.save(credit);
 		applyCreditToInvoices(credit, lockedInvoices, invoiceId, request.paymentDate());
 	}
@@ -318,9 +316,7 @@ public class InvoiceService {
 	}
 
 	private InvoiceStatus toInvoiceStatus(Invoice invoice, BigDecimal invoiceAmount, BigDecimal settledAmount) {
-		boolean isFullySettled = settledAmount.compareTo(invoiceAmount) >= 0;
-
-		if (isFullySettled) {
+		if (isFullySettled(settledAmount, invoiceAmount)) {
 			return InvoiceStatus.PAID;
 		}
 
@@ -328,9 +324,7 @@ public class InvoiceService {
 			return InvoiceStatus.OVERDUE;
 		}
 
-		boolean isPartiallySettled = settledAmount.signum() > 0;
-
-		if (isPartiallySettled) {
+		if (isPartiallySettled(settledAmount)) {
 			return InvoiceStatus.PARTIAL;
 		}
 
@@ -388,9 +382,7 @@ public class InvoiceService {
 				continue;
 			}
 
-			boolean hasNoRemainingCredit = new BigDecimal(credit.getBalance()).signum() <= 0;
-
-			if (hasNoRemainingCredit) {
+			if (credit.hasNoRemainingBalance()) {
 				break;
 			}
 
@@ -408,15 +400,13 @@ public class InvoiceService {
 		InvoiceSettlement settlement = getSettlement(invoice);
 		BigDecimal outstandingAmount = getOutstandingAmount(invoice, settlement);
 
-		boolean hasNoOutstandingAmount = outstandingAmount.signum() <= 0;
-
-		if (hasNoOutstandingAmount) {
+		if (hasNoOutstandingAmount(outstandingAmount)) {
 			updateAndSaveInvoiceStatus(invoice, settlement.paidAmount(), settlement.creditAppliedAmount());
 
 			return;
 		}
 
-		BigDecimal appliedAmount = new BigDecimal(credit.getBalance()).min(outstandingAmount);
+		BigDecimal appliedAmount = credit.getBalanceAmount().min(outstandingAmount);
 		credit.decreaseBalance(appliedAmount);
 		creditApplicationRepository.save(toCreditApplication(credit, invoice, appliedAmount, appliedDate));
 		updateAndSaveInvoiceStatus(
@@ -461,6 +451,26 @@ public class InvoiceService {
 				.subtract(settlement.paidAmount())
 				.subtract(settlement.creditAppliedAmount())
 				.max(BigDecimal.ZERO);
+	}
+
+	private BigDecimal getSurplusCreditAmount(BigDecimal paymentAmount, BigDecimal outstandingAmount) {
+		return paymentAmount.subtract(outstandingAmount).max(BigDecimal.ZERO);
+	}
+
+	private boolean hasNoSurplusCredit(BigDecimal surplusCreditAmount) {
+		return surplusCreditAmount.signum() <= 0;
+	}
+
+	private boolean isFullySettled(BigDecimal settledAmount, BigDecimal invoiceAmount) {
+		return settledAmount.compareTo(invoiceAmount) >= 0;
+	}
+
+	private boolean isPartiallySettled(BigDecimal settledAmount) {
+		return settledAmount.signum() > 0;
+	}
+
+	private boolean hasNoOutstandingAmount(BigDecimal outstandingAmount) {
+		return outstandingAmount.signum() <= 0;
 	}
 
 	private BigDecimal zeroIfNull(BigDecimal amount) {

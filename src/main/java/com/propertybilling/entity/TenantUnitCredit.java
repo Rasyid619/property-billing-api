@@ -69,7 +69,7 @@ public class TenantUnitCredit {
 	 * @param amount amount to add
 	 */
 	public void increaseBalance(BigDecimal amount) {
-		balance = new BigDecimal(balance).add(amount).toPlainString();
+		balance = getBalanceAmount().add(amount).toPlainString();
 	}
 
 	/**
@@ -78,6 +78,24 @@ public class TenantUnitCredit {
 	 * @param amount amount to subtract
 	 */
 	public void decreaseBalance(BigDecimal amount) {
-		balance = new BigDecimal(balance).subtract(amount).toPlainString();
+		balance = getBalanceAmount().subtract(amount).toPlainString();
+	}
+
+	/**
+	 * Returns the reusable credit balance as money.
+	 *
+	 * @return current credit balance
+	 */
+	public BigDecimal getBalanceAmount() {
+		return new BigDecimal(balance);
+	}
+
+	/**
+	 * Reports whether no reusable credit remains.
+	 *
+	 * @return true when the balance cannot settle another invoice
+	 */
+	public boolean hasNoRemainingBalance() {
+		return getBalanceAmount().signum() <= 0;
 	}
 }
