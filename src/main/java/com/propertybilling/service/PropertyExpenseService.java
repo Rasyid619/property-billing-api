@@ -77,6 +77,20 @@ public class PropertyExpenseService {
 	}
 
 	/**
+	 * Deletes a property expense.
+	 *
+	 * @param expenseId property expense identifier
+	 * @throws PropertyExpenseNotFoundException when no expense exists for the ID
+	 */
+	@Transactional
+	public void deleteExpense(UUID expenseId) {
+		PropertyExpense expense = propertyExpenseRepository.findByIdForUpdate(expenseId)
+				.orElseThrow(PropertyExpenseNotFoundException::new);
+
+		propertyExpenseRepository.delete(expense);
+	}
+
+	/**
 	 * Lists expenses for one property with optional month filtering.
 	 *
 	 * @param propertyId owning property identifier

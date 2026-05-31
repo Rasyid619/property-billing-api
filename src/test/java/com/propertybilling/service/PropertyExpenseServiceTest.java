@@ -186,6 +186,44 @@ class PropertyExpenseServiceTest {
 	}
 
 	@Nested
+	class DeleteExpense {
+
+		@Test
+		void deletesExpense() {
+			UUID expenseId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+			Property property = new Property(propertyId, "Green Residence", null, true);
+			PropertyExpense expense = new PropertyExpense(
+					expenseId,
+					property,
+					LocalDate.parse("2026-05-12"),
+					"cleaning",
+					"750000.00",
+					"Monthly cleaning fee",
+					null
+			);
+			when(propertyExpenseRepository.findByIdForUpdate(expenseId)).thenReturn(Optional.of(expense));
+
+			propertyExpenseService.deleteExpense(expenseId);
+
+			verify(propertyExpenseRepository, times(1)).findByIdForUpdate(expenseId);
+			verify(propertyExpenseRepository, times(1)).delete(expense);
+		}
+
+		@Test
+		void throwsNotFoundWhenExpenseDoesNotExist() {
+			UUID expenseId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			when(propertyExpenseRepository.findByIdForUpdate(expenseId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> propertyExpenseService.deleteExpense(expenseId))
+					.isInstanceOf(PropertyExpenseNotFoundException.class);
+
+			verify(propertyExpenseRepository, times(1)).findByIdForUpdate(expenseId);
+			verify(propertyExpenseRepository, never()).delete(any());
+		}
+	}
+
+	@Nested
 	class ListExpenses {
 
 		@Test

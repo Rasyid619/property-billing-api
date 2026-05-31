@@ -1,5 +1,39 @@
 # Daily Schedule
 
+## 2026-06-01 — Issue #20: DELETE /expenses/{expense_id}
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #20, and created branch `rasyid-20-delete-expenses-expense-id`.
+- Re-read the required project docs and confirmed the current scope is only `DELETE /expenses/{expense_id}` in the property expense module.
+- Updated Issue #20 from `DELETE /expenses/{expenseId}` to `DELETE /expenses/{expense_id}` based on API parameter naming rules.
+- Reviewed property expense requirements, database design, existing OpenAPI contract, and the existing expense index/create/update implementation before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to describe permanent expense deletion behavior.
+- Added expense deletion service workflow using the existing write-lock lookup and property expense not-found handling.
+- Added authenticated controller endpoint returning lean `204`.
+- Added service, controller, and PostgreSQL integration tests for successful expense deletion and missing expense handling.
+- Stayed within the Issue #20 `DELETE /expenses/{expense_id}` scope and did not implement cash-flow report, cash-balance, or future tenant login behavior.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.PropertyExpenseServiceTest --tests com.propertybilling.controller.PropertyExpenseControllerTest --tests com.propertybilling.integration.expense.ExpenseCreateIntegrationTest --tests com.propertybilling.integration.expense.ExpenseIndexIntegrationTest --tests com.propertybilling.integration.expense.ExpenseUpdateIntegrationTest --tests com.propertybilling.integration.expense.ExpenseDeleteIntegrationTest
+Passed
+
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/20
+
+## Blockers
+
+- None.
+
+---
+
 ## 2026-06-01 — Issue #19: PUT /expenses/{expense_id}
 
 ## What I Did

@@ -5,6 +5,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -162,6 +163,21 @@ class PropertyExpenseControllerTest {
 
 		verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
 		verify(propertyExpenseService, times(1)).listExpenses(propertyId, "2026-05", 0, 100);
+	}
+
+	@Test
+	void deleteReturnsNoContent() throws Exception {
+		when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+
+		mockMvc.perform(delete("/api/v1/expenses/00000000-0000-0000-0000-000000000201")
+						.header("Authorization", "Bearer access-token"))
+				.andExpect(status().isNoContent())
+				.andExpect(content().string(""));
+
+		verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+		verify(propertyExpenseService, times(1)).deleteExpense(UUID.fromString(
+				"00000000-0000-0000-0000-000000000201"
+		));
 	}
 
 	@Test
