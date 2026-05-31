@@ -593,7 +593,7 @@ paths:
       tags:
         - Reports
       summary: Get a cash-flow report.
-      description: Returns total income, total expenses, and net saving for a property month.
+      description: Returns cash payments by payment date, property expenses by expense date, and net saving for a property month. Credit applications are excluded from income because the cash was already counted when received.
       security:
         - BearerAuth: []
       parameters:
