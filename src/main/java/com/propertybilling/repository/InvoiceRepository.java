@@ -2,11 +2,14 @@ package com.propertybilling.repository;
 
 import com.propertybilling.dto.invoice.queryresult.InvoiceShowQueryResult;
 import com.propertybilling.entity.Invoice;
+import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -56,4 +59,32 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
 			WHERE invoice.id = :invoiceId
 			""")
 	Optional<InvoiceShowQueryResult> findShow(@Param("invoiceId") UUID invoiceId);
+
+	/**
+	 * Finds the selected invoice and same-tenant open invoices that can receive payments.
+	 *
+	 * @param selectedInvoiceId selected invoice that receives payment first
+	 * @param statuses invoice statuses eligible for surplus allocation
+	 * @return selected and open invoices ordered oldest first
+	 */
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("""
+			SELECT invoice
+			FROM Invoice invoice
+			JOIN FETCH invoice.tenant
+			WHERE invoice.tenant.id = (
+			    SELECT selectedInvoice.tenant.id
+			    FROM Invoice selectedInvoice
+			    WHERE selectedInvoice.id = :selectedInvoiceId
+			)
+			AND (
+			    invoice.id = :selectedInvoiceId
+			    OR invoice.status IN :statuses
+			)
+			ORDER BY invoice.billingMonth ASC, invoice.dueDate ASC, invoice.invoiceNumber ASC, invoice.id ASC
+			""")
+	List<Invoice> findPaymentAllocationInvoicesForUpdate(
+			@Param("selectedInvoiceId") UUID selectedInvoiceId,
+			@Param("statuses") Collection<String> statuses
+	);
 }

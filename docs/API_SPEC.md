@@ -390,7 +390,7 @@ paths:
       tags:
         - Payments
       summary: Record an invoice payment.
-      description: Records payment and recalculates the invoice status.
+      description: Records a positive payment and recalculates invoice status. The selected invoice is paid first. Surplus is applied to the same tenant's other open invoices oldest-first when possible, and any remaining surplus is preserved as an extra payment on the selected invoice for future credit rollover.
       security:
         - BearerAuth: []
       parameters:
@@ -1197,6 +1197,7 @@ components:
           type: number
           format: double
           minimum: 0.01
+          description: Positive payment amount. Amounts greater than the selected invoice balance are accepted.
           example: 750000
         payment_date:
           type: string
@@ -1204,8 +1205,11 @@ components:
           example: "2026-05-08"
         payment_method:
           type: string
-          minLength: 1
-          maxLength: 50
+          enum:
+            - bank_transfer
+            - cash
+            - e_wallet
+            - other
           example: bank_transfer
         reference_number:
           type: string

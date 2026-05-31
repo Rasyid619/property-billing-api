@@ -128,6 +128,122 @@ class FlywayMigrationTest {
 	}
 
 	@Test
+	void invoiceStatusUsesDomainAndDefaultsToUnpaid() throws SQLException {
+		try (var connection = dataSource.getConnection()) {
+			try (var selectType = connection.prepareStatement("""
+					SELECT domain_name
+					FROM information_schema.columns
+					WHERE table_schema = 'public'
+					AND table_name = 'invoices'
+					AND column_name = 'status'
+					""");
+					ResultSet typeResult = selectType.executeQuery()) {
+				assertThat(typeResult.next()).isTrue();
+				assertThat(typeResult.getString("domain_name")).isEqualTo("invoice_status");
+			}
+
+			try (var insertProperty = connection.prepareStatement("""
+					INSERT INTO properties (
+					    id,
+					    name,
+					    is_active
+					)
+					VALUES (
+					    '00000000-0000-0000-0000-000000000501',
+					    'Default Status Property',
+					    TRUE
+					)
+					""")) {
+				insertProperty.executeUpdate();
+			}
+
+			try (var insertUnit = connection.prepareStatement("""
+					INSERT INTO units (
+					    id,
+					    property_id,
+					    unit_number,
+					    monthly_fee,
+					    due_day,
+					    is_active
+					)
+					VALUES (
+					    '00000000-0000-0000-0000-000000000502',
+					    '00000000-0000-0000-0000-000000000501',
+					    'A-501',
+					    '750000.00',
+					    10,
+					    TRUE
+					)
+					""")) {
+				insertUnit.executeUpdate();
+			}
+
+			try (var insertTenant = connection.prepareStatement("""
+					INSERT INTO tenants (
+					    id,
+					    name
+					)
+					VALUES (
+					    '00000000-0000-0000-0000-000000000503',
+					    'Budi'
+					)
+					""")) {
+				insertTenant.executeUpdate();
+			}
+
+			try (var insertInvoice = connection.prepareStatement("""
+					INSERT INTO invoices (
+					    id,
+					    unit_id,
+					    tenant_id,
+					    billing_month,
+					    invoice_number,
+					    amount,
+					    due_date
+					)
+					VALUES (
+					    '00000000-0000-0000-0000-000000000504',
+					    '00000000-0000-0000-0000-000000000502',
+					    '00000000-0000-0000-0000-000000000503',
+					    '2026-05-01',
+					    'INV-202605-A501',
+					    '750000.00',
+					    '2026-05-10'
+					)
+					""")) {
+				insertInvoice.executeUpdate();
+			}
+
+			try (var selectStatus = connection.prepareStatement("""
+					SELECT status::TEXT AS status
+					FROM invoices
+					WHERE id = '00000000-0000-0000-0000-000000000504'
+					""");
+					ResultSet statusResult = selectStatus.executeQuery()) {
+				assertThat(statusResult.next()).isTrue();
+				assertThat(statusResult.getString("status")).isEqualTo("unpaid");
+			}
+		}
+	}
+
+	@Test
+	void paymentMethodUsesDomain() throws SQLException {
+		try (var connection = dataSource.getConnection()) {
+			try (var selectType = connection.prepareStatement("""
+					SELECT domain_name
+					FROM information_schema.columns
+					WHERE table_schema = 'public'
+					AND table_name = 'payments'
+					AND column_name = 'payment_method'
+					""");
+					ResultSet typeResult = selectType.executeQuery()) {
+				assertThat(typeResult.next()).isTrue();
+				assertThat(typeResult.getString("domain_name")).isEqualTo("payment_method");
+			}
+		}
+	}
+
+	@Test
 	void insertDefaultsPopulateCreatedAtAndUpdatedAt() throws SQLException {
 		OffsetDateTime userCreatedAt;
 		OffsetDateTime userUpdatedAt;
