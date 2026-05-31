@@ -1,5 +1,6 @@
 package com.propertybilling.repository;
 
+import com.propertybilling.dto.invoice.queryresult.InvoiceIndexQueryResult;
 import com.propertybilling.dto.invoice.queryresult.InvoiceShowQueryResult;
 import com.propertybilling.entity.Invoice;
 import jakarta.persistence.LockModeType;
@@ -34,6 +35,71 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
 	boolean existsByUnitIdsAndBillingMonth(
 			@Param("unitIds") Collection<UUID> unitIds,
 			@Param("billingMonth") LocalDate billingMonth
+	);
+
+	/**
+	 * Finds invoice index rows with settlement totals using optional query filters.
+	 *
+	 * @param propertyId optional owning property filter
+	 * @param unitId optional unit filter
+	 * @param tenantId optional tenant filter
+	 * @param billingMonth optional billing month filter
+	 * @param status optional invoice status filter
+	 * @param offset number of rows to skip
+	 * @param limit maximum rows to return
+	 * @return matching invoice rows ordered by newest billing month first
+	 */
+	@Query(value = """
+			WITH payment_totals AS (
+			    SELECT
+			        payment.invoice_id,
+			        SUM(CAST(payment.amount AS NUMERIC)) AS paid_amount
+			    FROM payments payment
+			    GROUP BY payment.invoice_id
+			),
+			credit_totals AS (
+			    SELECT
+			        credit_application.invoice_id,
+			        SUM(CAST(credit_application.amount AS NUMERIC)) AS credit_applied_amount
+			    FROM credit_applications credit_application
+			    GROUP BY credit_application.invoice_id
+			)
+			SELECT
+			    invoice.id,
+			    invoice.unit_id AS unit_id,
+			    invoice.tenant_id AS tenant_id,
+			    invoice.billing_month AS billing_month,
+			    invoice.invoice_number AS invoice_number,
+			    invoice.amount,
+			    COALESCE(payment_totals.paid_amount, 0) AS paid_amount,
+			    COALESCE(credit_totals.credit_applied_amount, 0) AS credit_applied_amount,
+			    invoice.due_date AS due_date,
+			    invoice.status
+			FROM invoices invoice
+			JOIN units unit ON unit.id = invoice.unit_id
+			LEFT JOIN payment_totals ON payment_totals.invoice_id = invoice.id
+			LEFT JOIN credit_totals ON credit_totals.invoice_id = invoice.id
+			WHERE (CAST(:propertyId AS UUID) IS NULL OR unit.property_id = CAST(:propertyId AS UUID))
+			AND (CAST(:unitId AS UUID) IS NULL OR invoice.unit_id = CAST(:unitId AS UUID))
+			AND (CAST(:tenantId AS UUID) IS NULL OR invoice.tenant_id = CAST(:tenantId AS UUID))
+			AND (CAST(:billingMonth AS DATE) IS NULL OR invoice.billing_month = CAST(:billingMonth AS DATE))
+			AND (CAST(:status AS TEXT) IS NULL OR invoice.status = CAST(:status AS TEXT))
+			ORDER BY
+			    invoice.billing_month DESC,
+			    invoice.due_date ASC,
+			    invoice.invoice_number ASC,
+			    invoice.id ASC
+			OFFSET :offset
+			LIMIT :limit
+			""", nativeQuery = true)
+	List<InvoiceIndexQueryResult> findIndex(
+			@Param("propertyId") UUID propertyId,
+			@Param("unitId") UUID unitId,
+			@Param("tenantId") UUID tenantId,
+			@Param("billingMonth") LocalDate billingMonth,
+			@Param("status") String status,
+			@Param("offset") int offset,
+			@Param("limit") int limit
 	);
 
 	/**

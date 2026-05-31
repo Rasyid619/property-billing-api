@@ -30,16 +30,16 @@ import com.propertybilling.exception.InvoiceGenerationConflictException;
 import com.propertybilling.exception.InvoiceNotFoundException;
 import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.repository.CreditApplicationRepository;
-import com.propertybilling.repository.InvoiceQueryRepository;
 import com.propertybilling.repository.InvoiceRepository;
 import com.propertybilling.repository.PaymentRepository;
 import com.propertybilling.repository.PropertyRepository;
 import com.propertybilling.repository.TenantRepository;
 import com.propertybilling.repository.TenantUnitCreditRepository;
 import com.propertybilling.repository.UnitRepository;
-import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
@@ -50,14 +50,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Pageable;
 
 /*
  * Unit tests for invoice retrieval workflows.
  */
 class InvoiceServiceTest {
 
-	private final InvoiceQueryRepository invoiceQueryRepository = Mockito.mock(InvoiceQueryRepository.class);
 	private final InvoiceRepository invoiceRepository = Mockito.mock(InvoiceRepository.class);
 	private final PaymentRepository paymentRepository = Mockito.mock(PaymentRepository.class);
 	private final CreditApplicationRepository creditApplicationRepository = Mockito.mock(CreditApplicationRepository.class);
@@ -67,7 +65,6 @@ class InvoiceServiceTest {
 	private final UnitRepository unitRepository = Mockito.mock(UnitRepository.class);
 	private final Clock clock = Clock.fixed(Instant.parse("2026-05-31T00:00:00Z"), ZoneOffset.UTC);
 	private final InvoiceService invoiceService = new InvoiceService(
-			invoiceQueryRepository,
 			invoiceRepository,
 			paymentRepository,
 			creditApplicationRepository,
@@ -115,7 +112,7 @@ class InvoiceServiceTest {
 			verify(unitRepository, times(1)).findMonthlyInvoiceGenerationTargets(propertyId);
 			verify(invoiceRepository, times(1))
 					.existsByUnitIdsAndBillingMonth(List.of(unitId), LocalDate.parse("2026-05-01"));
-			verify(invoiceRepository, times(1)).saveAll(invoicesCaptor.capture());
+			verify(invoiceRepository, times(1)).saveAllAndFlush(invoicesCaptor.capture());
 			verify(tenantUnitCreditRepository, times(1)).findByTenantIdAndUnitIdForUpdate(tenantId, unitId);
 			List<Invoice> invoices = toList(invoicesCaptor.getValue());
 			assertThat(invoices).hasSize(1);
@@ -146,7 +143,7 @@ class InvoiceServiceTest {
 			verify(propertyRepository, times(1)).findByIdForUpdate(propertyId);
 			verify(unitRepository, times(1)).findMonthlyInvoiceGenerationTargets(propertyId);
 			verify(invoiceRepository, never()).existsByUnitIdsAndBillingMonth(Mockito.any(), Mockito.any());
-			verify(invoiceRepository, never()).saveAll(Mockito.any());
+			verify(invoiceRepository, never()).saveAllAndFlush(Mockito.any());
 		}
 
 		@Test
@@ -198,7 +195,7 @@ class InvoiceServiceTest {
 
 			verify(invoiceRepository, times(1))
 					.existsByUnitIdsAndBillingMonth(List.of(unitId), LocalDate.parse("2026-05-01"));
-			verify(invoiceRepository, never()).saveAll(Mockito.any());
+			verify(invoiceRepository, never()).saveAllAndFlush(Mockito.any());
 		}
 
 		@Test
@@ -225,14 +222,14 @@ class InvoiceServiceTest {
 			when(tenantRepository.getReferenceById(tenantId)).thenReturn(buildTenant(tenantId, "Budi"));
 			Mockito.doThrow(new DataIntegrityViolationException("duplicate invoice"))
 					.when(invoiceRepository)
-					.saveAll(Mockito.any());
+					.saveAllAndFlush(Mockito.any());
 
 			assertThatThrownBy(() -> invoiceService.generateMonthlyInvoices(new InvoiceGenerateMonthlyRequest(
 					propertyId,
 					LocalDate.parse("2026-05-01")
 			))).isInstanceOf(InvoiceGenerationConflictException.class);
 
-			verify(invoiceRepository, times(1)).saveAll(Mockito.any());
+			verify(invoiceRepository, times(1)).saveAllAndFlush(Mockito.any());
 		}
 	}
 
@@ -241,13 +238,14 @@ class InvoiceServiceTest {
 		UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
 		UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
 		UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000301");
-		when(invoiceQueryRepository.findIndex(
+		when(invoiceRepository.findIndex(
 				Mockito.eq(propertyId),
 				Mockito.eq(unitId),
 				Mockito.eq(tenantId),
 				Mockito.eq(LocalDate.parse("2026-05-01")),
 				Mockito.eq("unpaid"),
-				Mockito.any(Pageable.class)
+				Mockito.eq(0),
+				Mockito.eq(100)
 		)).thenReturn(List.of(new InvoiceIndexQueryResult(
 				UUID.fromString("00000000-0000-0000-0000-000000000401"),
 				unitId,
@@ -255,6 +253,8 @@ class InvoiceServiceTest {
 				LocalDate.parse("2026-05-01"),
 				"INV-202605-A101",
 				"750000.00",
+				new BigDecimal("300000.00"),
+				new BigDecimal("150000.00"),
 				LocalDate.parse("2026-05-10"),
 				"unpaid"
 		)));
@@ -278,70 +278,72 @@ class InvoiceServiceTest {
 		assertThat(response.invoices().getFirst().billingMonth()).isEqualTo(LocalDate.parse("2026-05-01"));
 		assertThat(response.invoices().getFirst().invoiceNumber()).isEqualTo("INV-202605-A101");
 		assertThat(response.invoices().getFirst().amount()).isEqualByComparingTo("750000.00");
-		assertThat(response.invoices().getFirst().paidAmount()).isZero();
-		assertThat(response.invoices().getFirst().creditAppliedAmount()).isZero();
-		assertThat(response.invoices().getFirst().amountDue()).isEqualByComparingTo("750000.00");
+		assertThat(response.invoices().getFirst().paidAmount()).isEqualByComparingTo("300000.00");
+		assertThat(response.invoices().getFirst().creditAppliedAmount()).isEqualByComparingTo("150000.00");
+		assertThat(response.invoices().getFirst().amountDue()).isEqualByComparingTo("300000.00");
 		assertThat(response.invoices().getFirst().dueDate()).isEqualTo(LocalDate.parse("2026-05-10"));
 		assertThat(response.invoices().getFirst().status()).isEqualTo("unpaid");
-		verify(invoiceQueryRepository, times(1)).findIndex(
+		verify(invoiceRepository, times(1)).findIndex(
 				Mockito.eq(propertyId),
 				Mockito.eq(unitId),
 				Mockito.eq(tenantId),
 				Mockito.eq(LocalDate.parse("2026-05-01")),
 				Mockito.eq("unpaid"),
-				Mockito.any(Pageable.class)
+				Mockito.eq(0),
+				Mockito.eq(100)
 		);
 	}
 
 	@Test
 	void passesNullFiltersWhenOptionalFiltersAreUnset() {
-		when(invoiceQueryRepository.findIndex(
+		when(invoiceRepository.findIndex(
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
-				Mockito.any(Pageable.class)
+				Mockito.eq(0),
+				Mockito.eq(100)
 		)).thenReturn(List.of());
 
 		InvoiceIndexResponse response = invoiceService.listInvoices(null, null, null, null, null, 0, 100);
 
 		assertThat(response.count()).isZero();
 		assertThat(response.invoices()).isEmpty();
-		verify(invoiceQueryRepository, times(1)).findIndex(
+		verify(invoiceRepository, times(1)).findIndex(
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
-				Mockito.any(Pageable.class)
+				Mockito.eq(0),
+				Mockito.eq(100)
 		);
 	}
 
 	@Test
-	void passesPageRequestToRepository() {
-		ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-		when(invoiceQueryRepository.findIndex(
+	void passesOffsetAndLimitToRepository() {
+		when(invoiceRepository.findIndex(
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
-				Mockito.any(Pageable.class)
+				Mockito.anyInt(),
+				Mockito.anyInt()
 		)).thenReturn(List.of());
 
 		invoiceService.listInvoices(null, null, null, null, null, 200, 100);
 
-		verify(invoiceQueryRepository, times(1)).findIndex(
+		verify(invoiceRepository, times(1)).findIndex(
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
 				Mockito.isNull(),
-				pageableCaptor.capture()
+				Mockito.eq(200),
+				Mockito.eq(100)
 		);
-		assertThat(pageableCaptor.getValue().getPageNumber()).isEqualTo(2);
-		assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(100);
 	}
 
 	@Nested

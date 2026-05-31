@@ -22,7 +22,6 @@ import com.propertybilling.exception.InvoiceGenerationConflictException;
 import com.propertybilling.exception.InvoiceNotFoundException;
 import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.repository.CreditApplicationRepository;
-import com.propertybilling.repository.InvoiceQueryRepository;
 import com.propertybilling.repository.InvoiceRepository;
 import com.propertybilling.repository.PaymentRepository;
 import com.propertybilling.repository.PropertyRepository;
@@ -37,7 +36,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +47,6 @@ import lombok.RequiredArgsConstructor;
  */
 public class InvoiceService {
 
-	private final InvoiceQueryRepository invoiceQueryRepository;
 	private final InvoiceRepository invoiceRepository;
 	private final PaymentRepository paymentRepository;
 	private final CreditApplicationRepository creditApplicationRepository;
@@ -91,7 +88,7 @@ public class InvoiceService {
 		List<Invoice> invoices = toInvoices(targets, request.billingMonth());
 
 		try {
-			invoiceRepository.saveAll(invoices);
+			invoiceRepository.saveAllAndFlush(invoices);
 		} catch (DataIntegrityViolationException exception) {
 			throw new InvoiceGenerationConflictException();
 		}
@@ -121,13 +118,14 @@ public class InvoiceService {
 			int limit
 	) {
 		LocalDate billingMonth = toBillingMonth(month);
-		List<InvoiceIndexElement> invoices = invoiceQueryRepository.findIndex(
+		List<InvoiceIndexElement> invoices = invoiceRepository.findIndex(
 				propertyId,
 				unitId,
 				tenantId,
 				billingMonth,
 				toStatusFilter(status),
-				PageRequest.of(offset / limit, limit)
+				offset,
+				limit
 		)
 				.stream()
 				.map(this::toIndexElement)
@@ -253,7 +251,7 @@ public class InvoiceService {
 	}
 
 	private InvoiceIndexElement toIndexElement(InvoiceIndexQueryResult invoice) {
-		InvoiceSettlement settlement = getSettlement(invoice.id());
+		InvoiceSettlement settlement = new InvoiceSettlement(invoice.paidAmount(), invoice.creditAppliedAmount());
 		BigDecimal amount = new BigDecimal(invoice.amount());
 
 		return new InvoiceIndexElement(

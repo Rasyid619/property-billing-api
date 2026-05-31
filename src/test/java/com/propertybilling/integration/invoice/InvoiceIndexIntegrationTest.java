@@ -4,15 +4,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.propertybilling.entity.CreditApplication;
 import com.propertybilling.entity.Invoice;
+import com.propertybilling.entity.Payment;
 import com.propertybilling.entity.Property;
 import com.propertybilling.entity.Tenant;
+import com.propertybilling.entity.TenantUnitCredit;
 import com.propertybilling.entity.Unit;
 import com.propertybilling.entity.User;
 import com.propertybilling.integration.AbstractIntegrationTest;
+import com.propertybilling.repository.CreditApplicationRepository;
 import com.propertybilling.repository.InvoiceRepository;
+import com.propertybilling.repository.PaymentRepository;
 import com.propertybilling.repository.PropertyRepository;
 import com.propertybilling.repository.TenantRepository;
+import com.propertybilling.repository.TenantUnitCreditRepository;
 import com.propertybilling.repository.UnitRepository;
 import com.propertybilling.repository.UserRepository;
 import com.propertybilling.security.JwtTokenService;
@@ -31,8 +37,11 @@ class InvoiceIndexIntegrationTest extends AbstractIntegrationTest {
 
 	private final MockMvc mockMvc;
 	private final InvoiceRepository invoiceRepository;
+	private final PaymentRepository paymentRepository;
 	private final PropertyRepository propertyRepository;
+	private final CreditApplicationRepository creditApplicationRepository;
 	private final TenantRepository tenantRepository;
+	private final TenantUnitCreditRepository tenantUnitCreditRepository;
 	private final UnitRepository unitRepository;
 	private final UserRepository userRepository;
 	private final JwtTokenService jwtTokenService;
@@ -42,16 +51,22 @@ class InvoiceIndexIntegrationTest extends AbstractIntegrationTest {
 	InvoiceIndexIntegrationTest(
 			MockMvc mockMvc,
 			InvoiceRepository invoiceRepository,
+			PaymentRepository paymentRepository,
 			PropertyRepository propertyRepository,
+			CreditApplicationRepository creditApplicationRepository,
 			TenantRepository tenantRepository,
+			TenantUnitCreditRepository tenantUnitCreditRepository,
 			UnitRepository unitRepository,
 			UserRepository userRepository,
 			JwtTokenService jwtTokenService
 	) {
 		this.mockMvc = mockMvc;
 		this.invoiceRepository = invoiceRepository;
+		this.paymentRepository = paymentRepository;
 		this.propertyRepository = propertyRepository;
+		this.creditApplicationRepository = creditApplicationRepository;
 		this.tenantRepository = tenantRepository;
+		this.tenantUnitCreditRepository = tenantUnitCreditRepository;
 		this.unitRepository = unitRepository;
 		this.userRepository = userRepository;
 		this.jwtTokenService = jwtTokenService;
@@ -109,7 +124,7 @@ class InvoiceIndexIntegrationTest extends AbstractIntegrationTest {
 				"Andi"
 		));
 
-		invoiceRepository.save(buildInvoice(
+		Invoice currentInvoice = invoiceRepository.save(buildInvoice(
 				"00000000-0000-0000-0000-000000000401",
 				unit,
 				tenant,
@@ -129,7 +144,7 @@ class InvoiceIndexIntegrationTest extends AbstractIntegrationTest {
 				"2026-04-10",
 				"paid"
 		));
-		invoiceRepository.save(buildInvoice(
+		Invoice otherCurrentInvoice = invoiceRepository.save(buildInvoice(
 				"00000000-0000-0000-0000-000000000403",
 				otherUnit,
 				otherTenant,
@@ -138,6 +153,28 @@ class InvoiceIndexIntegrationTest extends AbstractIntegrationTest {
 				"650000.00",
 				"2026-05-08",
 				"partial"
+		));
+		paymentRepository.save(new Payment(
+				UUID.fromString("00000000-0000-0000-0000-000000000501"),
+				otherCurrentInvoice,
+				"250000.00",
+				LocalDate.parse("2026-05-02"),
+				"cash",
+				null,
+				null
+		));
+		TenantUnitCredit credit = tenantUnitCreditRepository.save(new TenantUnitCredit(
+				UUID.fromString("00000000-0000-0000-0000-000000000601"),
+				tenant,
+				unit,
+				"50000.00"
+		));
+		creditApplicationRepository.save(new CreditApplication(
+				UUID.fromString("00000000-0000-0000-0000-000000000701"),
+				credit,
+				currentInvoice,
+				"50000.00",
+				LocalDate.parse("2026-05-03")
 		));
 	}
 
@@ -155,14 +192,17 @@ class InvoiceIndexIntegrationTest extends AbstractIntegrationTest {
 				.andExpect(jsonPath("$.invoices[0].billing_month").value("2026-05-01"))
 				.andExpect(jsonPath("$.invoices[0].invoice_number").value("INV-202605-B101"))
 				.andExpect(jsonPath("$.invoices[0].amount").value(650000.00))
-				.andExpect(jsonPath("$.invoices[0].paid_amount").value(0.00))
+				.andExpect(jsonPath("$.invoices[0].paid_amount").value(250000.00))
 				.andExpect(jsonPath("$.invoices[0].credit_applied_amount").value(0.00))
-				.andExpect(jsonPath("$.invoices[0].amount_due").value(650000.00))
+				.andExpect(jsonPath("$.invoices[0].amount_due").value(400000.00))
 				.andExpect(jsonPath("$.invoices[0].due_date").value("2026-05-08"))
 				.andExpect(jsonPath("$.invoices[0].status").value("partial"))
 				.andExpect(jsonPath("$.invoices[0].created_at").doesNotExist())
 				.andExpect(jsonPath("$.invoices[0].updated_at").doesNotExist())
 				.andExpect(jsonPath("$.invoices[1].id").value("00000000-0000-0000-0000-000000000401"))
+				.andExpect(jsonPath("$.invoices[1].paid_amount").value(0.00))
+				.andExpect(jsonPath("$.invoices[1].credit_applied_amount").value(50000.00))
+				.andExpect(jsonPath("$.invoices[1].amount_due").value(700000.00))
 				.andExpect(jsonPath("$.invoices[2].id").value("00000000-0000-0000-0000-000000000402"));
 	}
 
