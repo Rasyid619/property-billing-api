@@ -1,5 +1,44 @@
 # Daily Schedule
 
+## 2026-05-31 — Issue #25: GET /invoices/{invoice_id}/payments
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #25, and created branch `rasyid-25-get-invoices-invoice-id-payments`.
+- Re-read the required project docs and confirmed the current issue scope is only `GET /invoices/{invoice_id}/payments`.
+- Reviewed payment listing requirements, invoice/payment database design, existing OpenAPI contract, and current invoice/payment endpoint patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to document the invoice payment index endpoint behavior.
+- Added payment index DTOs, repository query projection, service mapping with invoice existence check, and authenticated controller endpoint.
+- Added service, controller, and PostgreSQL integration tests for successful payment listing, empty payment lists for existing invoices, invoice not-found behavior, response shape, and deterministic ordering by payment date, creation timestamp, and ID.
+- Stayed within the Issue #25 payment index endpoint scope and did not implement expense, report, cash balance, credit rollover, or future tenant login behavior.
+
+## Test Results
+
+```text
+./gradlew compileTestJava
+Passed
+
+./gradlew test --tests com.propertybilling.service.InvoiceServiceTest --tests com.propertybilling.controller.InvoiceControllerTest --tests com.propertybilling.integration.payment.PaymentIndexIntegrationTest
+Passed
+
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/25
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Wait for Issue #25 CI before moving to the next payment endpoint.
+
+---
+
 ## 2026-05-31 — Issue #26: POST /invoices/{invoice_id}/payments
 
 ## What I Did

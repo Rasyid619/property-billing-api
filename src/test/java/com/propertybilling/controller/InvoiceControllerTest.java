@@ -11,11 +11,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.propertybilling.config.SecurityConfig;
+import com.propertybilling.constant.InvoiceStatus;
 import com.propertybilling.constant.PaymentMethod;
 import com.propertybilling.dto.invoice.InvoiceIndexElement;
 import com.propertybilling.dto.invoice.InvoiceIndexResponse;
 import com.propertybilling.dto.invoice.InvoiceShowResponse;
 import com.propertybilling.dto.payment.PaymentCreateRequest;
+import com.propertybilling.dto.payment.PaymentIndexElement;
+import com.propertybilling.dto.payment.PaymentIndexResponse;
 import com.propertybilling.entity.User;
 import com.propertybilling.exception.GlobalExceptionHandler;
 import com.propertybilling.exception.InvoiceGenerationConflictException;
@@ -269,6 +272,58 @@ class InvoiceControllerTest {
 
 		verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
 		verify(invoiceService, times(1)).getInvoice(invoiceId);
+	}
+
+	@Test
+	void returnsInvoicePayments() throws Exception {
+		UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000401");
+		when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+		when(invoiceService.listPayments(invoiceId)).thenReturn(new PaymentIndexResponse(
+				1,
+				List.of(new PaymentIndexElement(
+						UUID.fromString("00000000-0000-0000-0000-000000000501"),
+						invoiceId,
+						new BigDecimal("750000.00"),
+						LocalDate.parse("2026-05-08"),
+						PaymentMethod.BANK_TRANSFER,
+						"BCA-123456",
+						"Paid by tenant",
+						InvoiceStatus.PAID
+				))
+		));
+
+		mockMvc.perform(get("/api/v1/invoices/00000000-0000-0000-0000-000000000401/payments")
+						.header("Authorization", "Bearer access-token"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.count").value(1))
+				.andExpect(jsonPath("$.payments[0].id").value("00000000-0000-0000-0000-000000000501"))
+				.andExpect(jsonPath("$.payments[0].invoice_id").value("00000000-0000-0000-0000-000000000401"))
+				.andExpect(jsonPath("$.payments[0].amount").value(750000.00))
+				.andExpect(jsonPath("$.payments[0].payment_date").value("2026-05-08"))
+				.andExpect(jsonPath("$.payments[0].payment_method").value("bank_transfer"))
+				.andExpect(jsonPath("$.payments[0].reference_number").value("BCA-123456"))
+				.andExpect(jsonPath("$.payments[0].note").value("Paid by tenant"))
+				.andExpect(jsonPath("$.payments[0].invoice_status").value("paid"))
+				.andExpect(jsonPath("$.payments[0].created_at").doesNotExist())
+				.andExpect(jsonPath("$.payments[0].updated_at").doesNotExist());
+
+		verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+		verify(invoiceService, times(1)).listPayments(invoiceId);
+	}
+
+	@Test
+	void returnsNotFoundWhenInvoicePaymentsInvoiceDoesNotExist() throws Exception {
+		UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+		when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+		when(invoiceService.listPayments(invoiceId)).thenThrow(new InvoiceNotFoundException());
+
+		mockMvc.perform(get("/api/v1/invoices/00000000-0000-0000-0000-000000000999/payments")
+						.header("Authorization", "Bearer access-token"))
+				.andExpect(status().isNotFound())
+				.andExpect(content().string(""));
+
+		verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+		verify(invoiceService, times(1)).listPayments(invoiceId);
 	}
 
 	@Test

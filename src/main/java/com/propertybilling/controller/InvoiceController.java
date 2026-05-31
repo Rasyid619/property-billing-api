@@ -4,6 +4,7 @@ import com.propertybilling.dto.invoice.InvoiceGenerateMonthlyRequest;
 import com.propertybilling.dto.invoice.InvoiceIndexResponse;
 import com.propertybilling.dto.invoice.InvoiceShowResponse;
 import com.propertybilling.dto.payment.PaymentCreateRequest;
+import com.propertybilling.dto.payment.PaymentIndexResponse;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.InvoiceService;
 import jakarta.validation.Valid;
@@ -126,5 +127,22 @@ public class InvoiceController {
 		invoiceService.recordPayment(invoiceId, request);
 
 		return ResponseEntity.status(HttpStatus.CREATED).build();
+	}
+
+	/**
+	 * Lists payments for one invoice for authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param invoiceId invoice identifier
+	 * @return payment index response
+	 */
+	@GetMapping("/invoices/{invoice_id}/payments")
+	ResponseEntity<PaymentIndexResponse> indexPayments(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@PathVariable("invoice_id") UUID invoiceId
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+
+		return ResponseEntity.ok(invoiceService.listPayments(invoiceId));
 	}
 }

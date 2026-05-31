@@ -1,6 +1,7 @@
 package com.propertybilling.service;
 
 import com.propertybilling.constant.InvoiceStatus;
+import com.propertybilling.constant.PaymentMethod;
 import com.propertybilling.dto.invoice.InvoiceGenerateMonthlyRequest;
 import com.propertybilling.dto.invoice.InvoiceIndexElement;
 import com.propertybilling.dto.invoice.InvoiceIndexResponse;
@@ -9,6 +10,9 @@ import com.propertybilling.dto.invoice.queryresult.InvoiceGenerationTargetQueryR
 import com.propertybilling.dto.invoice.queryresult.InvoiceIndexQueryResult;
 import com.propertybilling.dto.invoice.queryresult.InvoiceShowQueryResult;
 import com.propertybilling.dto.payment.PaymentCreateRequest;
+import com.propertybilling.dto.payment.PaymentIndexElement;
+import com.propertybilling.dto.payment.PaymentIndexResponse;
+import com.propertybilling.dto.payment.queryresult.PaymentIndexQueryResult;
 import com.propertybilling.entity.Invoice;
 import com.propertybilling.entity.Payment;
 import com.propertybilling.entity.Property;
@@ -133,6 +137,26 @@ public class InvoiceService {
 		return invoiceRepository.findShow(invoiceId)
 				.map(this::toShowResponse)
 				.orElseThrow(InvoiceNotFoundException::new);
+	}
+
+	/**
+	 * Lists payments recorded for one invoice.
+	 *
+	 * @param invoiceId invoice identifier
+	 * @return payment index response
+	 * @throws InvoiceNotFoundException when no invoice exists for the ID
+	 */
+	public PaymentIndexResponse listPayments(UUID invoiceId) {
+		if (!invoiceRepository.existsById(invoiceId)) {
+			throw new InvoiceNotFoundException();
+		}
+
+		List<PaymentIndexElement> payments = paymentRepository.findIndexByInvoiceId(invoiceId)
+				.stream()
+				.map(this::toPaymentIndexElement)
+				.toList();
+
+		return new PaymentIndexResponse(payments.size(), payments);
 	}
 
 	/**
@@ -327,6 +351,19 @@ public class InvoiceService {
 				request.paymentMethod().value(),
 				request.referenceNumber(),
 				request.note()
+		);
+	}
+
+	private PaymentIndexElement toPaymentIndexElement(PaymentIndexQueryResult payment) {
+		return new PaymentIndexElement(
+				payment.id(),
+				payment.invoiceId(),
+				new BigDecimal(payment.amount()),
+				payment.paymentDate(),
+				PaymentMethod.fromValue(payment.paymentMethod()),
+				payment.referenceNumber(),
+				payment.note(),
+				InvoiceStatus.fromValue(payment.invoiceStatus())
 		);
 	}
 }
