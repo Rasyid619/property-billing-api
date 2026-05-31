@@ -71,6 +71,8 @@ class FlywayMigrationTest {
 				"unit_tenants",
 				"invoices",
 				"payments",
+				"tenant_unit_credits",
+				"credit_applications",
 				"property_expenses",
 				"cash_balances"
 		);

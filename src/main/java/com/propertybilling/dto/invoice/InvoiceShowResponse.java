@@ -14,6 +14,9 @@ import java.util.UUID;
  * @param billingMonth first day of the billed month
  * @param invoiceNumber unique invoice number
  * @param amount invoice amount
+ * @param paidAmount total cash payments
+ * @param creditAppliedAmount total applied credit
+ * @param amountDue remaining amount due
  * @param dueDate invoice due date
  * @param status current invoice status
  */
@@ -28,6 +31,12 @@ public record InvoiceShowResponse(
 		@JsonProperty("invoice_number")
 		String invoiceNumber,
 		BigDecimal amount,
+		@JsonProperty("paid_amount")
+		BigDecimal paidAmount,
+		@JsonProperty("credit_applied_amount")
+		BigDecimal creditAppliedAmount,
+		@JsonProperty("amount_due")
+		BigDecimal amountDue,
 		@JsonProperty("due_date")
 		LocalDate dueDate,
 		String status

@@ -43,6 +43,8 @@ public abstract class AbstractIntegrationTest {
 
 	@BeforeEach
 	void cleanDatabase() {
+		jdbcTemplate.update("DELETE FROM credit_applications");
+		jdbcTemplate.update("DELETE FROM tenant_unit_credits");
 		jdbcTemplate.update("DELETE FROM payments");
 		jdbcTemplate.update("DELETE FROM invoices");
 		jdbcTemplate.update("DELETE FROM unit_tenants");

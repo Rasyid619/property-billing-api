@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
 /*
@@ -41,6 +42,7 @@ class InvoiceGenerateMonthlyIntegrationTest extends AbstractIntegrationTest {
 	private final TenantRepository tenantRepository;
 	private final UnitRepository unitRepository;
 	private final UserRepository userRepository;
+	private final JdbcTemplate jdbcTemplate;
 	private final JwtTokenService jwtTokenService;
 	private Property property;
 	private Unit activeUnit;
@@ -56,6 +58,7 @@ class InvoiceGenerateMonthlyIntegrationTest extends AbstractIntegrationTest {
 			TenantRepository tenantRepository,
 			UnitRepository unitRepository,
 			UserRepository userRepository,
+			JdbcTemplate jdbcTemplate,
 			JwtTokenService jwtTokenService
 	) {
 		this.mockMvc = mockMvc;
@@ -65,6 +68,7 @@ class InvoiceGenerateMonthlyIntegrationTest extends AbstractIntegrationTest {
 		this.tenantRepository = tenantRepository;
 		this.unitRepository = unitRepository;
 		this.userRepository = userRepository;
+		this.jdbcTemplate = jdbcTemplate;
 		this.jwtTokenService = jwtTokenService;
 	}
 
@@ -160,6 +164,41 @@ class InvoiceGenerateMonthlyIntegrationTest extends AbstractIntegrationTest {
 		assertThat(invoices.getFirst().getAmount()).isEqualTo("750000.00");
 		assertThat(invoices.getFirst().getDueDate()).isEqualTo(LocalDate.parse("2026-05-10"));
 		assertThat(invoices.getFirst().getStatus()).isEqualTo("unpaid");
+	}
+
+	@Test
+	void generateMonthlyAutomaticallyAppliesAvailableTenantUnitCredit() throws Exception {
+		String accessToken = jwtTokenService.createAccessToken(user);
+		jdbcTemplate.update("""
+				INSERT INTO tenant_unit_credits (
+				    id,
+				    tenant_id,
+				    unit_id,
+				    balance
+				)
+				VALUES (
+				    '00000000-0000-0000-0000-000000000601',
+				    '00000000-0000-0000-0000-000000000301',
+				    '00000000-0000-0000-0000-000000000201',
+				    '150000.00'
+				)
+				""");
+
+		mockMvc.perform(post("/api/v1/invoices/generate-monthly")
+						.header("Authorization", "Bearer " + accessToken)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "property_id": "00000000-0000-0000-0000-000000000101",
+								  "billing_month": "2030-01-01"
+								}
+								"""))
+				.andExpect(status().isCreated());
+
+		Invoice invoice = invoiceRepository.findAll().getFirst();
+		assertThat(invoice.getStatus()).isEqualTo("partial");
+		assertThat(findCreditApplicationAmount(invoice.getId())).isEqualTo("150000.00");
+		assertThat(findCreditBalance()).isEqualTo("0.00");
 	}
 
 	@Test
@@ -315,6 +354,29 @@ class InvoiceGenerateMonthlyIntegrationTest extends AbstractIntegrationTest {
 				active,
 				timestamp,
 				timestamp
+		);
+	}
+
+	private String findCreditApplicationAmount(UUID invoiceId) {
+		return jdbcTemplate.queryForObject(
+				"""
+						SELECT amount
+						FROM credit_applications
+						WHERE invoice_id = ?::uuid
+						""",
+				String.class,
+				invoiceId
+		);
+	}
+
+	private String findCreditBalance() {
+		return jdbcTemplate.queryForObject(
+				"""
+						SELECT balance
+						FROM tenant_unit_credits
+						WHERE id = '00000000-0000-0000-0000-000000000601'::uuid
+						""",
+				String.class
 		);
 	}
 }
