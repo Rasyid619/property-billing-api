@@ -1,15 +1,20 @@
 package com.propertybilling.controller;
 
+import com.propertybilling.dto.expense.ExpenseCreateRequest;
 import com.propertybilling.dto.expense.ExpenseIndexResponse;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.PropertyExpenseService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,6 +32,24 @@ public class PropertyExpenseController {
 
 	private final AuthService authService;
 	private final PropertyExpenseService propertyExpenseService;
+
+	/**
+	 * Creates a property expense for authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param request expense creation request
+	 * @return empty created response
+	 */
+	@PostMapping("/expenses")
+	ResponseEntity<Void> create(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@Valid @RequestBody ExpenseCreateRequest request
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+		propertyExpenseService.createExpense(request);
+
+		return ResponseEntity.status(HttpStatus.CREATED).build();
+	}
 
 	/**
 	 * Lists property expenses for authenticated admin and staff users.

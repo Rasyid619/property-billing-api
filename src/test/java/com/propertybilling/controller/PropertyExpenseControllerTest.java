@@ -1,10 +1,12 @@
 package com.propertybilling.controller;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -46,6 +48,85 @@ class PropertyExpenseControllerTest {
 	@Autowired
 	PropertyExpenseControllerTest(MockMvc mockMvc) {
 		this.mockMvc = mockMvc;
+	}
+
+	@Test
+	void createReturnsCreated() throws Exception {
+		when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+
+		mockMvc.perform(post("/api/v1/expenses")
+						.header("Authorization", "Bearer access-token")
+						.contentType("application/json")
+						.content("""
+								{
+								  "property_id": "00000000-0000-0000-0000-000000000101",
+								  "expense_date": "2026-05-12",
+								  "category": "cleaning",
+								  "amount": 750000.00,
+								  "description": "Monthly cleaning fee"
+								}
+								"""))
+				.andExpect(status().isCreated())
+				.andExpect(content().string(""));
+
+		verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+		verify(propertyExpenseService, times(1)).createExpense(any());
+	}
+
+	@Test
+	void createRejectsZeroAmount() throws Exception {
+		mockMvc.perform(post("/api/v1/expenses")
+						.header("Authorization", "Bearer access-token")
+						.contentType("application/json")
+						.content("""
+								{
+								  "property_id": "00000000-0000-0000-0000-000000000101",
+								  "expense_date": "2026-05-12",
+								  "category": "cleaning",
+								  "amount": 0
+								}
+								"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(content().string(""));
+
+		verifyNoInteractions(authService, propertyExpenseService);
+	}
+
+	@Test
+	void createRejectsMissingCategory() throws Exception {
+		mockMvc.perform(post("/api/v1/expenses")
+						.header("Authorization", "Bearer access-token")
+						.contentType("application/json")
+						.content("""
+								{
+								  "property_id": "00000000-0000-0000-0000-000000000101",
+								  "expense_date": "2026-05-12",
+								  "amount": 750000.00
+								}
+								"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(content().string(""));
+
+		verifyNoInteractions(authService, propertyExpenseService);
+	}
+
+	@Test
+	void createRejectsUnsupportedCategory() throws Exception {
+		mockMvc.perform(post("/api/v1/expenses")
+						.header("Authorization", "Bearer access-token")
+						.contentType("application/json")
+						.content("""
+								{
+								  "property_id": "00000000-0000-0000-0000-000000000101",
+								  "expense_date": "2026-05-12",
+								  "category": "party",
+								  "amount": 750000.00
+								}
+								"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(content().string(""));
+
+		verifyNoInteractions(authService, propertyExpenseService);
 	}
 
 	@Test

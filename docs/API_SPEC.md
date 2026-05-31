@@ -1172,6 +1172,15 @@ components:
           example: "2026-05-12"
         category:
           type: string
+          enum:
+            - electricity
+            - water
+            - security
+            - cleaning
+            - social_help
+            - repair
+            - maintenance
+            - other
           minLength: 1
           maxLength: 100
           example: cleaning

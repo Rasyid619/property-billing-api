@@ -1,9 +1,14 @@
 package com.propertybilling.service;
 
+import com.propertybilling.dto.expense.ExpenseCreateRequest;
 import com.propertybilling.dto.expense.ExpenseIndexElement;
 import com.propertybilling.dto.expense.ExpenseIndexResponse;
 import com.propertybilling.dto.expense.queryresult.ExpenseIndexQueryResult;
+import com.propertybilling.entity.Property;
+import com.propertybilling.entity.PropertyExpense;
+import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.repository.PropertyExpenseRepository;
+import com.propertybilling.repository.PropertyRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -19,7 +24,29 @@ import lombok.RequiredArgsConstructor;
  */
 public class PropertyExpenseService {
 
+	private final PropertyRepository propertyRepository;
 	private final PropertyExpenseRepository propertyExpenseRepository;
+
+	/**
+	 * Creates a property expense.
+	 *
+	 * @param request expense creation request
+	 * @throws PropertyNotFoundException when no property exists for the request
+	 */
+	public void createExpense(ExpenseCreateRequest request) {
+		Property property = propertyRepository.findById(request.propertyId())
+				.orElseThrow(PropertyNotFoundException::new);
+
+		propertyExpenseRepository.save(new PropertyExpense(
+				UUID.randomUUID(),
+				property,
+				request.expenseDate(),
+				request.category().value(),
+				request.amount().toPlainString(),
+				request.description(),
+				null
+		));
+	}
 
 	/**
 	 * Lists expenses for one property with optional month filtering.

@@ -1,5 +1,38 @@
 # Daily Schedule
 
+## 2026-06-01 — Issue #18: POST /expenses
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #18, and created branch `rasyid-18-post-expenses`.
+- Re-read the required project docs and confirmed the current scope is only `POST /expenses` in the property expense module.
+- Reviewed property expense requirements, database design, existing OpenAPI contract, and the `GET /expenses` implementation already on `main`.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to document supported expense category values.
+- Added an `ExpenseCategory` enum with `electricity`, `water`, `security`, `cleaning`, `social_help`, `repair`, `maintenance`, and `other`.
+- Added expense create request DTO validation, service creation workflow, property existence handling, and authenticated controller endpoint returning lean `201`.
+- Added service, controller, and PostgreSQL integration tests for successful expense creation, zero/negative amount rejection, missing category rejection, unsupported category rejection, and property not found.
+- Stayed within the Issue #18 `POST /expenses` scope and did not implement update, delete, cash-flow report, cash-balance, or future tenant login behavior.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.PropertyExpenseServiceTest --tests com.propertybilling.controller.PropertyExpenseControllerTest --tests com.propertybilling.integration.expense.ExpenseCreateIntegrationTest --tests com.propertybilling.integration.expense.ExpenseIndexIntegrationTest
+Passed
+
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/18
+
+## Blockers
+
+- None.
+
+---
+
 ## 2026-05-31 — Issue #17: GET /expenses
 
 ## What I Did
