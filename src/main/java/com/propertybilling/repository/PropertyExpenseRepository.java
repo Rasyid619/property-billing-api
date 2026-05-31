@@ -3,6 +3,7 @@ package com.propertybilling.repository;
 import com.propertybilling.dto.expense.queryresult.ExpenseIndexQueryResult;
 import com.propertybilling.entity.PropertyExpense;
 import jakarta.persistence.LockModeType;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -57,6 +58,27 @@ public interface PropertyExpenseRepository extends JpaRepository<PropertyExpense
 			@Param("nextMonthStart") LocalDate nextMonthStart,
 			@Param("offset") int offset,
 			@Param("limit") int limit
+	);
+
+	/**
+	 * Sums expenses for one property in an expense-date range.
+	 *
+	 * @param propertyId owning property identifier
+	 * @param monthStart first day of the report month
+	 * @param nextMonthStart first day after the report month
+	 * @return total expense or zero when no expenses exist
+	 */
+	@Query(value = """
+			SELECT COALESCE(SUM(CAST(expense.amount AS NUMERIC)), 0)
+			FROM property_expenses expense
+			WHERE expense.property_id = :propertyId
+			AND expense.expense_date >= :monthStart
+			AND expense.expense_date < :nextMonthStart
+			""", nativeQuery = true)
+	BigDecimal sumAmountByPropertyIdAndExpenseDateRange(
+			@Param("propertyId") UUID propertyId,
+			@Param("monthStart") LocalDate monthStart,
+			@Param("nextMonthStart") LocalDate nextMonthStart
 	);
 
 	/**

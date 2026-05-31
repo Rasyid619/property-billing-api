@@ -3,6 +3,7 @@ package com.propertybilling.repository;
 import com.propertybilling.dto.payment.queryresult.PaymentIndexQueryResult;
 import com.propertybilling.entity.Payment;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,6 +27,29 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 			WHERE invoice_id = :invoiceId
 			""", nativeQuery = true)
 	BigDecimal sumAmountByInvoiceId(@Param("invoiceId") UUID invoiceId);
+
+	/**
+	 * Sums cash payments received for one property in a payment-date range.
+	 *
+	 * @param propertyId owning property identifier
+	 * @param monthStart first day of the report month
+	 * @param nextMonthStart first day after the report month
+	 * @return total cash income or zero when no payments exist
+	 */
+	@Query(value = """
+			SELECT COALESCE(SUM(CAST(payment.amount AS NUMERIC)), 0)
+			FROM payments payment
+			JOIN invoices invoice ON invoice.id = payment.invoice_id
+			JOIN units unit ON unit.id = invoice.unit_id
+			WHERE unit.property_id = :propertyId
+			AND payment.payment_date >= :monthStart
+			AND payment.payment_date < :nextMonthStart
+			""", nativeQuery = true)
+	BigDecimal sumCashIncomeByPropertyIdAndPaymentDateRange(
+			@Param("propertyId") UUID propertyId,
+			@Param("monthStart") LocalDate monthStart,
+			@Param("nextMonthStart") LocalDate nextMonthStart
+	);
 
 	/**
 	 * Finds payments recorded for an invoice.

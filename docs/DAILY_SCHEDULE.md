@@ -1,5 +1,38 @@
 # Daily Schedule
 
+## 2026-06-01 — Issue #34: GET /reports/cash-flow
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #34, and created branch `rasyid-34-get-reports-cash-flow`.
+- Re-read the required project docs and confirmed the current scope is only `GET /reports/cash-flow`.
+- Reviewed cash-flow report requirements, database design, payment and expense tables, existing OpenAPI contract, and current invoice/payment/expense repository patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify that report income uses the payment-date window, expenses use the expense-date window, and credit applications are excluded from income.
+- Added cash-flow report response DTO, report service, payment and expense aggregate repository methods, and authenticated report controller endpoint.
+- Used separate payment and expense aggregate queries to avoid duplicated sums when a property has multiple payments and multiple expenses.
+- Added service, controller, and PostgreSQL integration tests for cash-flow totals, zero income/expense months, property not found, required/invalid query validation, payment-window filtering, other-property exclusion, and credit-application exclusion.
+- Stayed within the Issue #34 cash-flow report scope and did not implement cash balance closing or future report endpoints.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.ReportServiceTest --tests com.propertybilling.controller.ReportControllerTest --tests com.propertybilling.integration.report.CashFlowReportIntegrationTest
+Passed
+
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/34
+
+## Blockers
+
+- None.
+
+---
+
 ## 2026-06-01 — Issue #20: DELETE /expenses/{expense_id}
 
 ## What I Did
