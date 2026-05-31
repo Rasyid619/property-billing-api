@@ -6,8 +6,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 /*
@@ -33,6 +35,16 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(MissingRequestHeaderException.class)
 	ResponseEntity<Void> handleMissingRequestHeader() {
 		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+	}
+
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	ResponseEntity<Void> handleMissingServletRequestParameter() {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+	}
+
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	ResponseEntity<Void> handleMethodArgumentTypeMismatch() {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 	}
 
 	@ExceptionHandler(PropertyNotFoundException.class)
