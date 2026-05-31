@@ -146,9 +146,42 @@ class PaymentCreateIntegrationTest extends AbstractIntegrationTest {
 		assertThat(findInvoiceStatus("00000000-0000-0000-0000-000000000401")).isEqualTo("paid");
 		assertThat(findInvoiceStatus("00000000-0000-0000-0000-000000000402")).isEqualTo("partial");
 		assertThat(findPaymentAmounts("00000000-0000-0000-0000-000000000401"))
-				.containsExactly("750000.00");
+				.containsExactly("1000000.00");
 		assertThat(findPaymentAmounts("00000000-0000-0000-0000-000000000402"))
+				.isEmpty();
+		assertThat(findCreditApplicationAmounts("00000000-0000-0000-0000-000000000402"))
 				.containsExactly("250000.00");
+		assertThat(findCreditBalance()).isEqualTo("0.00");
+	}
+
+	@Test
+	void createStoresSurplusAsCreditWhenNoOpenInvoiceCanReceiveIt() throws Exception {
+		String accessToken = jwtTokenService.createAccessToken(user);
+		jdbcTemplate.update("""
+				UPDATE invoices
+				SET status = 'paid'
+				WHERE id = '00000000-0000-0000-0000-000000000402'
+				""");
+
+		mockMvc.perform(post("/api/v1/invoices/00000000-0000-0000-0000-000000000401/payments")
+						.header("Authorization", "Bearer " + accessToken)
+						.contentType("application/json")
+						.content("""
+								{
+								  "amount": 1000000.00,
+								  "payment_date": "2026-05-08",
+								  "payment_method": "bank_transfer"
+								}
+								"""))
+				.andExpect(status().isCreated())
+				.andExpect(content().string(""));
+
+		assertThat(findInvoiceStatus("00000000-0000-0000-0000-000000000401")).isEqualTo("paid");
+		assertThat(findPaymentAmounts("00000000-0000-0000-0000-000000000401"))
+				.containsExactly("1000000.00");
+		assertThat(findCreditApplicationAmounts("00000000-0000-0000-0000-000000000402"))
+				.isEmpty();
+		assertThat(findCreditBalance()).isEqualTo("250000.00");
 	}
 
 	@Test
@@ -220,6 +253,31 @@ class PaymentCreateIntegrationTest extends AbstractIntegrationTest {
 						""",
 				String.class,
 				invoiceId
+		);
+	}
+
+	private List<String> findCreditApplicationAmounts(String invoiceId) {
+		return jdbcTemplate.queryForList(
+				"""
+						SELECT amount
+						FROM credit_applications
+						WHERE invoice_id = ?::uuid
+						ORDER BY created_at ASC, id ASC
+						""",
+				String.class,
+				invoiceId
+		);
+	}
+
+	private String findCreditBalance() {
+		return jdbcTemplate.queryForObject(
+				"""
+						SELECT balance
+						FROM tenant_unit_credits
+						WHERE tenant_id = '00000000-0000-0000-0000-000000000301'::uuid
+						AND unit_id = '00000000-0000-0000-0000-000000000201'::uuid
+						""",
+				String.class
 		);
 	}
 

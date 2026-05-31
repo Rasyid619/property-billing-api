@@ -1,5 +1,48 @@
 # Daily Schedule
 
+## 2026-05-31 — Issue #91: Add tenant credit rollover for invoice overpayments
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #91, and created branch `rasyid-91-add-tenant-credit-rollover`.
+- Re-read the required project docs and confirmed the current scope is tenant/unit credit rollover inside the invoice/payment settlement module.
+- Reviewed payment overpayment requirements, invoice status rules, existing invoice/payment schema, OpenAPI contract, and current payment recording workflow before changing code.
+- Updated `PROJECT_GUIDE.md`, `docs/DATABASE_DESIGN.md`, `openapi.yml`, and `docs/API_SPEC.md` before controller-facing behavior changes.
+- Added credit rollover migration with `tenant_unit_credits` and `credit_applications` tables plus timestamp triggers.
+- Added credit and credit-application entities and repositories.
+- Updated invoice responses to expose `paid_amount`, `credit_applied_amount`, and `amount_due`.
+- Updated payment recording so actual cash is recorded once, overpayment creates tenant/unit credit, and credit applies automatically to same tenant/unit open invoices.
+- Updated monthly invoice generation so available tenant/unit credit is automatically applied to newly generated invoices.
+- Added service, migration, controller, and PostgreSQL integration coverage for overpayment credit creation, automatic credit application, partial settlement, invoice response settlement totals, and migration cleanup.
+- Stayed within the Issue #91 invoice/payment settlement scope and did not implement future expense, cash balance closing, or cash-flow report controllers that are not present yet.
+
+## Test Results
+
+```text
+./gradlew compileTestJava
+Passed
+
+./gradlew test --tests com.propertybilling.service.InvoiceServiceTest --tests com.propertybilling.controller.InvoiceControllerTest --tests com.propertybilling.integration.payment.PaymentCreateIntegrationTest --tests com.propertybilling.integration.invoice.InvoiceGenerateMonthlyIntegrationTest --tests com.propertybilling.integration.invoice.InvoiceIndexIntegrationTest --tests com.propertybilling.integration.invoice.InvoiceShowIntegrationTest --tests com.propertybilling.migration.FlywayMigrationTest
+Passed
+
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/91
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Wait for Issue #91 CI before moving to the next module.
+
+---
+
 ## 2026-05-31 — Issue #25: GET /invoices/{invoice_id}/payments
 
 ## What I Did

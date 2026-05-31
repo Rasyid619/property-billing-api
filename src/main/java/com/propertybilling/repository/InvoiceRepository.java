@@ -61,7 +61,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
 	Optional<InvoiceShowQueryResult> findShow(@Param("invoiceId") UUID invoiceId);
 
 	/**
-	 * Finds the selected invoice and same-tenant open invoices that can receive payments.
+	 * Finds the selected invoice and same-tenant/unit open invoices that can receive payments or credit.
 	 *
 	 * @param selectedInvoiceId selected invoice that receives payment first
 	 * @param statuses invoice statuses eligible for surplus allocation
@@ -72,8 +72,14 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
 			SELECT invoice
 			FROM Invoice invoice
 			JOIN FETCH invoice.tenant
+			JOIN FETCH invoice.unit
 			WHERE invoice.tenant.id = (
 			    SELECT selectedInvoice.tenant.id
+			    FROM Invoice selectedInvoice
+			    WHERE selectedInvoice.id = :selectedInvoiceId
+			)
+			AND invoice.unit.id = (
+			    SELECT selectedInvoice.unit.id
 			    FROM Invoice selectedInvoice
 			    WHERE selectedInvoice.id = :selectedInvoiceId
 			)

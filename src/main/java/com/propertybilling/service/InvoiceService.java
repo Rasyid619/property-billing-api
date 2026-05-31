@@ -13,17 +13,21 @@ import com.propertybilling.dto.payment.PaymentCreateRequest;
 import com.propertybilling.dto.payment.PaymentIndexElement;
 import com.propertybilling.dto.payment.PaymentIndexResponse;
 import com.propertybilling.dto.payment.queryresult.PaymentIndexQueryResult;
+import com.propertybilling.entity.CreditApplication;
 import com.propertybilling.entity.Invoice;
 import com.propertybilling.entity.Payment;
 import com.propertybilling.entity.Property;
+import com.propertybilling.entity.TenantUnitCredit;
 import com.propertybilling.exception.InvoiceGenerationConflictException;
 import com.propertybilling.exception.InvoiceNotFoundException;
 import com.propertybilling.exception.PropertyNotFoundException;
+import com.propertybilling.repository.CreditApplicationRepository;
 import com.propertybilling.repository.InvoiceQueryRepository;
 import com.propertybilling.repository.InvoiceRepository;
 import com.propertybilling.repository.PaymentRepository;
 import com.propertybilling.repository.PropertyRepository;
 import com.propertybilling.repository.TenantRepository;
+import com.propertybilling.repository.TenantUnitCreditRepository;
 import com.propertybilling.repository.UnitRepository;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -48,8 +52,10 @@ public class InvoiceService {
 	private final InvoiceQueryRepository invoiceQueryRepository;
 	private final InvoiceRepository invoiceRepository;
 	private final PaymentRepository paymentRepository;
+	private final CreditApplicationRepository creditApplicationRepository;
 	private final PropertyRepository propertyRepository;
 	private final TenantRepository tenantRepository;
+	private final TenantUnitCreditRepository tenantUnitCreditRepository;
 	private final UnitRepository unitRepository;
 	private final Clock clock;
 
@@ -82,11 +88,15 @@ public class InvoiceService {
 			throw new InvoiceGenerationConflictException();
 		}
 
+		List<Invoice> invoices = toInvoices(targets, request.billingMonth());
+
 		try {
-			invoiceRepository.saveAll(toInvoices(targets, request.billingMonth()));
+			invoiceRepository.saveAll(invoices);
 		} catch (DataIntegrityViolationException exception) {
 			throw new InvoiceGenerationConflictException();
 		}
+
+		applyAvailableCreditToInvoices(invoices, LocalDate.now(clock));
 	}
 
 	/**
@@ -174,32 +184,25 @@ public class InvoiceService {
 		);
 		Invoice lockedSelectedInvoice = findSelectedInvoice(lockedInvoices, invoiceId)
 				.orElseThrow(InvoiceNotFoundException::new);
-		BigDecimal remainingAmount = request.amount();
+		InvoiceSettlement settlement = getSettlement(lockedSelectedInvoice);
+		BigDecimal outstandingAmount = getOutstandingAmount(lockedSelectedInvoice, settlement);
+		BigDecimal surplusAmount = request.amount().subtract(outstandingAmount).max(BigDecimal.ZERO);
 
-		remainingAmount = applyPaymentToInvoice(lockedSelectedInvoice, remainingAmount, request);
+		paymentRepository.save(toPayment(lockedSelectedInvoice, request.amount(), request));
+		updateAndSaveInvoiceStatus(
+				lockedSelectedInvoice,
+				settlement.paidAmount().add(request.amount()),
+				settlement.creditAppliedAmount()
+		);
 
-		if (remainingAmount.signum() <= 0) {
+		if (surplusAmount.signum() <= 0) {
 			return;
 		}
 
-		for (Invoice invoice : lockedInvoices) {
-			if (remainingAmount.signum() <= 0) {
-				return;
-			}
-
-			if (invoice.getId().equals(invoiceId)) {
-				continue;
-			}
-
-			remainingAmount = applyPaymentToInvoice(invoice, remainingAmount, request);
-		}
-
-		if (remainingAmount.signum() <= 0) {
-			return;
-		}
-
-		paymentRepository.save(toPayment(lockedSelectedInvoice, remainingAmount, request));
-		updateAndSaveInvoiceStatus(lockedSelectedInvoice);
+		TenantUnitCredit credit = findOrCreateCredit(lockedSelectedInvoice);
+		credit.increaseBalance(surplusAmount);
+		tenantUnitCreditRepository.save(credit);
+		applyCreditToInvoices(credit, lockedInvoices, invoiceId, request.paymentDate());
 	}
 
 	private LocalDate toBillingMonth(String month) {
@@ -250,68 +253,70 @@ public class InvoiceService {
 	}
 
 	private InvoiceIndexElement toIndexElement(InvoiceIndexQueryResult invoice) {
+		InvoiceSettlement settlement = getSettlement(invoice.id());
+		BigDecimal amount = new BigDecimal(invoice.amount());
+
 		return new InvoiceIndexElement(
 				invoice.id(),
 				invoice.unitId(),
 				invoice.tenantId(),
 				invoice.billingMonth(),
 				invoice.invoiceNumber(),
-				new BigDecimal(invoice.amount()),
+				amount,
+				settlement.paidAmount(),
+				settlement.creditAppliedAmount(),
+				getAmountDue(amount, settlement),
 				invoice.dueDate(),
 				invoice.status()
 		);
 	}
 
 	private InvoiceShowResponse toShowResponse(InvoiceShowQueryResult invoice) {
+		InvoiceSettlement settlement = getSettlement(invoice.id());
+		BigDecimal amount = new BigDecimal(invoice.amount());
+
 		return new InvoiceShowResponse(
 				invoice.id(),
 				invoice.unitId(),
 				invoice.tenantId(),
 				invoice.billingMonth(),
 				invoice.invoiceNumber(),
-				new BigDecimal(invoice.amount()),
+				amount,
+				settlement.paidAmount(),
+				settlement.creditAppliedAmount(),
+				getAmountDue(amount, settlement),
 				invoice.dueDate(),
 				invoice.status()
 		);
 	}
 
-	private BigDecimal applyPaymentToInvoice(
-			Invoice invoice,
-			BigDecimal availableAmount,
-			PaymentCreateRequest request
-	) {
-		BigDecimal invoiceAmount = new BigDecimal(invoice.getAmount());
-		BigDecimal totalPaid = paymentRepository.sumAmountByInvoiceId(invoice.getId());
-		BigDecimal outstandingAmount = invoiceAmount.subtract(totalPaid).max(BigDecimal.ZERO);
-
-		if (outstandingAmount.signum() <= 0) {
-			updateAndSaveInvoiceStatus(invoice, totalPaid);
-
-			return availableAmount;
+	private void applyAvailableCreditToInvoices(List<Invoice> invoices, LocalDate appliedDate) {
+		for (Invoice invoice : invoices) {
+			tenantUnitCreditRepository.findByTenantIdAndUnitIdForUpdate(
+					invoice.getTenant().getId(),
+					invoice.getUnit().getId()
+			).ifPresent(credit -> applyCreditToInvoices(credit, List.of(invoice), null, appliedDate));
 		}
-
-		BigDecimal appliedAmount = availableAmount.min(outstandingAmount);
-		paymentRepository.save(toPayment(invoice, appliedAmount, request));
-		updateAndSaveInvoiceStatus(invoice, totalPaid.add(appliedAmount));
-
-		return availableAmount.subtract(appliedAmount);
 	}
 
 	private void updateAndSaveInvoiceStatus(Invoice invoice) {
-		updateAndSaveInvoiceStatus(
-				invoice,
-				paymentRepository.sumAmountByInvoiceId(invoice.getId())
-		);
+		InvoiceSettlement settlement = getSettlement(invoice);
+
+		updateAndSaveInvoiceStatus(invoice, settlement.paidAmount(), settlement.creditAppliedAmount());
 	}
 
-	private void updateAndSaveInvoiceStatus(Invoice invoice, BigDecimal totalPaid) {
+	private void updateAndSaveInvoiceStatus(
+			Invoice invoice,
+			BigDecimal paidAmount,
+			BigDecimal creditAppliedAmount
+	) {
 		BigDecimal invoiceAmount = new BigDecimal(invoice.getAmount());
-		invoice.updateStatus(toInvoiceStatus(invoice, invoiceAmount, totalPaid));
+		invoice.updateStatus(toInvoiceStatus(invoice, invoiceAmount, paidAmount.add(creditAppliedAmount)));
 		invoiceRepository.save(invoice);
 	}
 
-	private InvoiceStatus toInvoiceStatus(Invoice invoice, BigDecimal invoiceAmount, BigDecimal totalPaid) {
-		if (totalPaid.compareTo(invoiceAmount) >= 0) {
+	private InvoiceStatus toInvoiceStatus(Invoice invoice, BigDecimal invoiceAmount, BigDecimal settledAmount) {
+		if (settledAmount.compareTo(invoiceAmount) >= 0) {
 			return InvoiceStatus.PAID;
 		}
 
@@ -319,7 +324,7 @@ public class InvoiceService {
 			return InvoiceStatus.OVERDUE;
 		}
 
-		if (totalPaid.signum() > 0) {
+		if (settledAmount.signum() > 0) {
 			return InvoiceStatus.PARTIAL;
 		}
 
@@ -354,6 +359,110 @@ public class InvoiceService {
 		);
 	}
 
+	private TenantUnitCredit findOrCreateCredit(Invoice invoice) {
+		return tenantUnitCreditRepository.findByTenantIdAndUnitIdForUpdate(
+				invoice.getTenant().getId(),
+				invoice.getUnit().getId()
+		).orElseGet(() -> new TenantUnitCredit(
+				UUID.randomUUID(),
+				invoice.getTenant(),
+				invoice.getUnit(),
+				BigDecimal.ZERO.toPlainString()
+		));
+	}
+
+	private void applyCreditToInvoices(
+			TenantUnitCredit credit,
+			List<Invoice> invoices,
+			UUID skippedInvoiceId,
+			LocalDate appliedDate
+	) {
+		for (Invoice invoice : invoices) {
+			if (skippedInvoiceId != null && invoice.getId().equals(skippedInvoiceId)) {
+				continue;
+			}
+
+			boolean hasNoRemainingCredit = new BigDecimal(credit.getBalance()).signum() <= 0;
+
+			if (hasNoRemainingCredit) {
+				break;
+			}
+
+			applyCreditToInvoice(credit, invoice, appliedDate);
+		}
+
+		tenantUnitCreditRepository.save(credit);
+	}
+
+	private void applyCreditToInvoice(
+			TenantUnitCredit credit,
+			Invoice invoice,
+			LocalDate appliedDate
+	) {
+		InvoiceSettlement settlement = getSettlement(invoice);
+		BigDecimal outstandingAmount = getOutstandingAmount(invoice, settlement);
+
+		if (outstandingAmount.signum() <= 0) {
+			updateAndSaveInvoiceStatus(invoice, settlement.paidAmount(), settlement.creditAppliedAmount());
+
+			return;
+		}
+
+		BigDecimal appliedAmount = new BigDecimal(credit.getBalance()).min(outstandingAmount);
+		credit.decreaseBalance(appliedAmount);
+		creditApplicationRepository.save(toCreditApplication(credit, invoice, appliedAmount, appliedDate));
+		updateAndSaveInvoiceStatus(
+				invoice,
+				settlement.paidAmount(),
+				settlement.creditAppliedAmount().add(appliedAmount)
+		);
+	}
+
+	private CreditApplication toCreditApplication(
+			TenantUnitCredit credit,
+			Invoice invoice,
+			BigDecimal amount,
+			LocalDate appliedDate
+	) {
+		return new CreditApplication(
+				UUID.randomUUID(),
+				credit,
+				invoice,
+				amount.toPlainString(),
+				appliedDate
+		);
+	}
+
+	private InvoiceSettlement getSettlement(Invoice invoice) {
+		return getSettlement(invoice.getId());
+	}
+
+	private InvoiceSettlement getSettlement(UUID invoiceId) {
+		return new InvoiceSettlement(
+				zeroIfNull(paymentRepository.sumAmountByInvoiceId(invoiceId)),
+				zeroIfNull(creditApplicationRepository.sumAmountByInvoiceId(invoiceId))
+		);
+	}
+
+	private BigDecimal getOutstandingAmount(Invoice invoice, InvoiceSettlement settlement) {
+		return getAmountDue(new BigDecimal(invoice.getAmount()), settlement);
+	}
+
+	private BigDecimal getAmountDue(BigDecimal invoiceAmount, InvoiceSettlement settlement) {
+		return invoiceAmount
+				.subtract(settlement.paidAmount())
+				.subtract(settlement.creditAppliedAmount())
+				.max(BigDecimal.ZERO);
+	}
+
+	private BigDecimal zeroIfNull(BigDecimal amount) {
+		if (amount == null) {
+			return BigDecimal.ZERO;
+		}
+
+		return amount;
+	}
+
 	private PaymentIndexElement toPaymentIndexElement(PaymentIndexQueryResult payment) {
 		return new PaymentIndexElement(
 				payment.id(),
@@ -365,5 +474,11 @@ public class InvoiceService {
 				payment.note(),
 				InvoiceStatus.fromValue(payment.invoiceStatus())
 		);
+	}
+
+	private record InvoiceSettlement(
+			BigDecimal paidAmount,
+			BigDecimal creditAppliedAmount
+	) {
 	}
 }

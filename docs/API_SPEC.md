@@ -391,7 +391,7 @@ paths:
       tags:
         - Payments
       summary: Record an invoice payment.
-      description: Records a positive payment and recalculates invoice status. The selected invoice is paid first. Surplus is applied to the same tenant's other open invoices oldest-first when possible, and any remaining surplus is preserved as an extra payment on the selected invoice for future credit rollover.
+      description: Records a positive cash payment and recalculates invoice status. The selected invoice is settled first. Any remaining surplus becomes tenant/unit credit and is applied to same tenant/unit open invoices oldest-first without creating additional payment income.
       security:
         - BearerAuth: []
       parameters:
@@ -1384,6 +1384,21 @@ components:
           type: number
           format: double
           example: 750000
+        paid_amount:
+          type: number
+          format: double
+          description: Total cash payments recorded for this invoice.
+          example: 900000
+        credit_applied_amount:
+          type: number
+          format: double
+          description: Total tenant/unit credit applied to this invoice.
+          example: 150000
+        amount_due:
+          type: number
+          format: double
+          description: Remaining invoice amount after cash payments and applied credit.
+          example: 0
         due_date:
           type: string
           format: date
@@ -1397,6 +1412,9 @@ components:
         - billing_month
         - invoice_number
         - amount
+        - paid_amount
+        - credit_applied_amount
+        - amount_due
         - due_date
         - status
 

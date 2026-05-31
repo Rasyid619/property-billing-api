@@ -19,19 +19,23 @@ import com.propertybilling.dto.invoice.queryresult.InvoiceShowQueryResult;
 import com.propertybilling.dto.payment.PaymentCreateRequest;
 import com.propertybilling.dto.payment.PaymentIndexResponse;
 import com.propertybilling.dto.payment.queryresult.PaymentIndexQueryResult;
+import com.propertybilling.entity.CreditApplication;
 import com.propertybilling.entity.Invoice;
 import com.propertybilling.entity.Payment;
 import com.propertybilling.entity.Property;
 import com.propertybilling.entity.Tenant;
+import com.propertybilling.entity.TenantUnitCredit;
 import com.propertybilling.entity.Unit;
 import com.propertybilling.exception.InvoiceGenerationConflictException;
 import com.propertybilling.exception.InvoiceNotFoundException;
 import com.propertybilling.exception.PropertyNotFoundException;
+import com.propertybilling.repository.CreditApplicationRepository;
 import com.propertybilling.repository.InvoiceQueryRepository;
 import com.propertybilling.repository.InvoiceRepository;
 import com.propertybilling.repository.PaymentRepository;
 import com.propertybilling.repository.PropertyRepository;
 import com.propertybilling.repository.TenantRepository;
+import com.propertybilling.repository.TenantUnitCreditRepository;
 import com.propertybilling.repository.UnitRepository;
 import java.time.LocalDate;
 import java.time.Clock;
@@ -56,16 +60,20 @@ class InvoiceServiceTest {
 	private final InvoiceQueryRepository invoiceQueryRepository = Mockito.mock(InvoiceQueryRepository.class);
 	private final InvoiceRepository invoiceRepository = Mockito.mock(InvoiceRepository.class);
 	private final PaymentRepository paymentRepository = Mockito.mock(PaymentRepository.class);
+	private final CreditApplicationRepository creditApplicationRepository = Mockito.mock(CreditApplicationRepository.class);
 	private final PropertyRepository propertyRepository = Mockito.mock(PropertyRepository.class);
 	private final TenantRepository tenantRepository = Mockito.mock(TenantRepository.class);
+	private final TenantUnitCreditRepository tenantUnitCreditRepository = Mockito.mock(TenantUnitCreditRepository.class);
 	private final UnitRepository unitRepository = Mockito.mock(UnitRepository.class);
 	private final Clock clock = Clock.fixed(Instant.parse("2026-05-31T00:00:00Z"), ZoneOffset.UTC);
 	private final InvoiceService invoiceService = new InvoiceService(
 			invoiceQueryRepository,
 			invoiceRepository,
 			paymentRepository,
+			creditApplicationRepository,
 			propertyRepository,
 			tenantRepository,
+			tenantUnitCreditRepository,
 			unitRepository,
 			clock
 	);
@@ -95,6 +103,8 @@ class InvoiceServiceTest {
 			)).thenReturn(false);
 			when(unitRepository.getReferenceById(unitId)).thenReturn(unit);
 			when(tenantRepository.getReferenceById(tenantId)).thenReturn(tenant);
+			when(tenantUnitCreditRepository.findByTenantIdAndUnitIdForUpdate(tenantId, unitId))
+					.thenReturn(Optional.empty());
 
 			invoiceService.generateMonthlyInvoices(new InvoiceGenerateMonthlyRequest(
 					propertyId,
@@ -106,6 +116,7 @@ class InvoiceServiceTest {
 			verify(invoiceRepository, times(1))
 					.existsByUnitIdsAndBillingMonth(List.of(unitId), LocalDate.parse("2026-05-01"));
 			verify(invoiceRepository, times(1)).saveAll(invoicesCaptor.capture());
+			verify(tenantUnitCreditRepository, times(1)).findByTenantIdAndUnitIdForUpdate(tenantId, unitId);
 			List<Invoice> invoices = toList(invoicesCaptor.getValue());
 			assertThat(invoices).hasSize(1);
 			assertThat(invoices.getFirst().getId()).isNotNull();
@@ -267,6 +278,9 @@ class InvoiceServiceTest {
 		assertThat(response.invoices().getFirst().billingMonth()).isEqualTo(LocalDate.parse("2026-05-01"));
 		assertThat(response.invoices().getFirst().invoiceNumber()).isEqualTo("INV-202605-A101");
 		assertThat(response.invoices().getFirst().amount()).isEqualByComparingTo("750000.00");
+		assertThat(response.invoices().getFirst().paidAmount()).isZero();
+		assertThat(response.invoices().getFirst().creditAppliedAmount()).isZero();
+		assertThat(response.invoices().getFirst().amountDue()).isEqualByComparingTo("750000.00");
 		assertThat(response.invoices().getFirst().dueDate()).isEqualTo(LocalDate.parse("2026-05-10"));
 		assertThat(response.invoices().getFirst().status()).isEqualTo("unpaid");
 		verify(invoiceQueryRepository, times(1)).findIndex(
@@ -425,6 +439,9 @@ class InvoiceServiceTest {
 			assertThat(response.billingMonth()).isEqualTo(LocalDate.parse("2026-05-01"));
 			assertThat(response.invoiceNumber()).isEqualTo("INV-202605-A101");
 			assertThat(response.amount()).isEqualByComparingTo("750000.00");
+			assertThat(response.paidAmount()).isZero();
+			assertThat(response.creditAppliedAmount()).isZero();
+			assertThat(response.amountDue()).isEqualByComparingTo("750000.00");
 			assertThat(response.dueDate()).isEqualTo(LocalDate.parse("2026-05-10"));
 			assertThat(response.status()).isEqualTo("unpaid");
 			verify(invoiceRepository, times(1)).findShow(invoiceId);
@@ -544,25 +561,31 @@ class InvoiceServiceTest {
 			Invoice selectedInvoice = buildInvoice(selectedInvoiceId, "750000.00", LocalDate.parse("2026-05-10"), "unpaid");
 			Invoice nextInvoice = buildInvoice(nextInvoiceId, "750000.00", LocalDate.parse("2026-06-10"), "unpaid");
 			ArgumentCaptor<Payment> paymentCaptor = ArgumentCaptor.forClass(Payment.class);
+			ArgumentCaptor<CreditApplication> creditApplicationCaptor = ArgumentCaptor.forClass(CreditApplication.class);
 			when(invoiceRepository.findPaymentAllocationInvoicesForUpdate(
 					selectedInvoiceId,
 					openInvoiceStatuses()
 			)).thenReturn(List.of(selectedInvoice, nextInvoice));
 			when(paymentRepository.sumAmountByInvoiceId(selectedInvoiceId))
-					.thenReturn(new java.math.BigDecimal("0.00"))
-					.thenReturn(new java.math.BigDecimal("750000.00"));
-			when(paymentRepository.sumAmountByInvoiceId(nextInvoiceId))
-					.thenReturn(new java.math.BigDecimal("0.00"))
-					.thenReturn(new java.math.BigDecimal("250000.00"));
+					.thenReturn(new java.math.BigDecimal("0.00"));
+			when(paymentRepository.sumAmountByInvoiceId(nextInvoiceId)).thenReturn(new java.math.BigDecimal("0.00"));
+			when(creditApplicationRepository.sumAmountByInvoiceId(selectedInvoiceId))
+					.thenReturn(new java.math.BigDecimal("0.00"));
+			when(creditApplicationRepository.sumAmountByInvoiceId(nextInvoiceId)).thenReturn(new java.math.BigDecimal("0.00"));
+			when(tenantUnitCreditRepository.findByTenantIdAndUnitIdForUpdate(
+					selectedInvoice.getTenant().getId(),
+					selectedInvoice.getUnit().getId()
+			)).thenReturn(Optional.empty());
 
 			invoiceService.recordPayment(selectedInvoiceId, buildPaymentRequest("1000000.00"));
 
-			verify(paymentRepository, times(2)).save(paymentCaptor.capture());
-			assertThat(paymentCaptor.getAllValues())
-					.extracting(Payment::getAmount)
-					.containsExactly("750000.00", "250000.00");
-			assertThat(paymentCaptor.getAllValues().getFirst().getInvoice()).isEqualTo(selectedInvoice);
-			assertThat(paymentCaptor.getAllValues().get(1).getInvoice()).isEqualTo(nextInvoice);
+			verify(paymentRepository, times(1)).save(paymentCaptor.capture());
+			assertThat(paymentCaptor.getValue().getAmount()).isEqualTo("1000000.00");
+			assertThat(paymentCaptor.getValue().getInvoice()).isEqualTo(selectedInvoice);
+			verify(creditApplicationRepository, times(1)).save(creditApplicationCaptor.capture());
+			assertThat(creditApplicationCaptor.getValue().getInvoice()).isEqualTo(nextInvoice);
+			assertThat(creditApplicationCaptor.getValue().getAmount()).isEqualTo("250000.00");
+			assertThat(creditApplicationCaptor.getValue().getAppliedDate()).isEqualTo(LocalDate.parse("2026-05-08"));
 			assertThat(selectedInvoice.getStatus()).isEqualTo("paid");
 			assertThat(nextInvoice.getStatus()).isEqualTo("partial");
 			verify(invoiceRepository, times(1)).save(selectedInvoice);
@@ -574,26 +597,30 @@ class InvoiceServiceTest {
 			UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000401");
 			Invoice invoice = buildInvoice(invoiceId, "750000.00", LocalDate.parse("2026-05-10"), "unpaid");
 			ArgumentCaptor<Payment> paymentCaptor = ArgumentCaptor.forClass(Payment.class);
+			ArgumentCaptor<TenantUnitCredit> creditCaptor = ArgumentCaptor.forClass(TenantUnitCredit.class);
 			when(invoiceRepository.findPaymentAllocationInvoicesForUpdate(
 					invoiceId,
 					openInvoiceStatuses()
 			)).thenReturn(List.of(invoice));
 			when(paymentRepository.sumAmountByInvoiceId(invoiceId))
-					.thenReturn(new java.math.BigDecimal("0.00"))
-					.thenReturn(new java.math.BigDecimal("750000.00"))
-					.thenReturn(new java.math.BigDecimal("900000.00"));
+					.thenReturn(new java.math.BigDecimal("0.00"));
+			when(creditApplicationRepository.sumAmountByInvoiceId(invoiceId))
+					.thenReturn(new java.math.BigDecimal("0.00"));
+			when(tenantUnitCreditRepository.findByTenantIdAndUnitIdForUpdate(
+					invoice.getTenant().getId(),
+					invoice.getUnit().getId()
+			)).thenReturn(Optional.empty());
 
 			invoiceService.recordPayment(invoiceId, buildPaymentRequest("900000.00"));
 
-			verify(paymentRepository, times(2)).save(paymentCaptor.capture());
-			assertThat(paymentCaptor.getAllValues())
-					.extracting(Payment::getAmount)
-					.containsExactly("750000.00", "150000.00");
-			assertThat(paymentCaptor.getAllValues())
-					.extracting(Payment::getInvoice)
-					.containsExactly(invoice, invoice);
+			verify(paymentRepository, times(1)).save(paymentCaptor.capture());
+			assertThat(paymentCaptor.getValue().getAmount()).isEqualTo("900000.00");
+			assertThat(paymentCaptor.getValue().getInvoice()).isEqualTo(invoice);
+			verify(tenantUnitCreditRepository, times(2)).save(creditCaptor.capture());
+			assertThat(creditCaptor.getAllValues().getLast().getBalance()).isEqualTo("150000.00");
+			verify(creditApplicationRepository, never()).save(Mockito.any(CreditApplication.class));
 			assertThat(invoice.getStatus()).isEqualTo("paid");
-			verify(invoiceRepository, times(2)).save(invoice);
+			verify(invoiceRepository, times(1)).save(invoice);
 		}
 
 		@Test

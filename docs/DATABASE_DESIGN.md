@@ -13,6 +13,8 @@ The database stores:
 - Unit tenant assignments
 - Invoices
 - Payments
+- Tenant/unit credits
+- Credit applications
 - Property expenses
 - Cash balances
 
@@ -228,6 +230,8 @@ Business rules:
   - paid
   - overdue
   - cancelled
+- Invoice settlement is calculated from cash payments plus applied tenant/unit credits.
+- Applied credit reduces `amount_due` but must not be counted as new cash income.
 
 ## payments
 
@@ -250,6 +254,55 @@ Business rules:
 - Payment amount must be a valid decimal string greater than zero.
 - One invoice can have multiple payments.
 - Invoice status must be recalculated after payment is created.
+- Actual received money is stored only as payment rows.
+- Overpayment beyond the selected invoice amount becomes tenant/unit credit.
+- Payment rows must not be created for applied credit.
+
+## tenant_unit_credits
+
+Stores reusable credit balance created from invoice overpayments for the same tenant and unit.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID | Primary key |
+| tenant_id | UUID | Foreign key to tenants |
+| unit_id | UUID | Foreign key to units |
+| balance | TEXT | Required, decimal string |
+| created_at | TIMESTAMP | Required |
+| updated_at | TIMESTAMP | Required |
+
+Constraints:
+
+```text
+UNIQUE(tenant_id, unit_id)
+```
+
+Business rules:
+
+- Credit belongs to both the tenant and unit.
+- Credit balance must never be negative.
+- Credit is created from overpayment after the selected invoice is settled.
+- Credit can be applied to open future invoices for the same tenant and unit.
+
+## credit_applications
+
+Tracks credit amounts applied to invoices.
+
+| Column | Type | Notes |
+|---|---|---|
+| id | UUID | Primary key |
+| tenant_unit_credit_id | UUID | Foreign key to tenant_unit_credits |
+| invoice_id | UUID | Foreign key to invoices |
+| amount | TEXT | Required, decimal string |
+| applied_date | DATE | Required |
+| created_at | TIMESTAMP | Required |
+| updated_at | TIMESTAMP | Required |
+
+Business rules:
+
+- Applied credit settles invoice amount without creating cash income.
+- Invoice status calculation includes applied credit.
+- Cash-flow reports must sum payment rows only and must not sum credit applications as income.
 
 ## property_expenses
 
@@ -313,6 +366,10 @@ tenants 1--many unit_tenants
 units 1--many invoices
 tenants 1--many invoices
 invoices 1--many payments
+tenants 1--many tenant_unit_credits
+units 1--many tenant_unit_credits
+tenant_unit_credits 1--many credit_applications
+invoices 1--many credit_applications
 properties 1--many property_expenses
 properties 1--many cash_balances
 ```
@@ -333,6 +390,8 @@ total_expense = sum(parse_decimal(property_expenses.amount))
 net_saving = total_income - total_expense
 ```
 
+Credit applications are not cash income because the money was counted when the payment was received.
+
 ### Invoice Status
 
 Invoice status should be calculated from:
@@ -340,6 +399,7 @@ Invoice status should be calculated from:
 ```text
 parsed invoice amount
 parsed total paid amount
+parsed total applied credit amount
 due date
 current date
 ```
@@ -347,10 +407,11 @@ current date
 Rules:
 
 ```text
-total_paid = 0 → unpaid
-total_paid > 0 and total_paid < amount → partial
-total_paid >= amount → paid
-due_date < today and total_paid < amount → overdue
+total_settled = total_paid + total_applied_credit
+total_settled = 0 → unpaid
+total_settled > 0 and total_settled < amount → partial
+total_settled >= amount → paid
+due_date < today and total_settled < amount → overdue
 ```
 
 A paid invoice must not become overdue.

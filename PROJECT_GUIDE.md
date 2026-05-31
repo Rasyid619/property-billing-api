@@ -142,6 +142,10 @@ Represents payment made for an invoice.
 
 A single invoice can have multiple payments.
 
+Overpayment beyond the selected invoice amount becomes tenant/unit credit.
+Credit can settle future invoices for the same tenant and unit, but applied credit
+is not new cash income because the money was already received.
+
 ### PropertyExpense
 
 Represents money spent from collected property fees.
@@ -241,9 +245,11 @@ After payment is created, recalculate invoice status.
 Rules:
 
 - If total paid is `0`, status is `unpaid`.
-- If total paid is more than `0` and less than invoice amount, status is `partial`.
-- If total paid is greater than or equal to invoice amount, status is `paid`.
-- If due date is past and total paid is less than invoice amount, status is `overdue`.
+- If total settlement is more than `0` and less than invoice amount, status is `partial`.
+- If total settlement is greater than or equal to invoice amount, status is `paid`.
+- If due date is past and total settlement is less than invoice amount, status is `overdue`.
+
+Total settlement is cash payments plus applied tenant/unit credit.
 
 Important:
 

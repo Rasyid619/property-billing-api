@@ -162,6 +162,9 @@ class InvoiceControllerTest {
 								LocalDate.parse("2026-05-01"),
 								"INV-202605-A101",
 								new BigDecimal("750000.00"),
+								new BigDecimal("0.00"),
+								new BigDecimal("0.00"),
+								new BigDecimal("750000.00"),
 								LocalDate.parse("2026-05-10"),
 								"unpaid"
 						))
@@ -182,6 +185,9 @@ class InvoiceControllerTest {
 				.andExpect(jsonPath("$.invoices[0].billing_month").value("2026-05-01"))
 				.andExpect(jsonPath("$.invoices[0].invoice_number").value("INV-202605-A101"))
 				.andExpect(jsonPath("$.invoices[0].amount").value(750000.00))
+				.andExpect(jsonPath("$.invoices[0].paid_amount").value(0.00))
+				.andExpect(jsonPath("$.invoices[0].credit_applied_amount").value(0.00))
+				.andExpect(jsonPath("$.invoices[0].amount_due").value(750000.00))
 				.andExpect(jsonPath("$.invoices[0].due_date").value("2026-05-10"))
 				.andExpect(jsonPath("$.invoices[0].status").value("unpaid"))
 				.andExpect(jsonPath("$.invoices[0].created_at").doesNotExist())
@@ -237,8 +243,11 @@ class InvoiceControllerTest {
 				LocalDate.parse("2026-05-01"),
 				"INV-202605-A101",
 				new BigDecimal("750000.00"),
+				new BigDecimal("300000.00"),
+				new BigDecimal("150000.00"),
+				new BigDecimal("300000.00"),
 				LocalDate.parse("2026-05-10"),
-				"unpaid"
+				"partial"
 		));
 
 		mockMvc.perform(get("/api/v1/invoices/00000000-0000-0000-0000-000000000401")
@@ -250,8 +259,11 @@ class InvoiceControllerTest {
 				.andExpect(jsonPath("$.billing_month").value("2026-05-01"))
 				.andExpect(jsonPath("$.invoice_number").value("INV-202605-A101"))
 				.andExpect(jsonPath("$.amount").value(750000.00))
+				.andExpect(jsonPath("$.paid_amount").value(300000.00))
+				.andExpect(jsonPath("$.credit_applied_amount").value(150000.00))
+				.andExpect(jsonPath("$.amount_due").value(300000.00))
 				.andExpect(jsonPath("$.due_date").value("2026-05-10"))
-				.andExpect(jsonPath("$.status").value("unpaid"))
+				.andExpect(jsonPath("$.status").value("partial"))
 				.andExpect(jsonPath("$.created_at").doesNotExist())
 				.andExpect(jsonPath("$.updated_at").doesNotExist());
 
