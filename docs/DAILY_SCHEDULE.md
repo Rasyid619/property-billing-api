@@ -1,5 +1,35 @@
 # Daily Schedule
 
+## 2026-06-01 — Issue #16: POST /cash-balances/close-month
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #16, and created branch `rasyid-16-post-cash-balances-close-month`.
+- Re-read the required project docs and confirmed the current scope is only `POST /cash-balances/close-month` in the cash-balance module.
+- Reviewed cash-balance requirements, database design, existing OpenAPI contract, and cash-flow report income/expense aggregation patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify first-day month validation, previous-month opening balance behavior, duplicate close conflict behavior, and lean `201` success response.
+- Added the cash-balance entity, repository, close-month request DTO, service workflow, authenticated controller endpoint, validation, and exception handling.
+- Implemented closing calculation as previous closing balance or zero, plus current-month income, minus current-month expenses, persisted to `cash_balances`.
+- Added service, controller, and PostgreSQL integration tests for previous balance carry-forward, zero-opening months, duplicate conflict, invalid month, missing property, required body fields, and persistence.
+- Stayed within the Issue #16 cash-balance closing scope and did not implement future cash-balance report or mutation endpoints.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.CashBalanceServiceTest --tests com.propertybilling.controller.CashBalanceControllerTest --tests com.propertybilling.integration.cashbalance.CashBalanceCloseMonthIntegrationTest
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/16
+
+## Blockers
+
+- None.
+
+---
+
 ## 2026-06-01 — Issue #34: GET /reports/cash-flow
 
 ## What I Did

@@ -97,6 +97,16 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.CONFLICT).build();
 	}
 
+	@ExceptionHandler(CashBalanceConflictException.class)
+	ResponseEntity<Void> handleCashBalanceConflict() {
+		return ResponseEntity.status(HttpStatus.CONFLICT).build();
+	}
+
+	@ExceptionHandler(CashBalanceMonthException.class)
+	ResponseEntity<Void> handleCashBalanceMonth() {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+	}
+
 	@ExceptionHandler(InvoiceNotFoundException.class)
 	ResponseEntity<Void> handleInvoiceNotFound() {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
