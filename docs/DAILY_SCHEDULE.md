@@ -1,5 +1,44 @@
 # Daily Schedule
 
+## 2026-05-31 — Issue #26: POST /invoices/{invoice_id}/payments
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #26, and created branch `rasyid-26-post-invoice-payment`.
+- Re-read the required project docs and confirmed the current issue scope is only `POST /invoices/{invoice_id}/payments`.
+- Reviewed payment requirements, invoice status rules, database design, existing OpenAPI contract, and current invoice endpoint patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to document positive payment validation, accepted overpayments, oldest-open-invoice surplus allocation, and surplus preservation for future credit rollover.
+- Added `invoice_status` database domain migration with default `unpaid`, `payment_method` database domain migration, and shared Java enums for invoice status and payment method values.
+- Added payment request DTO, payment entity, payment repository, invoice row-lock queries, payment recording workflow, invoice status recalculation, and authenticated payment controller endpoint.
+- Updated payment invoice locking to use one ordered query that locks the selected invoice and same-tenant open invoices together, avoiding mixed selected-invoice/open-invoice lock ordering during surplus allocation.
+- Addressed PR review comments by removing redundant explicit getters covered by Lombok and injecting a `Clock` into invoice payment status calculation so overdue tests do not depend on the wall clock.
+- Added service, controller, PostgreSQL integration, and migration tests for full payment, partial payment, multiple payments, overdue recalculation, invoice not found, zero/negative amount rejection, unsupported payment method rejection, overpayment acceptance, multi-month surplus allocation, invoice status default/type behavior, and payment method type behavior.
+- Stayed within the Issue #26 payment recording endpoint scope and did not implement payment index, expense, report, cash balance, or full tenant credit rollover policy from Issue #91.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.InvoiceServiceTest --tests com.propertybilling.controller.InvoiceControllerTest --tests com.propertybilling.integration.payment.PaymentCreateIntegrationTest --tests com.propertybilling.migration.FlywayMigrationTest
+Passed
+
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/26
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Wait for Issue #26 CI before moving to the next payment endpoint.
+
+---
+
 ## 2026-05-31 — Issue #24: GET /invoices/{invoice_id}
 
 ## What I Did

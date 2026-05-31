@@ -8,13 +8,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.propertybilling.constant.InvoiceStatus;
+import com.propertybilling.constant.PaymentMethod;
 import com.propertybilling.dto.invoice.InvoiceGenerateMonthlyRequest;
 import com.propertybilling.dto.invoice.InvoiceIndexResponse;
 import com.propertybilling.dto.invoice.InvoiceShowResponse;
 import com.propertybilling.dto.invoice.queryresult.InvoiceGenerationTargetQueryResult;
 import com.propertybilling.dto.invoice.queryresult.InvoiceIndexQueryResult;
 import com.propertybilling.dto.invoice.queryresult.InvoiceShowQueryResult;
+import com.propertybilling.dto.payment.PaymentCreateRequest;
 import com.propertybilling.entity.Invoice;
+import com.propertybilling.entity.Payment;
 import com.propertybilling.entity.Property;
 import com.propertybilling.entity.Tenant;
 import com.propertybilling.entity.Unit;
@@ -23,10 +27,14 @@ import com.propertybilling.exception.InvoiceNotFoundException;
 import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.repository.InvoiceQueryRepository;
 import com.propertybilling.repository.InvoiceRepository;
+import com.propertybilling.repository.PaymentRepository;
 import com.propertybilling.repository.PropertyRepository;
 import com.propertybilling.repository.TenantRepository;
 import com.propertybilling.repository.UnitRepository;
 import java.time.LocalDate;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,15 +53,19 @@ class InvoiceServiceTest {
 
 	private final InvoiceQueryRepository invoiceQueryRepository = Mockito.mock(InvoiceQueryRepository.class);
 	private final InvoiceRepository invoiceRepository = Mockito.mock(InvoiceRepository.class);
+	private final PaymentRepository paymentRepository = Mockito.mock(PaymentRepository.class);
 	private final PropertyRepository propertyRepository = Mockito.mock(PropertyRepository.class);
 	private final TenantRepository tenantRepository = Mockito.mock(TenantRepository.class);
 	private final UnitRepository unitRepository = Mockito.mock(UnitRepository.class);
+	private final Clock clock = Clock.fixed(Instant.parse("2026-05-31T00:00:00Z"), ZoneOffset.UTC);
 	private final InvoiceService invoiceService = new InvoiceService(
 			invoiceQueryRepository,
 			invoiceRepository,
+			paymentRepository,
 			propertyRepository,
 			tenantRepository,
-			unitRepository
+			unitRepository,
+			clock
 	);
 
 	@Nested
@@ -363,6 +375,179 @@ class InvoiceServiceTest {
 		}
 	}
 
+	@Nested
+	/*
+	 * Service tests for recording invoice payments.
+	 */
+	class RecordPayment {
+
+		@Test
+		void recordsFullPaymentAndMarksInvoicePaid() {
+			UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000401");
+			Invoice invoice = buildInvoice(invoiceId, "750000.00", LocalDate.parse("2026-06-10"), "unpaid");
+			ArgumentCaptor<Payment> paymentCaptor = ArgumentCaptor.forClass(Payment.class);
+			when(invoiceRepository.findPaymentAllocationInvoicesForUpdate(
+					invoiceId,
+					openInvoiceStatuses()
+			)).thenReturn(List.of(invoice));
+			when(paymentRepository.sumAmountByInvoiceId(invoiceId))
+					.thenReturn(new java.math.BigDecimal("0.00"))
+					.thenReturn(new java.math.BigDecimal("750000.00"));
+
+			invoiceService.recordPayment(invoiceId, buildPaymentRequest("750000.00"));
+
+			verify(paymentRepository, times(1)).save(paymentCaptor.capture());
+			assertThat(paymentCaptor.getValue().getInvoice()).isEqualTo(invoice);
+			assertThat(paymentCaptor.getValue().getAmount()).isEqualTo("750000.00");
+			assertThat(paymentCaptor.getValue().getPaymentDate()).isEqualTo(LocalDate.parse("2026-05-08"));
+			assertThat(paymentCaptor.getValue().getPaymentMethod()).isEqualTo("bank_transfer");
+			assertThat(paymentCaptor.getValue().getReferenceNumber()).isEqualTo("BCA-123456");
+			assertThat(paymentCaptor.getValue().getNote()).isEqualTo("Paid by tenant");
+			assertThat(invoice.getStatus()).isEqualTo("paid");
+			verify(invoiceRepository, times(1)).save(invoice);
+			verify(invoiceRepository, times(1)).findPaymentAllocationInvoicesForUpdate(
+					invoiceId,
+					openInvoiceStatuses()
+			);
+		}
+
+		@Test
+		void recordsPartialPaymentAndMarksInvoicePartialWhenDueDateIsNotPast() {
+			UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000401");
+			Invoice invoice = buildInvoice(invoiceId, "750000.00", LocalDate.parse("2026-06-10"), "unpaid");
+			when(invoiceRepository.findPaymentAllocationInvoicesForUpdate(
+					invoiceId,
+					openInvoiceStatuses()
+			)).thenReturn(List.of(invoice));
+			when(paymentRepository.sumAmountByInvoiceId(invoiceId))
+					.thenReturn(new java.math.BigDecimal("0.00"))
+					.thenReturn(new java.math.BigDecimal("300000.00"));
+
+			invoiceService.recordPayment(invoiceId, buildPaymentRequest("300000.00"));
+
+			assertThat(invoice.getStatus()).isEqualTo("partial");
+			verify(paymentRepository, times(1)).save(Mockito.any(Payment.class));
+			verify(invoiceRepository, times(1)).save(invoice);
+		}
+
+		@Test
+		void marksPastDueInvoiceOverdueWhenPaymentDoesNotCompleteIt() {
+			UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000401");
+			Invoice invoice = buildInvoice(invoiceId, "750000.00", LocalDate.parse("2026-05-10"), "unpaid");
+			when(invoiceRepository.findPaymentAllocationInvoicesForUpdate(
+					invoiceId,
+					openInvoiceStatuses()
+			)).thenReturn(List.of(invoice));
+			when(paymentRepository.sumAmountByInvoiceId(invoiceId))
+					.thenReturn(new java.math.BigDecimal("0.00"))
+					.thenReturn(new java.math.BigDecimal("300000.00"));
+
+			invoiceService.recordPayment(invoiceId, buildPaymentRequest("300000.00"));
+
+			assertThat(invoice.getStatus()).isEqualTo("overdue");
+			verify(paymentRepository, times(1)).save(Mockito.any(Payment.class));
+			verify(invoiceRepository, times(1)).save(invoice);
+		}
+
+		@Test
+		void recordsMultiplePaymentsAndMarksInvoicePaidWhenTotalReachesInvoiceAmount() {
+			UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000401");
+			Invoice invoice = buildInvoice(invoiceId, "750000.00", LocalDate.parse("2026-06-10"), "partial");
+			when(invoiceRepository.findPaymentAllocationInvoicesForUpdate(
+					invoiceId,
+					openInvoiceStatuses()
+			)).thenReturn(List.of(invoice));
+			when(paymentRepository.sumAmountByInvoiceId(invoiceId))
+					.thenReturn(new java.math.BigDecimal("300000.00"))
+					.thenReturn(new java.math.BigDecimal("750000.00"));
+
+			invoiceService.recordPayment(invoiceId, buildPaymentRequest("450000.00"));
+
+			assertThat(invoice.getStatus()).isEqualTo("paid");
+			verify(paymentRepository, times(1)).save(Mockito.argThat(payment ->
+					"450000.00".equals(payment.getAmount())
+			));
+			verify(invoiceRepository, times(1)).save(invoice);
+		}
+
+		@Test
+		void allocatesOverpaymentToOldestOpenInvoiceForSameTenant() {
+			UUID selectedInvoiceId = UUID.fromString("00000000-0000-0000-0000-000000000401");
+			UUID nextInvoiceId = UUID.fromString("00000000-0000-0000-0000-000000000402");
+			Invoice selectedInvoice = buildInvoice(selectedInvoiceId, "750000.00", LocalDate.parse("2026-05-10"), "unpaid");
+			Invoice nextInvoice = buildInvoice(nextInvoiceId, "750000.00", LocalDate.parse("2026-06-10"), "unpaid");
+			ArgumentCaptor<Payment> paymentCaptor = ArgumentCaptor.forClass(Payment.class);
+			when(invoiceRepository.findPaymentAllocationInvoicesForUpdate(
+					selectedInvoiceId,
+					openInvoiceStatuses()
+			)).thenReturn(List.of(selectedInvoice, nextInvoice));
+			when(paymentRepository.sumAmountByInvoiceId(selectedInvoiceId))
+					.thenReturn(new java.math.BigDecimal("0.00"))
+					.thenReturn(new java.math.BigDecimal("750000.00"));
+			when(paymentRepository.sumAmountByInvoiceId(nextInvoiceId))
+					.thenReturn(new java.math.BigDecimal("0.00"))
+					.thenReturn(new java.math.BigDecimal("250000.00"));
+
+			invoiceService.recordPayment(selectedInvoiceId, buildPaymentRequest("1000000.00"));
+
+			verify(paymentRepository, times(2)).save(paymentCaptor.capture());
+			assertThat(paymentCaptor.getAllValues())
+					.extracting(Payment::getAmount)
+					.containsExactly("750000.00", "250000.00");
+			assertThat(paymentCaptor.getAllValues().getFirst().getInvoice()).isEqualTo(selectedInvoice);
+			assertThat(paymentCaptor.getAllValues().get(1).getInvoice()).isEqualTo(nextInvoice);
+			assertThat(selectedInvoice.getStatus()).isEqualTo("paid");
+			assertThat(nextInvoice.getStatus()).isEqualTo("partial");
+			verify(invoiceRepository, times(1)).save(selectedInvoice);
+			verify(invoiceRepository, times(1)).save(nextInvoice);
+		}
+
+		@Test
+		void preservesRemainingSurplusOnSelectedInvoiceWhenNoOpenInvoicesCanReceiveIt() {
+			UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000401");
+			Invoice invoice = buildInvoice(invoiceId, "750000.00", LocalDate.parse("2026-05-10"), "unpaid");
+			ArgumentCaptor<Payment> paymentCaptor = ArgumentCaptor.forClass(Payment.class);
+			when(invoiceRepository.findPaymentAllocationInvoicesForUpdate(
+					invoiceId,
+					openInvoiceStatuses()
+			)).thenReturn(List.of(invoice));
+			when(paymentRepository.sumAmountByInvoiceId(invoiceId))
+					.thenReturn(new java.math.BigDecimal("0.00"))
+					.thenReturn(new java.math.BigDecimal("750000.00"))
+					.thenReturn(new java.math.BigDecimal("900000.00"));
+
+			invoiceService.recordPayment(invoiceId, buildPaymentRequest("900000.00"));
+
+			verify(paymentRepository, times(2)).save(paymentCaptor.capture());
+			assertThat(paymentCaptor.getAllValues())
+					.extracting(Payment::getAmount)
+					.containsExactly("750000.00", "150000.00");
+			assertThat(paymentCaptor.getAllValues())
+					.extracting(Payment::getInvoice)
+					.containsExactly(invoice, invoice);
+			assertThat(invoice.getStatus()).isEqualTo("paid");
+			verify(invoiceRepository, times(2)).save(invoice);
+		}
+
+			@Test
+			void throwsNotFoundWhenInvoiceDoesNotExist() {
+				UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+				when(invoiceRepository.findPaymentAllocationInvoicesForUpdate(
+						invoiceId,
+						openInvoiceStatuses()
+				)).thenReturn(List.of());
+
+				assertThatThrownBy(() -> invoiceService.recordPayment(invoiceId, buildPaymentRequest("750000.00")))
+						.isInstanceOf(InvoiceNotFoundException.class);
+
+			verify(invoiceRepository, times(1)).findPaymentAllocationInvoicesForUpdate(
+					invoiceId,
+					openInvoiceStatuses()
+			);
+			verifyNoInteractions(paymentRepository);
+		}
+	}
+
 	private Property buildProperty(UUID propertyId, boolean active) {
 		return new Property(
 				propertyId,
@@ -396,6 +581,45 @@ class InvoiceServiceTest {
 				name,
 				null,
 				null
+		);
+	}
+
+	private Invoice buildInvoice(
+			UUID invoiceId,
+			String amount,
+			LocalDate dueDate,
+			String status
+	) {
+		UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+		UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+		UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000301");
+		return new Invoice(
+				invoiceId,
+				buildUnit(unitId, propertyId, "A-101", amount, dueDate.getDayOfMonth(), true),
+				buildTenant(tenantId, "Budi"),
+				dueDate.withDayOfMonth(1),
+				"INV-" + invoiceId,
+				amount,
+				dueDate,
+				status
+		);
+	}
+
+	private PaymentCreateRequest buildPaymentRequest(String amount) {
+		return new PaymentCreateRequest(
+				new java.math.BigDecimal(amount),
+				LocalDate.parse("2026-05-08"),
+				PaymentMethod.BANK_TRANSFER,
+				"BCA-123456",
+				"Paid by tenant"
+		);
+	}
+
+	private List<String> openInvoiceStatuses() {
+		return List.of(
+				InvoiceStatus.UNPAID.value(),
+				InvoiceStatus.PARTIAL.value(),
+				InvoiceStatus.OVERDUE.value()
 		);
 	}
 

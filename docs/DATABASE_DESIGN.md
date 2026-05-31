@@ -204,7 +204,7 @@ Stores monthly invoices.
 | invoice_number | TEXT | Required, unique |
 | amount | TEXT | Required, decimal string |
 | due_date | DATE | Required |
-| status | TEXT | Required |
+| status | invoice_status | Required, defaults to `unpaid` |
 | created_at | TIMESTAMP | Required |
 | updated_at | TIMESTAMP | Required |
 
@@ -239,7 +239,7 @@ Stores invoice payments.
 | invoice_id | UUID | Foreign key to invoices |
 | amount | TEXT | Required, decimal string |
 | payment_date | DATE | Required |
-| payment_method | TEXT | Required |
+| payment_method | payment_method | Required |
 | reference_number | TEXT | Optional |
 | note | TEXT | Optional |
 | created_at | TIMESTAMP | Required |

@@ -1,5 +1,6 @@
 package com.propertybilling.entity;
 
+import com.propertybilling.constant.InvoiceStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -116,5 +117,14 @@ public class Invoice {
 		this.status = status;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
+	}
+
+	/**
+	 * Updates invoice status after payment totals are recalculated.
+	 *
+	 * @param status recalculated invoice status
+	 */
+	public void updateStatus(InvoiceStatus status) {
+		this.status = status.value();
 	}
 }

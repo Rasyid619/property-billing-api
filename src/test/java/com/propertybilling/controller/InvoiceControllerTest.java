@@ -11,9 +11,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.propertybilling.config.SecurityConfig;
+import com.propertybilling.constant.PaymentMethod;
 import com.propertybilling.dto.invoice.InvoiceIndexElement;
 import com.propertybilling.dto.invoice.InvoiceIndexResponse;
 import com.propertybilling.dto.invoice.InvoiceShowResponse;
+import com.propertybilling.dto.payment.PaymentCreateRequest;
 import com.propertybilling.entity.User;
 import com.propertybilling.exception.GlobalExceptionHandler;
 import com.propertybilling.exception.InvoiceGenerationConflictException;
@@ -267,6 +269,115 @@ class InvoiceControllerTest {
 
 		verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
 		verify(invoiceService, times(1)).getInvoice(invoiceId);
+	}
+
+	@Test
+	void recordPaymentReturnsCreated() throws Exception {
+		UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000401");
+		when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+
+		mockMvc.perform(post("/api/v1/invoices/00000000-0000-0000-0000-000000000401/payments")
+						.header("Authorization", "Bearer access-token")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "amount": 750000.00,
+								  "payment_date": "2026-05-08",
+								  "payment_method": "bank_transfer",
+								  "reference_number": "BCA-123456",
+								  "note": "Paid by tenant"
+								}
+								"""))
+				.andExpect(status().isCreated())
+				.andExpect(content().string(""));
+
+		verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+		verify(invoiceService, times(1)).recordPayment(Mockito.eq(invoiceId), Mockito.argThat(request ->
+				new BigDecimal("750000.00").compareTo(request.amount()) == 0
+						&& LocalDate.parse("2026-05-08").equals(request.paymentDate())
+						&& PaymentMethod.BANK_TRANSFER.equals(request.paymentMethod())
+						&& "BCA-123456".equals(request.referenceNumber())
+						&& "Paid by tenant".equals(request.note())
+		));
+	}
+
+	@Test
+	void recordPaymentRejectsZeroAmount() throws Exception {
+		mockMvc.perform(post("/api/v1/invoices/00000000-0000-0000-0000-000000000401/payments")
+						.header("Authorization", "Bearer access-token")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "amount": 0,
+								  "payment_date": "2026-05-08",
+								  "payment_method": "bank_transfer"
+								}
+								"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(content().string(""));
+
+		verifyNoInteractions(authService, invoiceService);
+	}
+
+	@Test
+	void recordPaymentRejectsNegativeAmount() throws Exception {
+		mockMvc.perform(post("/api/v1/invoices/00000000-0000-0000-0000-000000000401/payments")
+						.header("Authorization", "Bearer access-token")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "amount": -1,
+								  "payment_date": "2026-05-08",
+								  "payment_method": "bank_transfer"
+								}
+								"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(content().string(""));
+
+		verifyNoInteractions(authService, invoiceService);
+	}
+
+	@Test
+	void recordPaymentRejectsUnsupportedPaymentMethod() throws Exception {
+		mockMvc.perform(post("/api/v1/invoices/00000000-0000-0000-0000-000000000401/payments")
+						.header("Authorization", "Bearer access-token")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "amount": 750000.00,
+								  "payment_date": "2026-05-08",
+								  "payment_method": "crypto"
+								}
+								"""))
+				.andExpect(status().isBadRequest())
+				.andExpect(content().string(""));
+
+		verifyNoInteractions(authService, invoiceService);
+	}
+
+	@Test
+	void recordPaymentReturnsNotFoundWhenInvoiceDoesNotExist() throws Exception {
+		UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+		when(authService.authenticateAccessToken("Bearer access-token")).thenReturn(buildUser());
+		Mockito.doThrow(new InvoiceNotFoundException())
+				.when(invoiceService)
+				.recordPayment(Mockito.eq(invoiceId), Mockito.any(PaymentCreateRequest.class));
+
+		mockMvc.perform(post("/api/v1/invoices/00000000-0000-0000-0000-000000000999/payments")
+						.header("Authorization", "Bearer access-token")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "amount": 750000.00,
+								  "payment_date": "2026-05-08",
+								  "payment_method": "bank_transfer"
+								}
+								"""))
+				.andExpect(status().isNotFound())
+				.andExpect(content().string(""));
+
+		verify(authService, times(1)).authenticateAccessToken("Bearer access-token");
+		verify(invoiceService, times(1)).recordPayment(Mockito.eq(invoiceId), Mockito.any(PaymentCreateRequest.class));
 	}
 
 	private User buildUser() {

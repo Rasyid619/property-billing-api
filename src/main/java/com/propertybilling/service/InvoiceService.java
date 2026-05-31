@@ -1,5 +1,6 @@
 package com.propertybilling.service;
 
+import com.propertybilling.constant.InvoiceStatus;
 import com.propertybilling.dto.invoice.InvoiceGenerateMonthlyRequest;
 import com.propertybilling.dto.invoice.InvoiceIndexElement;
 import com.propertybilling.dto.invoice.InvoiceIndexResponse;
@@ -7,20 +8,25 @@ import com.propertybilling.dto.invoice.InvoiceShowResponse;
 import com.propertybilling.dto.invoice.queryresult.InvoiceGenerationTargetQueryResult;
 import com.propertybilling.dto.invoice.queryresult.InvoiceIndexQueryResult;
 import com.propertybilling.dto.invoice.queryresult.InvoiceShowQueryResult;
+import com.propertybilling.dto.payment.PaymentCreateRequest;
 import com.propertybilling.entity.Invoice;
+import com.propertybilling.entity.Payment;
 import com.propertybilling.entity.Property;
 import com.propertybilling.exception.InvoiceGenerationConflictException;
 import com.propertybilling.exception.InvoiceNotFoundException;
 import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.repository.InvoiceQueryRepository;
 import com.propertybilling.repository.InvoiceRepository;
+import com.propertybilling.repository.PaymentRepository;
 import com.propertybilling.repository.PropertyRepository;
 import com.propertybilling.repository.TenantRepository;
 import com.propertybilling.repository.UnitRepository;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
@@ -37,11 +43,13 @@ public class InvoiceService {
 
 	private final InvoiceQueryRepository invoiceQueryRepository;
 	private final InvoiceRepository invoiceRepository;
+	private final PaymentRepository paymentRepository;
 	private final PropertyRepository propertyRepository;
 	private final TenantRepository tenantRepository;
 	private final UnitRepository unitRepository;
+	private final Clock clock;
 
-	private static final String INITIAL_INVOICE_STATUS = "unpaid";
+	private static final String INITIAL_INVOICE_STATUS = InvoiceStatus.UNPAID.value();
 
 	/**
 	 * Generates monthly invoices for active units with active tenants.
@@ -127,6 +135,49 @@ public class InvoiceService {
 				.orElseThrow(InvoiceNotFoundException::new);
 	}
 
+	/**
+	 * Records a payment and recalculates affected invoice statuses.
+	 *
+	 * @param invoiceId selected invoice identifier
+	 * @param request payment request
+	 * @throws InvoiceNotFoundException when no invoice exists for the ID
+	 */
+	@Transactional
+	public void recordPayment(UUID invoiceId, PaymentCreateRequest request) {
+		List<Invoice> lockedInvoices = invoiceRepository.findPaymentAllocationInvoicesForUpdate(
+				invoiceId,
+				toStatusValues(InvoiceStatus.openStatuses())
+		);
+		Invoice lockedSelectedInvoice = findSelectedInvoice(lockedInvoices, invoiceId)
+				.orElseThrow(InvoiceNotFoundException::new);
+		BigDecimal remainingAmount = request.amount();
+
+		remainingAmount = applyPaymentToInvoice(lockedSelectedInvoice, remainingAmount, request);
+
+		if (remainingAmount.signum() <= 0) {
+			return;
+		}
+
+		for (Invoice invoice : lockedInvoices) {
+			if (remainingAmount.signum() <= 0) {
+				return;
+			}
+
+			if (invoice.getId().equals(invoiceId)) {
+				continue;
+			}
+
+			remainingAmount = applyPaymentToInvoice(invoice, remainingAmount, request);
+		}
+
+		if (remainingAmount.signum() <= 0) {
+			return;
+		}
+
+		paymentRepository.save(toPayment(lockedSelectedInvoice, remainingAmount, request));
+		updateAndSaveInvoiceStatus(lockedSelectedInvoice);
+	}
+
 	private LocalDate toBillingMonth(String month) {
 		if (month == null || month.isBlank()) {
 			return null;
@@ -197,6 +248,85 @@ public class InvoiceService {
 				new BigDecimal(invoice.amount()),
 				invoice.dueDate(),
 				invoice.status()
+		);
+	}
+
+	private BigDecimal applyPaymentToInvoice(
+			Invoice invoice,
+			BigDecimal availableAmount,
+			PaymentCreateRequest request
+	) {
+		BigDecimal invoiceAmount = new BigDecimal(invoice.getAmount());
+		BigDecimal totalPaid = paymentRepository.sumAmountByInvoiceId(invoice.getId());
+		BigDecimal outstandingAmount = invoiceAmount.subtract(totalPaid).max(BigDecimal.ZERO);
+
+		if (outstandingAmount.signum() <= 0) {
+			updateAndSaveInvoiceStatus(invoice, totalPaid);
+
+			return availableAmount;
+		}
+
+		BigDecimal appliedAmount = availableAmount.min(outstandingAmount);
+		paymentRepository.save(toPayment(invoice, appliedAmount, request));
+		updateAndSaveInvoiceStatus(invoice, totalPaid.add(appliedAmount));
+
+		return availableAmount.subtract(appliedAmount);
+	}
+
+	private void updateAndSaveInvoiceStatus(Invoice invoice) {
+		updateAndSaveInvoiceStatus(
+				invoice,
+				paymentRepository.sumAmountByInvoiceId(invoice.getId())
+		);
+	}
+
+	private void updateAndSaveInvoiceStatus(Invoice invoice, BigDecimal totalPaid) {
+		BigDecimal invoiceAmount = new BigDecimal(invoice.getAmount());
+		invoice.updateStatus(toInvoiceStatus(invoice, invoiceAmount, totalPaid));
+		invoiceRepository.save(invoice);
+	}
+
+	private InvoiceStatus toInvoiceStatus(Invoice invoice, BigDecimal invoiceAmount, BigDecimal totalPaid) {
+		if (totalPaid.compareTo(invoiceAmount) >= 0) {
+			return InvoiceStatus.PAID;
+		}
+
+		if (invoice.getDueDate().isBefore(LocalDate.now(clock))) {
+			return InvoiceStatus.OVERDUE;
+		}
+
+		if (totalPaid.signum() > 0) {
+			return InvoiceStatus.PARTIAL;
+		}
+
+		return InvoiceStatus.UNPAID;
+	}
+
+	private List<String> toStatusValues(List<InvoiceStatus> statuses) {
+		return statuses.stream()
+				.map(InvoiceStatus::value)
+				.toList();
+	}
+
+	private Optional<Invoice> findSelectedInvoice(List<Invoice> invoices, UUID invoiceId) {
+		return invoices.stream()
+				.filter(invoice -> invoice.getId().equals(invoiceId))
+				.findFirst();
+	}
+
+	private Payment toPayment(
+			Invoice invoice,
+			BigDecimal amount,
+			PaymentCreateRequest request
+	) {
+		return new Payment(
+				UUID.randomUUID(),
+				invoice,
+				amount.toPlainString(),
+				request.paymentDate(),
+				request.paymentMethod().value(),
+				request.referenceNumber(),
+				request.note()
 		);
 	}
 }
