@@ -107,4 +107,27 @@ public class PropertyExpense {
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
 	}
+
+	/**
+	 * Replaces editable expense fields.
+	 *
+	 * @param property new owning property
+	 * @param expenseDate new date the expense happened
+	 * @param category new expense category
+	 * @param amount new decimal string expense amount
+	 * @param description new optional expense description
+	 */
+	public void update(
+			Property property,
+			LocalDate expenseDate,
+			String category,
+			String amount,
+			String description
+	) {
+		this.property = property;
+		this.expenseDate = expenseDate;
+		this.category = category;
+		this.amount = amount;
+		this.description = description;
+	}
 }

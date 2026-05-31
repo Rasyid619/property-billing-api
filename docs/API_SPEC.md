@@ -250,7 +250,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  /expenses/{expenseId}:
+  /expenses/{expense_id}:
     delete:
       tags:
         - Property Expenses
@@ -266,10 +266,11 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-    patch:
+    put:
       tags:
         - Property Expenses
       summary: Update a property expense.
+      description: Replaces editable property expense fields.
       security:
         - BearerAuth: []
       parameters:

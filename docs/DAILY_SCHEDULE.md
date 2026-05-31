@@ -1,5 +1,38 @@
 # Daily Schedule
 
+## 2026-06-01 — Issue #19: PUT /expenses/{expense_id}
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #19, and created branch `rasyid-19-put-expenses-expense-id`.
+- Re-read the required project docs and confirmed the current scope is only `PUT /expenses/{expense_id}` in the property expense module.
+- Updated Issue #19 from `PATCH /expenses/{expenseId}` to `PUT /expenses/{expense_id}` based on the requested operation and API parameter naming rules.
+- Reviewed property expense requirements, database design, existing OpenAPI contract, and the existing `GET /expenses` and `POST /expenses` implementation before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to replace `PATCH` with `PUT`, describe full replacement behavior, and align the path parameter with `expense_id`.
+- Added expense update request DTO validation, property expense not-found handling, repository write-lock lookup, entity update behavior, and authenticated controller endpoint returning lean `204`.
+- Added service, controller, and PostgreSQL integration tests for successful expense update, zero/negative amount rejection, missing category rejection, unsupported category rejection, missing expense, and missing property.
+- Stayed within the Issue #19 `PUT /expenses/{expense_id}` scope and did not implement delete, cash-flow report, cash-balance, or future tenant login behavior.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.PropertyExpenseServiceTest --tests com.propertybilling.controller.PropertyExpenseControllerTest --tests com.propertybilling.integration.expense.ExpenseCreateIntegrationTest --tests com.propertybilling.integration.expense.ExpenseIndexIntegrationTest --tests com.propertybilling.integration.expense.ExpenseUpdateIntegrationTest
+Passed
+
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/19
+
+## Blockers
+
+- None.
+
+---
+
 ## 2026-06-01 — Issue #18: POST /expenses
 
 ## What I Did
