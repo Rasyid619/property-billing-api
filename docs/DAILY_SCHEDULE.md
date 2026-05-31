@@ -1,5 +1,41 @@
 # Daily Schedule
 
+## 2026-05-31 — Issue #17: GET /expenses
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #17, and created branch `rasyid-17-get-expenses`.
+- Re-read the required project docs and confirmed the current scope is only `GET /expenses` in the property expense module.
+- Reviewed property expense requirements, database design, existing OpenAPI contract, and controller/service/repository patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to clarify generic month filter wording and deterministic expense index ordering.
+- Added property expense entity mapping, index DTOs, repository projection query, service mapping, and authenticated controller endpoint.
+- Added request validation for required `property_id`, optional `month`, `offset`, and `limit`.
+- Added service, controller, and PostgreSQL integration tests for expense listing, month filtering, ordering, pagination, response shape, and validation.
+- Stayed within the Issue #17 `GET /expenses` scope and did not implement create, update, delete, cash-flow report, cash-balance, or future tenant login behavior.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.PropertyExpenseServiceTest --tests com.propertybilling.controller.PropertyExpenseControllerTest --tests com.propertybilling.integration.expense.ExpenseIndexIntegrationTest
+Passed
+
+./gradlew test --tests com.propertybilling.service.PropertyExpenseServiceTest --tests com.propertybilling.controller.PropertyExpenseControllerTest --tests com.propertybilling.integration.expense.ExpenseIndexIntegrationTest --tests com.propertybilling.openapi.OpenApiEndpointTest --tests com.propertybilling.migration.FlywayMigrationTest
+Passed
+
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/17
+
+## Blockers
+
+- None.
+
+---
+
 ## 2026-05-31 — Issue #94: Automate monthly invoice generation
 
 ## What I Did

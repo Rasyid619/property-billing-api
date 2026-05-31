@@ -208,7 +208,7 @@ paths:
       tags:
         - Property Expenses
       summary: List property expenses.
-      description: Returns property expenses filtered by property and optional month.
+      description: Returns property expenses filtered by property and optional month, ordered by newest expense date first.
       security:
         - BearerAuth: []
       parameters:
@@ -922,7 +922,7 @@ components:
       name: month
       in: query
       required: false
-      description: Month in YYYY-MM format. The filter matches invoices whose billing month is the first day of that month.
+      description: Month in YYYY-MM format. The filter matches records that belong to that month.
       schema:
         type: string
         pattern: "^\\d{4}-(0[1-9]|1[0-2])$"
