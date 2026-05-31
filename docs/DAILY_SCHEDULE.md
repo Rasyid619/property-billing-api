@@ -1,5 +1,41 @@
 # Daily Schedule
 
+## 2026-05-31 — Issue #24: GET /invoices/{invoice_id}
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #24, and used branch `rasyid-24-get-invoices-invoice-id`.
+- Re-read the required project docs and confirmed the current issue scope is only `GET /invoices/{invoice_id}`.
+- Reviewed invoice requirements, database design, existing OpenAPI contract, and current invoice index/generation patterns before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to describe invoice detail behavior.
+- Added invoice detail response and query projection, joined invoice lookup by ID, service mapping, invoice not-found exception handling, and authenticated controller endpoint.
+- Added service, controller, and PostgreSQL integration tests for successful invoice detail response shape and missing invoice `404`.
+- Stayed within the Issue #24 invoice detail endpoint scope and did not implement payments, expenses, reports, cash balances, or future tenant login behavior.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.InvoiceServiceTest --tests com.propertybilling.controller.InvoiceControllerTest --tests com.propertybilling.integration.invoice.InvoiceShowIntegrationTest
+Passed
+
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/24
+
+## Blockers
+
+- None.
+
+## Tomorrow
+
+- Wait for Issue #24 CI before moving to the next invoice endpoint.
+
+---
+
 ## 2026-05-31 — Issue #23: POST /invoices/generate-monthly
 
 ## What I Did

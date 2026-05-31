@@ -2,6 +2,7 @@ package com.propertybilling.controller;
 
 import com.propertybilling.dto.invoice.InvoiceGenerateMonthlyRequest;
 import com.propertybilling.dto.invoice.InvoiceIndexResponse;
+import com.propertybilling.dto.invoice.InvoiceShowResponse;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.InvoiceService;
 import jakarta.validation.Valid;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -86,5 +88,22 @@ public class InvoiceController {
 				offset,
 				limit
 		));
+	}
+
+	/**
+	 * Shows one invoice for authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param invoiceId invoice identifier
+	 * @return invoice detail response
+	 */
+	@GetMapping("/invoices/{invoice_id}")
+	ResponseEntity<InvoiceShowResponse> show(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@PathVariable("invoice_id") UUID invoiceId
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+
+		return ResponseEntity.ok(invoiceService.getInvoice(invoiceId));
 	}
 }

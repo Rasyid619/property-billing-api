@@ -349,6 +349,7 @@ paths:
       tags:
         - Invoices
       summary: Get invoice detail.
+      description: Returns one invoice by ID.
       security:
         - BearerAuth: []
       parameters:
