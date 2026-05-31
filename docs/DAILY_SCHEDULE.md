@@ -9,7 +9,7 @@
 - Reviewed payment listing requirements, invoice/payment database design, existing OpenAPI contract, and current invoice/payment endpoint patterns before changing code.
 - Updated `openapi.yml` and `docs/API_SPEC.md` before controller work to document the invoice payment index endpoint behavior.
 - Added payment index DTOs, repository query projection, service mapping with invoice existence check, and authenticated controller endpoint.
-- Added service, controller, and PostgreSQL integration tests for successful payment listing, empty payment lists for existing invoices, invoice not-found behavior, response shape, and ordering by payment date plus creation order.
+- Added service, controller, and PostgreSQL integration tests for successful payment listing, empty payment lists for existing invoices, invoice not-found behavior, response shape, and deterministic ordering by payment date, creation timestamp, and ID.
 - Stayed within the Issue #25 payment index endpoint scope and did not implement expense, report, cash balance, credit rollover, or future tenant login behavior.
 
 ## Test Results

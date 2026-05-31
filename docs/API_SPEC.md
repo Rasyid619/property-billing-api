@@ -371,7 +371,7 @@ paths:
       tags:
         - Payments
       summary: List invoice payments.
-      description: Returns payments recorded for one invoice, ordered by payment date and creation order.
+      description: Returns payments recorded for one invoice, ordered by payment date, creation timestamp, and ID.
       security:
         - BearerAuth: []
       parameters:

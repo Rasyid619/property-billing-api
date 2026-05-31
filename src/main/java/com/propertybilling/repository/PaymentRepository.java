@@ -31,7 +31,7 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 	 * Finds payments recorded for an invoice.
 	 *
 	 * @param invoiceId invoice identifier
-	 * @return payment rows ordered by payment date and creation order
+	 * @return payment rows ordered by payment date, creation timestamp, and ID
 	 */
 	@Query("""
 			SELECT new com.propertybilling.dto.payment.queryresult.PaymentIndexQueryResult(
