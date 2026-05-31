@@ -10,13 +10,16 @@ import static org.mockito.Mockito.when;
 
 import com.propertybilling.dto.invoice.InvoiceGenerateMonthlyRequest;
 import com.propertybilling.dto.invoice.InvoiceIndexResponse;
+import com.propertybilling.dto.invoice.InvoiceShowResponse;
 import com.propertybilling.dto.invoice.queryresult.InvoiceGenerationTargetQueryResult;
 import com.propertybilling.dto.invoice.queryresult.InvoiceIndexQueryResult;
+import com.propertybilling.dto.invoice.queryresult.InvoiceShowQueryResult;
 import com.propertybilling.entity.Invoice;
 import com.propertybilling.entity.Property;
 import com.propertybilling.entity.Tenant;
 import com.propertybilling.entity.Unit;
 import com.propertybilling.exception.InvoiceGenerationConflictException;
+import com.propertybilling.exception.InvoiceNotFoundException;
 import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.repository.InvoiceQueryRepository;
 import com.propertybilling.repository.InvoiceRepository;
@@ -311,6 +314,53 @@ class InvoiceServiceTest {
 		);
 		assertThat(pageableCaptor.getValue().getPageNumber()).isEqualTo(2);
 		assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(100);
+	}
+
+	@Nested
+	/*
+	 * Service tests for showing one invoice.
+	 */
+	class ShowInvoice {
+
+		@Test
+		void returnsInvoice() {
+			UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000401");
+			UUID unitId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			UUID tenantId = UUID.fromString("00000000-0000-0000-0000-000000000301");
+			when(invoiceRepository.findShow(invoiceId)).thenReturn(Optional.of(new InvoiceShowQueryResult(
+					invoiceId,
+					unitId,
+					tenantId,
+					LocalDate.parse("2026-05-01"),
+					"INV-202605-A101",
+					"750000.00",
+					LocalDate.parse("2026-05-10"),
+					"unpaid"
+			)));
+
+			InvoiceShowResponse response = invoiceService.getInvoice(invoiceId);
+
+			assertThat(response.id()).isEqualTo(invoiceId);
+			assertThat(response.unitId()).isEqualTo(unitId);
+			assertThat(response.tenantId()).isEqualTo(tenantId);
+			assertThat(response.billingMonth()).isEqualTo(LocalDate.parse("2026-05-01"));
+			assertThat(response.invoiceNumber()).isEqualTo("INV-202605-A101");
+			assertThat(response.amount()).isEqualByComparingTo("750000.00");
+			assertThat(response.dueDate()).isEqualTo(LocalDate.parse("2026-05-10"));
+			assertThat(response.status()).isEqualTo("unpaid");
+			verify(invoiceRepository, times(1)).findShow(invoiceId);
+		}
+
+		@Test
+		void throwsNotFoundWhenInvoiceDoesNotExist() {
+			UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(invoiceRepository.findShow(invoiceId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> invoiceService.getInvoice(invoiceId))
+					.isInstanceOf(InvoiceNotFoundException.class);
+
+			verify(invoiceRepository, times(1)).findShow(invoiceId);
+		}
 	}
 
 	private Property buildProperty(UUID propertyId, boolean active) {

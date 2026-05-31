@@ -3,11 +3,14 @@ package com.propertybilling.service;
 import com.propertybilling.dto.invoice.InvoiceGenerateMonthlyRequest;
 import com.propertybilling.dto.invoice.InvoiceIndexElement;
 import com.propertybilling.dto.invoice.InvoiceIndexResponse;
+import com.propertybilling.dto.invoice.InvoiceShowResponse;
 import com.propertybilling.dto.invoice.queryresult.InvoiceGenerationTargetQueryResult;
 import com.propertybilling.dto.invoice.queryresult.InvoiceIndexQueryResult;
+import com.propertybilling.dto.invoice.queryresult.InvoiceShowQueryResult;
 import com.propertybilling.entity.Invoice;
 import com.propertybilling.entity.Property;
 import com.propertybilling.exception.InvoiceGenerationConflictException;
+import com.propertybilling.exception.InvoiceNotFoundException;
 import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.repository.InvoiceQueryRepository;
 import com.propertybilling.repository.InvoiceRepository;
@@ -111,6 +114,19 @@ public class InvoiceService {
 		return new InvoiceIndexResponse(invoices.size(), invoices);
 	}
 
+	/**
+	 * Gets one invoice by ID.
+	 *
+	 * @param invoiceId invoice identifier
+	 * @return invoice detail response
+	 * @throws InvoiceNotFoundException when no invoice exists for the ID
+	 */
+	public InvoiceShowResponse getInvoice(UUID invoiceId) {
+		return invoiceRepository.findShow(invoiceId)
+				.map(this::toShowResponse)
+				.orElseThrow(InvoiceNotFoundException::new);
+	}
+
 	private LocalDate toBillingMonth(String month) {
 		if (month == null || month.isBlank()) {
 			return null;
@@ -160,6 +176,19 @@ public class InvoiceService {
 
 	private InvoiceIndexElement toIndexElement(InvoiceIndexQueryResult invoice) {
 		return new InvoiceIndexElement(
+				invoice.id(),
+				invoice.unitId(),
+				invoice.tenantId(),
+				invoice.billingMonth(),
+				invoice.invoiceNumber(),
+				new BigDecimal(invoice.amount()),
+				invoice.dueDate(),
+				invoice.status()
+		);
+	}
+
+	private InvoiceShowResponse toShowResponse(InvoiceShowQueryResult invoice) {
+		return new InvoiceShowResponse(
 				invoice.id(),
 				invoice.unitId(),
 				invoice.tenantId(),
