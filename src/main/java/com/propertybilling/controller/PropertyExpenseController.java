@@ -2,6 +2,7 @@ package com.propertybilling.controller;
 
 import com.propertybilling.dto.expense.ExpenseCreateRequest;
 import com.propertybilling.dto.expense.ExpenseIndexResponse;
+import com.propertybilling.dto.expense.ExpenseUpdateRequest;
 import com.propertybilling.service.AuthService;
 import com.propertybilling.service.PropertyExpenseService;
 import jakarta.validation.Valid;
@@ -13,7 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -72,5 +75,25 @@ public class PropertyExpenseController {
 		authService.authenticateAccessToken(authorizationHeader);
 
 		return ResponseEntity.ok(propertyExpenseService.listExpenses(propertyId, month, offset, limit));
+	}
+
+	/**
+	 * Replaces a property expense for authenticated admin and staff users.
+	 *
+	 * @param authorizationHeader bearer access token
+	 * @param expenseId property expense identifier
+	 * @param request expense replacement request
+	 * @return empty no-content response
+	 */
+	@PutMapping("/expenses/{expense_id}")
+	ResponseEntity<Void> update(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@PathVariable("expense_id") UUID expenseId,
+			@Valid @RequestBody ExpenseUpdateRequest request
+	) {
+		authService.authenticateAccessToken(authorizationHeader);
+		propertyExpenseService.updateExpense(expenseId, request);
+
+		return ResponseEntity.noContent().build();
 	}
 }

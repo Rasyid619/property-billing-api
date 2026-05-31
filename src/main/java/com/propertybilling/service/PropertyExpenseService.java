@@ -3,9 +3,11 @@ package com.propertybilling.service;
 import com.propertybilling.dto.expense.ExpenseCreateRequest;
 import com.propertybilling.dto.expense.ExpenseIndexElement;
 import com.propertybilling.dto.expense.ExpenseIndexResponse;
+import com.propertybilling.dto.expense.ExpenseUpdateRequest;
 import com.propertybilling.dto.expense.queryresult.ExpenseIndexQueryResult;
 import com.propertybilling.entity.Property;
 import com.propertybilling.entity.PropertyExpense;
+import com.propertybilling.exception.PropertyExpenseNotFoundException;
 import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.repository.PropertyExpenseRepository;
 import com.propertybilling.repository.PropertyRepository;
@@ -15,6 +17,7 @@ import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -46,6 +49,31 @@ public class PropertyExpenseService {
 				request.description(),
 				null
 		));
+	}
+
+	/**
+	 * Replaces a property expense.
+	 *
+	 * @param expenseId property expense identifier
+	 * @param request expense replacement request
+	 * @throws PropertyExpenseNotFoundException when no expense exists for the ID
+	 * @throws PropertyNotFoundException when no property exists for the request
+	 */
+	@Transactional
+	public void updateExpense(UUID expenseId, ExpenseUpdateRequest request) {
+		PropertyExpense expense = propertyExpenseRepository.findByIdForUpdate(expenseId)
+				.orElseThrow(PropertyExpenseNotFoundException::new);
+		Property property = propertyRepository.findById(request.propertyId())
+				.orElseThrow(PropertyNotFoundException::new);
+
+		expense.update(
+				property,
+				request.expenseDate(),
+				request.category().value(),
+				request.amount().toPlainString(),
+				request.description()
+		);
+		propertyExpenseRepository.save(expense);
 	}
 
 	/**

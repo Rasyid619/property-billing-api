@@ -52,6 +52,11 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 	}
 
+	@ExceptionHandler(PropertyExpenseNotFoundException.class)
+	ResponseEntity<Void> handlePropertyExpenseNotFound() {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+	}
+
 	@ExceptionHandler(UnitNotFoundException.class)
 	ResponseEntity<Void> handleUnitNotFound() {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

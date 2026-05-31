@@ -11,9 +11,11 @@ import static org.mockito.Mockito.when;
 import com.propertybilling.constant.ExpenseCategory;
 import com.propertybilling.dto.expense.ExpenseCreateRequest;
 import com.propertybilling.dto.expense.ExpenseIndexResponse;
+import com.propertybilling.dto.expense.ExpenseUpdateRequest;
 import com.propertybilling.dto.expense.queryresult.ExpenseIndexQueryResult;
 import com.propertybilling.entity.Property;
 import com.propertybilling.entity.PropertyExpense;
+import com.propertybilling.exception.PropertyExpenseNotFoundException;
 import com.propertybilling.exception.PropertyNotFoundException;
 import com.propertybilling.repository.PropertyExpenseRepository;
 import com.propertybilling.repository.PropertyRepository;
@@ -84,6 +86,102 @@ class PropertyExpenseServiceTest {
 
 			verify(propertyRepository, times(1)).findById(propertyId);
 			verify(propertyExpenseRepository, never()).save(any());
+		}
+	}
+
+	@Nested
+	class UpdateExpense {
+
+		@Test
+		void updatesExpense() {
+			UUID expenseId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			UUID originalPropertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+			UUID updatedPropertyId = UUID.fromString("00000000-0000-0000-0000-000000000102");
+			Property originalProperty = new Property(originalPropertyId, "Green Residence", null, true);
+			Property updatedProperty = new Property(updatedPropertyId, "Blue Terrace", null, true);
+			PropertyExpense expense = new PropertyExpense(
+					expenseId,
+					originalProperty,
+					LocalDate.parse("2026-05-12"),
+					"cleaning",
+					"750000.00",
+					"Monthly cleaning fee",
+					null
+			);
+			when(propertyExpenseRepository.findByIdForUpdate(expenseId)).thenReturn(Optional.of(expense));
+			when(propertyRepository.findById(updatedPropertyId)).thenReturn(Optional.of(updatedProperty));
+
+			propertyExpenseService.updateExpense(expenseId, new ExpenseUpdateRequest(
+					updatedPropertyId,
+					LocalDate.parse("2026-05-15"),
+					ExpenseCategory.REPAIR,
+					new BigDecimal("1250000.00"),
+					"Gate repair"
+			));
+
+			verify(propertyExpenseRepository, times(1)).findByIdForUpdate(expenseId);
+			verify(propertyRepository, times(1)).findById(updatedPropertyId);
+			verify(propertyExpenseRepository, times(1)).save(expense);
+			assertThat(expense.getProperty()).isEqualTo(updatedProperty);
+			assertThat(expense.getExpenseDate()).isEqualTo(LocalDate.parse("2026-05-15"));
+			assertThat(expense.getCategory()).isEqualTo("repair");
+			assertThat(expense.getAmount()).isEqualTo("1250000.00");
+			assertThat(expense.getDescription()).isEqualTo("Gate repair");
+		}
+
+		@Test
+		void throwsNotFoundWhenExpenseDoesNotExist() {
+			UUID expenseId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+			when(propertyExpenseRepository.findByIdForUpdate(expenseId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> propertyExpenseService.updateExpense(expenseId, new ExpenseUpdateRequest(
+					propertyId,
+					LocalDate.parse("2026-05-15"),
+					ExpenseCategory.REPAIR,
+					new BigDecimal("1250000.00"),
+					"Gate repair"
+			))).isInstanceOf(PropertyExpenseNotFoundException.class);
+
+			verify(propertyExpenseRepository, times(1)).findByIdForUpdate(expenseId);
+			verify(propertyRepository, never()).findById(any());
+			verify(propertyExpenseRepository, never()).save(any());
+		}
+
+		@Test
+		void throwsNotFoundWhenPropertyDoesNotExist() {
+			UUID expenseId = UUID.fromString("00000000-0000-0000-0000-000000000201");
+			UUID originalPropertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+			UUID missingPropertyId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			Property originalProperty = new Property(originalPropertyId, "Green Residence", null, true);
+			PropertyExpense expense = new PropertyExpense(
+					expenseId,
+					originalProperty,
+					LocalDate.parse("2026-05-12"),
+					"cleaning",
+					"750000.00",
+					"Monthly cleaning fee",
+					null
+			);
+			when(propertyExpenseRepository.findByIdForUpdate(expenseId)).thenReturn(Optional.of(expense));
+			when(propertyRepository.findById(missingPropertyId)).thenReturn(Optional.empty());
+
+			assertThatThrownBy(() -> propertyExpenseService.updateExpense(expenseId, new ExpenseUpdateRequest(
+					missingPropertyId,
+					LocalDate.parse("2026-05-15"),
+					ExpenseCategory.REPAIR,
+					new BigDecimal("1250000.00"),
+					"Gate repair"
+			))).isInstanceOf(PropertyNotFoundException.class);
+
+			verify(propertyExpenseRepository, times(1)).findByIdForUpdate(expenseId);
+			verify(propertyRepository, times(1)).findById(missingPropertyId);
+			verify(propertyExpenseRepository, never()).save(any());
+			assertThat(expense.getProperty()).isEqualTo(originalProperty);
+			assertThat(expense.getExpenseDate()).isEqualTo(LocalDate.parse("2026-05-12"));
+			assertThat(expense.getCategory()).isEqualTo("cleaning");
+			assertThat(expense.getAmount()).isEqualTo("750000.00");
+			assertThat(expense.getDescription()).isEqualTo("Monthly cleaning fee");
 		}
 	}
 
