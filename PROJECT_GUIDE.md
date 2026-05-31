@@ -238,6 +238,30 @@ Due day: 10
 Due date: 2026-05-10
 ```
 
+## Automated Invoice Generation Rule
+
+The system can run an internal scheduled job that generates invoices for the
+next billing month before the tenant payment window starts.
+
+Rules:
+
+1. The scheduled job is disabled by default and must be enabled through configuration.
+2. The schedule is configurable through application configuration.
+3. The scheduler generates invoices for active properties only.
+4. The scheduler uses the same active-unit and active-tenant eligibility rules as manual generation.
+5. Duplicate property-month generation is skipped and must not create duplicate invoice rows.
+6. The scheduler calls application service logic directly and does not require JWT authentication.
+7. No unauthenticated public invoice generation endpoint should be exposed.
+
+Example:
+
+```text
+Current date: 2026-05-25
+Generated billing month: 2026-06-01
+Due day: 5
+Due date: 2026-06-05
+```
+
 ## Payment Rule
 
 After payment is created, recalculate invoice status.

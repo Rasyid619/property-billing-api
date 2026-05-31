@@ -1,5 +1,42 @@
 # Daily Schedule
 
+## 2026-05-31 — Issue #94: Automate monthly invoice generation
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #94, and created branch `rasyid-94-automate-monthly-invoice-generation`.
+- Re-read the required project docs and confirmed the current scope is internal monthly invoice automation, not a new public endpoint.
+- Reviewed invoice generation requirements, database design, existing manual invoice generation workflow, OpenAPI contract, and scheduler authentication rule before changing code.
+- Updated `openapi.yml` and `docs/API_SPEC.md` to clarify that `POST /invoices/generate-monthly` remains the authenticated manual trigger and automation is internal.
+- Added configurable invoice automation settings with the scheduler disabled by default.
+- Added an internal Spring scheduled job that generates next-month invoices for active properties only and skips duplicate/conflicting property-month generation.
+- Reused existing invoice generation service rules so inactive properties, ineligible units, due date calculation, initial unpaid status, duplicate protection, and tenant/unit credit application remain consistent.
+- Added unit, configuration, and PostgreSQL integration coverage for scheduled generation, duplicate skipping, inactive property handling, and scheduler enablement.
+- Stayed within the Issue #94 invoice automation scope and did not add property expense, cash-flow, cash-balance, or unauthenticated invoice endpoints.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.InvoiceAutomationSchedulerTest --tests com.propertybilling.service.InvoiceAutomationSchedulerContextTest --tests com.propertybilling.integration.invoice.InvoiceAutomationSchedulerIntegrationTest
+Passed
+
+./gradlew test --tests com.propertybilling.service.InvoiceServiceTest --tests com.propertybilling.controller.InvoiceControllerTest --tests com.propertybilling.integration.invoice.InvoiceGenerateMonthlyIntegrationTest --tests com.propertybilling.integration.invoice.InvoiceAutomationSchedulerIntegrationTest --tests com.propertybilling.service.InvoiceAutomationSchedulerTest --tests com.propertybilling.service.InvoiceAutomationSchedulerContextTest --tests com.propertybilling.openapi.OpenApiEndpointTest --tests com.propertybilling.PropertyBillingApiApplicationTests
+Passed
+
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/94
+
+## Blockers
+
+- None.
+
+---
+
 ## 2026-05-31 — Issue #91: Add tenant credit rollover for invoice overpayments
 
 ## What I Did

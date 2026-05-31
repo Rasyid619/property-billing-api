@@ -323,7 +323,7 @@ paths:
       tags:
         - Invoices
       summary: Generate monthly invoices.
-      description: Generates one unpaid invoice per active unit with an active tenant for the requested active property and billing month. Units without active tenants are skipped. The request is rejected when any eligible unit already has an invoice for the billing month.
+      description: Authenticated manual trigger that generates one unpaid invoice per active unit with an active tenant for the requested active property and billing month. Units without active tenants are skipped. The request is rejected when any eligible unit already has an invoice for the billing month. Automated monthly invoice generation is handled by an internal scheduler and is not exposed as a public unauthenticated endpoint.
       security:
         - BearerAuth: []
       requestBody:
