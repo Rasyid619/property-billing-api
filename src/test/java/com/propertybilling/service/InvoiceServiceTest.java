@@ -17,6 +17,8 @@ import com.propertybilling.dto.invoice.queryresult.InvoiceGenerationTargetQueryR
 import com.propertybilling.dto.invoice.queryresult.InvoiceIndexQueryResult;
 import com.propertybilling.dto.invoice.queryresult.InvoiceShowQueryResult;
 import com.propertybilling.dto.payment.PaymentCreateRequest;
+import com.propertybilling.dto.payment.PaymentIndexResponse;
+import com.propertybilling.dto.payment.queryresult.PaymentIndexQueryResult;
 import com.propertybilling.entity.Invoice;
 import com.propertybilling.entity.Payment;
 import com.propertybilling.entity.Property;
@@ -330,6 +332,71 @@ class InvoiceServiceTest {
 
 	@Nested
 	/*
+	 * Service tests for listing payments recorded for one invoice.
+	 */
+	class ListInvoicePayments {
+
+		@Test
+		void returnsInvoicePayments() {
+			UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000401");
+			UUID paymentId = UUID.fromString("00000000-0000-0000-0000-000000000501");
+			when(invoiceRepository.existsById(invoiceId)).thenReturn(true);
+			when(paymentRepository.findIndexByInvoiceId(invoiceId)).thenReturn(List.of(new PaymentIndexQueryResult(
+					paymentId,
+					invoiceId,
+					"750000.00",
+					LocalDate.parse("2026-05-08"),
+					"bank_transfer",
+					"BCA-123456",
+					"Paid by tenant",
+					"paid"
+			)));
+
+			PaymentIndexResponse response = invoiceService.listPayments(invoiceId);
+
+			assertThat(response.count()).isEqualTo(1);
+			assertThat(response.payments()).hasSize(1);
+			assertThat(response.payments().getFirst().id()).isEqualTo(paymentId);
+			assertThat(response.payments().getFirst().invoiceId()).isEqualTo(invoiceId);
+			assertThat(response.payments().getFirst().amount()).isEqualByComparingTo("750000.00");
+			assertThat(response.payments().getFirst().paymentDate()).isEqualTo(LocalDate.parse("2026-05-08"));
+			assertThat(response.payments().getFirst().paymentMethod()).isEqualTo(PaymentMethod.BANK_TRANSFER);
+			assertThat(response.payments().getFirst().referenceNumber()).isEqualTo("BCA-123456");
+			assertThat(response.payments().getFirst().note()).isEqualTo("Paid by tenant");
+			assertThat(response.payments().getFirst().invoiceStatus()).isEqualTo(InvoiceStatus.PAID);
+			verify(invoiceRepository, times(1)).existsById(invoiceId);
+			verify(paymentRepository, times(1)).findIndexByInvoiceId(invoiceId);
+		}
+
+		@Test
+		void returnsEmptyPaymentsWhenInvoiceHasNoPayments() {
+			UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000401");
+			when(invoiceRepository.existsById(invoiceId)).thenReturn(true);
+			when(paymentRepository.findIndexByInvoiceId(invoiceId)).thenReturn(List.of());
+
+			PaymentIndexResponse response = invoiceService.listPayments(invoiceId);
+
+			assertThat(response.count()).isZero();
+			assertThat(response.payments()).isEmpty();
+			verify(invoiceRepository, times(1)).existsById(invoiceId);
+			verify(paymentRepository, times(1)).findIndexByInvoiceId(invoiceId);
+		}
+
+		@Test
+		void throwsNotFoundWhenInvoiceDoesNotExist() {
+			UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(invoiceRepository.existsById(invoiceId)).thenReturn(false);
+
+			assertThatThrownBy(() -> invoiceService.listPayments(invoiceId))
+					.isInstanceOf(InvoiceNotFoundException.class);
+
+			verify(invoiceRepository, times(1)).existsById(invoiceId);
+			verify(paymentRepository, never()).findIndexByInvoiceId(Mockito.any());
+		}
+	}
+
+	@Nested
+	/*
 	 * Service tests for showing one invoice.
 	 */
 	class ShowInvoice {
@@ -529,16 +596,16 @@ class InvoiceServiceTest {
 			verify(invoiceRepository, times(2)).save(invoice);
 		}
 
-			@Test
-			void throwsNotFoundWhenInvoiceDoesNotExist() {
-				UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000999");
-				when(invoiceRepository.findPaymentAllocationInvoicesForUpdate(
-						invoiceId,
-						openInvoiceStatuses()
-				)).thenReturn(List.of());
+		@Test
+		void throwsNotFoundWhenInvoiceDoesNotExist() {
+			UUID invoiceId = UUID.fromString("00000000-0000-0000-0000-000000000999");
+			when(invoiceRepository.findPaymentAllocationInvoicesForUpdate(
+					invoiceId,
+					openInvoiceStatuses()
+			)).thenReturn(List.of());
 
-				assertThatThrownBy(() -> invoiceService.recordPayment(invoiceId, buildPaymentRequest("750000.00")))
-						.isInstanceOf(InvoiceNotFoundException.class);
+			assertThatThrownBy(() -> invoiceService.recordPayment(invoiceId, buildPaymentRequest("750000.00")))
+					.isInstanceOf(InvoiceNotFoundException.class);
 
 			verify(invoiceRepository, times(1)).findPaymentAllocationInvoicesForUpdate(
 					invoiceId,
