@@ -51,6 +51,19 @@ public interface PropertyRepository extends JpaRepository<Property, UUID> {
 	);
 
 	/**
+	 * Finds active properties that should receive automated monthly invoice generation.
+	 *
+	 * @return active property identifiers ordered consistently for scheduled processing
+	 */
+	@Query("""
+			SELECT property.id
+			FROM Property property
+			WHERE property.active = true
+			ORDER BY property.name ASC, property.id ASC
+			""")
+	List<UUID> findActiveIdsForInvoiceAutomation();
+
+	/**
 	 * Finds one property using a write lock for mutation workflows.
 	 *
 	 * @param propertyId property identifier
