@@ -7,15 +7,15 @@ import com.propertybilling.repository.PropertyRepository;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import lombok.RequiredArgsConstructor;
 
 @Component
-@RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "app.invoice.automation", name = "enabled", havingValue = "true")
 /*
  * Internal scheduler that creates next-month invoices for active properties.
@@ -25,6 +25,27 @@ public class InvoiceAutomationScheduler {
 	private final PropertyRepository propertyRepository;
 	private final InvoiceService invoiceService;
 	private final Clock clock;
+	private final String automationZone;
+
+	/**
+	 * Creates a scheduler that uses the same zone for cron execution and billing-month calculation.
+	 *
+	 * @param propertyRepository property lookup boundary
+	 * @param invoiceService invoice generation workflow
+	 * @param clock source of the current instant
+	 * @param automationZone configured scheduler zone ID
+	 */
+	public InvoiceAutomationScheduler(
+			PropertyRepository propertyRepository,
+			InvoiceService invoiceService,
+			Clock clock,
+			@Value("${app.invoice.automation.zone}") String automationZone
+	) {
+		this.propertyRepository = propertyRepository;
+		this.invoiceService = invoiceService;
+		this.clock = clock;
+		this.automationZone = automationZone;
+	}
 
 	/**
 	 * Runs automated invoice generation using the configured cron schedule.
@@ -40,7 +61,7 @@ public class InvoiceAutomationScheduler {
 	}
 
 	private LocalDate getNextBillingMonth() {
-		return YearMonth.now(clock)
+		return YearMonth.from(clock.instant().atZone(ZoneId.of(automationZone)))
 				.plusMonths(1)
 				.atDay(1);
 	}

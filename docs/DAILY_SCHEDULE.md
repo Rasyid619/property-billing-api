@@ -10,6 +10,7 @@
 - Updated `openapi.yml` and `docs/API_SPEC.md` to clarify that `POST /invoices/generate-monthly` remains the authenticated manual trigger and automation is internal.
 - Added configurable invoice automation settings with the scheduler disabled by default.
 - Added an internal Spring scheduled job that generates next-month invoices for active properties only and skips duplicate/conflicting property-month generation.
+- Addressed PR review feedback by calculating the next billing month from the configured automation time zone instead of the default clock zone.
 - Reused existing invoice generation service rules so inactive properties, ineligible units, due date calculation, initial unpaid status, duplicate protection, and tenant/unit credit application remain consistent.
 - Added unit, configuration, and PostgreSQL integration coverage for scheduled generation, duplicate skipping, inactive property handling, and scheduler enablement.
 - Stayed within the Issue #94 invoice automation scope and did not add property expense, cash-flow, cash-balance, or unauthenticated invoice endpoints.
@@ -21,6 +22,13 @@
 Passed
 
 ./gradlew test --tests com.propertybilling.service.InvoiceServiceTest --tests com.propertybilling.controller.InvoiceControllerTest --tests com.propertybilling.integration.invoice.InvoiceGenerateMonthlyIntegrationTest --tests com.propertybilling.integration.invoice.InvoiceAutomationSchedulerIntegrationTest --tests com.propertybilling.service.InvoiceAutomationSchedulerTest --tests com.propertybilling.service.InvoiceAutomationSchedulerContextTest --tests com.propertybilling.openapi.OpenApiEndpointTest --tests com.propertybilling.PropertyBillingApiApplicationTests
+Passed
+
+./gradlew clean test
+Passed
+
+Review fix:
+./gradlew test --tests com.propertybilling.service.InvoiceAutomationSchedulerTest --tests com.propertybilling.service.InvoiceAutomationSchedulerContextTest --tests com.propertybilling.integration.invoice.InvoiceAutomationSchedulerIntegrationTest
 Passed
 
 ./gradlew clean test

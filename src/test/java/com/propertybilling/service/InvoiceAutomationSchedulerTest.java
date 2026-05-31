@@ -27,7 +27,8 @@ class InvoiceAutomationSchedulerTest {
 	private final InvoiceAutomationScheduler scheduler = new InvoiceAutomationScheduler(
 			propertyRepository,
 			invoiceService,
-			clock
+			clock,
+			"UTC"
 	);
 
 	@Test
@@ -65,6 +66,26 @@ class InvoiceAutomationSchedulerTest {
 		verify(invoiceService, times(1)).generateMonthlyInvoices(new InvoiceGenerateMonthlyRequest(
 				nextPropertyId,
 				LocalDate.parse("2026-06-01")
+		));
+	}
+
+	@Test
+	void calculatesBillingMonthUsingConfiguredAutomationZone() {
+		UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
+		Clock boundaryClock = Clock.fixed(Instant.parse("2026-05-31T17:00:00Z"), ZoneOffset.UTC);
+		InvoiceAutomationScheduler jakartaScheduler = new InvoiceAutomationScheduler(
+				propertyRepository,
+				invoiceService,
+				boundaryClock,
+				"Asia/Jakarta"
+		);
+		when(propertyRepository.findActiveIdsForInvoiceAutomation()).thenReturn(List.of(propertyId));
+
+		jakartaScheduler.generateNextBillingMonthInvoices();
+
+		verify(invoiceService, times(1)).generateMonthlyInvoices(Mockito.argThat(request ->
+				propertyId.equals(request.propertyId())
+						&& LocalDate.parse("2026-07-01").equals(request.billingMonth())
 		));
 	}
 }
