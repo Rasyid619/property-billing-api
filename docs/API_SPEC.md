@@ -255,6 +255,7 @@ paths:
       tags:
         - Property Expenses
       summary: Delete a property expense.
+      description: Permanently deletes one property expense.
       security:
         - BearerAuth: []
       parameters:
