@@ -182,7 +182,7 @@ paths:
       tags:
         - Cash Balances
       summary: Close a monthly cash balance.
-      description: Calculates and stores the opening balance, income, expenses, and closing balance for a property month.
+      description: Calculates and stores the opening balance, cash income, expenses, and closing balance for a property month. The requested month must be the first day of the month. Opening balance uses the previous month closing balance when present, otherwise zero. Closing the same property month more than once returns a conflict.
       security:
         - BearerAuth: []
       requestBody:
