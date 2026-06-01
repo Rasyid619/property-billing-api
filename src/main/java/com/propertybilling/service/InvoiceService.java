@@ -380,7 +380,7 @@ public class InvoiceService {
 				continue;
 			}
 
-			if (credit.hasNoRemainingBalance()) {
+			if (credit.hasNoRemainingCredit()) {
 				break;
 			}
 
@@ -456,19 +456,31 @@ public class InvoiceService {
 	}
 
 	private boolean hasNoSurplusCredit(BigDecimal surplusCreditAmount) {
-		return surplusCreditAmount.signum() <= 0;
+		return isZeroOrNegative(surplusCreditAmount);
 	}
 
 	private boolean isFullySettled(BigDecimal settledAmount, BigDecimal invoiceAmount) {
-		return settledAmount.compareTo(invoiceAmount) >= 0;
+		return isGreaterThanOrEqualTo(settledAmount, invoiceAmount);
 	}
 
 	private boolean isPartiallySettled(BigDecimal settledAmount) {
-		return settledAmount.signum() > 0;
+		return isPositive(settledAmount);
 	}
 
 	private boolean hasNoOutstandingAmount(BigDecimal outstandingAmount) {
-		return outstandingAmount.signum() <= 0;
+		return isZeroOrNegative(outstandingAmount);
+	}
+
+	private boolean isPositive(BigDecimal amount) {
+		return amount.signum() > 0;
+	}
+
+	private boolean isZeroOrNegative(BigDecimal amount) {
+		return amount.signum() <= 0;
+	}
+
+	private boolean isGreaterThanOrEqualTo(BigDecimal left, BigDecimal right) {
+		return left.compareTo(right) >= 0;
 	}
 
 	private BigDecimal zeroIfNull(BigDecimal amount) {
