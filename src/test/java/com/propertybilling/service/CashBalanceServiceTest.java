@@ -48,7 +48,7 @@ class CashBalanceServiceTest {
 	void closesMonthWithPreviousClosingBalance() {
 		UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
 		Property property = new Property(propertyId, "Green Residence", null, true);
-		when(propertyRepository.findById(propertyId)).thenReturn(Optional.of(property));
+		when(propertyRepository.findByIdForUpdate(propertyId)).thenReturn(Optional.of(property));
 		when(cashBalanceRepository.existsByPropertyIdAndMonth(propertyId, LocalDate.parse("2026-05-01")))
 				.thenReturn(false);
 		when(cashBalanceRepository.findClosingBalanceByPropertyIdAndMonth(
@@ -87,7 +87,7 @@ class CashBalanceServiceTest {
 	void closesMonthWithZeroOpeningWhenPreviousBalanceDoesNotExist() {
 		UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
 		Property property = new Property(propertyId, "Green Residence", null, true);
-		when(propertyRepository.findById(propertyId)).thenReturn(Optional.of(property));
+		when(propertyRepository.findByIdForUpdate(propertyId)).thenReturn(Optional.of(property));
 		when(cashBalanceRepository.existsByPropertyIdAndMonth(propertyId, LocalDate.parse("2026-05-01")))
 				.thenReturn(false);
 		when(cashBalanceRepository.findClosingBalanceByPropertyIdAndMonth(
@@ -131,14 +131,14 @@ class CashBalanceServiceTest {
 	@Test
 	void throwsNotFoundWhenPropertyDoesNotExist() {
 		UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
-		when(propertyRepository.findById(propertyId)).thenReturn(Optional.empty());
+		when(propertyRepository.findByIdForUpdate(propertyId)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> cashBalanceService.closeMonth(new CashBalanceCloseMonthRequest(
 				propertyId,
 				LocalDate.parse("2026-05-01")
 		))).isInstanceOf(PropertyNotFoundException.class);
 
-		verify(propertyRepository, times(1)).findById(propertyId);
+		verify(propertyRepository, times(1)).findByIdForUpdate(propertyId);
 		verify(cashBalanceRepository, never()).saveAndFlush(any());
 	}
 
@@ -146,7 +146,7 @@ class CashBalanceServiceTest {
 	void throwsConflictWhenMonthAlreadyClosed() {
 		UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
 		Property property = new Property(propertyId, "Green Residence", null, true);
-		when(propertyRepository.findById(propertyId)).thenReturn(Optional.of(property));
+		when(propertyRepository.findByIdForUpdate(propertyId)).thenReturn(Optional.of(property));
 		when(cashBalanceRepository.existsByPropertyIdAndMonth(propertyId, LocalDate.parse("2026-05-01")))
 				.thenReturn(true);
 
@@ -166,7 +166,7 @@ class CashBalanceServiceTest {
 	void throwsConflictWhenUniqueConstraintFailsDuringSave() {
 		UUID propertyId = UUID.fromString("00000000-0000-0000-0000-000000000101");
 		Property property = new Property(propertyId, "Green Residence", null, true);
-		when(propertyRepository.findById(propertyId)).thenReturn(Optional.of(property));
+		when(propertyRepository.findByIdForUpdate(propertyId)).thenReturn(Optional.of(property));
 		when(cashBalanceRepository.existsByPropertyIdAndMonth(propertyId, LocalDate.parse("2026-05-01")))
 				.thenReturn(false);
 		when(cashBalanceRepository.findClosingBalanceByPropertyIdAndMonth(

@@ -46,7 +46,7 @@ public class CashBalanceService {
 			throw new CashBalanceMonthException();
 		}
 
-		Property property = propertyRepository.findById(request.propertyId())
+		Property property = propertyRepository.findByIdForUpdate(request.propertyId())
 				.orElseThrow(PropertyNotFoundException::new);
 
 		if (cashBalanceRepository.existsByPropertyIdAndMonth(request.propertyId(), request.month())) {
