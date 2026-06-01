@@ -95,7 +95,11 @@ public class TenantUnitCredit {
 	 *
 	 * @return true when the balance cannot settle another invoice
 	 */
-	public boolean hasNoRemainingBalance() {
-		return getBalanceAmount().signum() <= 0;
+	public boolean hasNoRemainingCredit() {
+		return isZeroOrNegative(getBalanceAmount());
+	}
+
+	private boolean isZeroOrNegative(BigDecimal amount) {
+		return amount.signum() <= 0;
 	}
 }

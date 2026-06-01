@@ -1,5 +1,35 @@
 # Daily Schedule
 
+## 2026-06-01 — Issue #99: Clarify Business Predicate Intent
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #99, and created branch `rasyid-99-code-cleanup-clarify-business-predicate-intent`.
+- Re-read the required project docs and confirmed the current scope is behavior-preserving code cleanup, not a new API endpoint.
+- Scanned all production and test code for business-significant `signum()` and `compareTo()` predicates, query-builder patterns, and common cleanup smells.
+- Renamed the tenant/unit credit predicate from balance-focused language to credit-focused language so the invoice workflow reads in business terms.
+- Isolated the remaining production money comparison mechanics behind small helper methods while keeping business-level predicate names at the call sites.
+- Confirmed there is no production dynamic query-builder code to replace; existing aggregate and index read models already use repository queries.
+- Confirmed no OpenAPI or API specification update is needed because public behavior and response contracts are unchanged.
+- Kept trivial test assertion comparison code unchanged because naming it would add noise.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.service.InvoiceServiceTest --tests com.propertybilling.integration.payment.PaymentCreateIntegrationTest --tests com.propertybilling.integration.invoice.InvoiceGenerateMonthlyIntegrationTest
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/99
+
+## Blockers
+
+- None.
+
+---
+
 ## 2026-06-01 — Issue #16: POST /cash-balances/close-month
 
 ## What I Did
