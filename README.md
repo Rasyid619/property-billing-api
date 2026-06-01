@@ -4,7 +4,7 @@ Property Billing API is a backend REST API for tracking monthly housing and apar
 
 The system is designed for property owners or administrators who need to manage properties, units, tenants, monthly invoices, payments, expenses, and cash-flow reports from one backend service.
 
-Current implementation status: the platform foundation is in place and the authentication module is complete for MVP admin/staff access.
+Current implementation status: the MVP backend modules are implemented through monthly cash balance closing. Remaining work is focused on documentation, deployment guidance, and ongoing hardening.
 
 ## Project Goal
 
@@ -51,21 +51,23 @@ Implemented:
 - JWT access-token login
 - Refresh-token renewal
 - Authenticated current-user lookup
+- Property management
+- Unit management
+- Tenant data management
+- Tenant assignment history
+- Manual and scheduled monthly invoice generation
+- Invoice listing and detail lookup
+- Payment recording with tenant/unit credit rollover
+- Property expense tracking
+- Monthly cash-flow reporting
+- Monthly cash balance closing
 - Prometheus metrics export
 - Local Grafana monitoring setup
 
-Planned MVP modules:
+Remaining planned project work:
 
-- Property management
-- Unit management
-- Tenant management
-- Tenant assignment to unit
-- Monthly invoice generation
-- Payment recording
-- Invoice status tracking
-- Property expense tracking
-- Monthly cash-flow report
-- Monthly cash balance support
+- API documentation improvement
+- Deployment guide
 
 ## Main Business Flow
 
@@ -98,13 +100,46 @@ For MVP, tenants are managed as data records by admin or staff.
 
 The public API contract is defined in `openapi.yml` and documented in `docs/API_SPEC.md`.
 
-Implemented auth endpoints:
+Implemented endpoints:
 
 | Method | Path | Purpose |
 |---|---|---|
+| `GET` | `/actuator/health` | Check application health. |
+| `GET` | `/actuator/prometheus` | Export Prometheus metrics. |
 | `POST` | `/api/v1/auth/login` | Login an admin or staff user and return access/refresh tokens. |
 | `POST` | `/api/v1/auth/refresh` | Exchange a refresh token for a new access token. |
 | `GET` | `/api/v1/auth/me` | Return the currently authenticated admin or staff user. |
+| `GET` | `/api/v1/properties` | List properties. |
+| `POST` | `/api/v1/properties` | Create a property. |
+| `GET` | `/api/v1/properties/{property_id}` | Get property detail. |
+| `PUT` | `/api/v1/properties/{property_id}` | Update a property. |
+| `DELETE` | `/api/v1/properties/{property_id}` | Deactivate a property. |
+| `POST` | `/api/v1/properties/{property_id}/activate` | Activate a property. |
+| `GET` | `/api/v1/properties/{property_id}/units` | List units by property. |
+| `POST` | `/api/v1/properties/{property_id}/units` | Create a unit. |
+| `GET` | `/api/v1/units/{unit_id}` | Get unit detail. |
+| `PUT` | `/api/v1/units/{unit_id}` | Update a unit. |
+| `DELETE` | `/api/v1/units/{unit_id}` | Deactivate a unit. |
+| `POST` | `/api/v1/units/{unit_id}/activate` | Activate a unit. |
+| `GET` | `/api/v1/tenants` | List tenants. |
+| `POST` | `/api/v1/tenants` | Create a tenant. |
+| `GET` | `/api/v1/tenants/{tenant_id}` | Get tenant detail. |
+| `PUT` | `/api/v1/tenants/{tenant_id}` | Update a tenant. |
+| `GET` | `/api/v1/units/{unit_id}/active-tenant` | Get the active tenant for a unit. |
+| `GET` | `/api/v1/units/{unit_id}/tenant-assignments` | List tenant assignment history for a unit. |
+| `POST` | `/api/v1/units/{unit_id}/tenant-assignments` | Assign a tenant to a unit. |
+| `POST` | `/api/v1/unit-tenant-assignments/{assignmentId}/move-out` | Move out a tenant from a unit. |
+| `GET` | `/api/v1/invoices` | List invoices. |
+| `POST` | `/api/v1/invoices/generate-monthly` | Generate monthly invoices manually. |
+| `GET` | `/api/v1/invoices/{invoice_id}` | Get invoice detail. |
+| `GET` | `/api/v1/invoices/{invoice_id}/payments` | List invoice payments. |
+| `POST` | `/api/v1/invoices/{invoice_id}/payments` | Record an invoice payment. |
+| `GET` | `/api/v1/expenses` | List property expenses. |
+| `POST` | `/api/v1/expenses` | Create a property expense. |
+| `PUT` | `/api/v1/expenses/{expense_id}` | Update a property expense. |
+| `DELETE` | `/api/v1/expenses/{expense_id}` | Delete a property expense. |
+| `GET` | `/api/v1/reports/cash-flow` | Get a monthly cash-flow report. |
+| `POST` | `/api/v1/cash-balances/close-month` | Close a monthly cash balance. |
 
 Tenant login is intentionally not part of MVP.
 
@@ -364,7 +399,16 @@ Current status:
 ```text
 Foundation complete
 Auth module complete
-Next planned module: Property management
+Property module complete
+Unit module complete
+Tenant module complete
+Tenant assignment module complete
+Invoice module complete
+Payment module complete
+Property expense module complete
+Cash-flow report module complete
+Cash balance closing module complete
+Remaining planned work: API documentation and deployment guide
 ```
 
 ## License

@@ -1,5 +1,33 @@
 # Daily Schedule
 
+## 2026-06-01 — Issue #108: Update README for Current MVP Status
+
+## What I Did
+
+- Created Issue #108 and branch `rasyid-108-update-readme-current-mvp-status`.
+- Re-read the required project docs and confirmed the task is documentation-only.
+- Updated `README.md` so the implementation status matches the modules currently on `main`.
+- Replaced the auth-only API section with a high-level endpoint table aligned with `openapi.yml`.
+- Updated the project status section to show completed MVP modules through cash balance closing.
+- Confirmed no migration, OpenAPI, or API behavior changes were needed.
+
+## Test Results
+
+```text
+./gradlew clean test
+Passed
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/108
+
+## Blockers
+
+- None.
+
+---
+
 ## 2026-06-01 — Issue #99: Clarify Business Predicate Intent
 
 ## What I Did
