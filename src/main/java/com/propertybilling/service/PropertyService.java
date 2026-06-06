@@ -68,7 +68,7 @@ public class PropertyService {
 				.map(this::toIndexElement)
 				.toList();
 
-		return new PropertyIndexResponse(properties.size(), properties);
+		return new PropertyIndexResponse(properties);
 	}
 
 	/**
@@ -135,7 +135,7 @@ public class PropertyService {
 	}
 
 	private PropertyIndexResponse emptyIndexResponse() {
-		return new PropertyIndexResponse(0, List.of());
+		return new PropertyIndexResponse(List.of());
 	}
 
 	private PropertyIndexElement toIndexElement(PropertyIndexQueryResult property) {

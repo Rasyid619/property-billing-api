@@ -1,5 +1,6 @@
 package com.propertybilling.dto.expense;
 
+import com.propertybilling.dto.common.IndexResponse;
 import java.util.List;
 
 /**
@@ -11,5 +12,14 @@ import java.util.List;
 public record ExpenseIndexResponse(
 		int count,
 		List<ExpenseIndexElement> expenses
-) {
+) implements IndexResponse {
+
+	/**
+	 * Builds a response with count derived from the returned expense items.
+	 *
+	 * @param expenses property expense items
+	 */
+	public ExpenseIndexResponse(List<ExpenseIndexElement> expenses) {
+		this(IndexResponse.countItems(expenses), expenses);
+	}
 }

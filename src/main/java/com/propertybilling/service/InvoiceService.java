@@ -131,7 +131,7 @@ public class InvoiceService {
 				.map(this::toIndexElement)
 				.toList();
 
-		return new InvoiceIndexResponse(invoices.size(), invoices);
+		return new InvoiceIndexResponse(invoices);
 	}
 
 	/**
@@ -164,7 +164,7 @@ public class InvoiceService {
 				.map(this::toPaymentIndexElement)
 				.toList();
 
-		return new PaymentIndexResponse(payments.size(), payments);
+		return new PaymentIndexResponse(payments);
 	}
 
 	/**

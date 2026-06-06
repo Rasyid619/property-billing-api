@@ -1,5 +1,44 @@
 # Daily Schedule
 
+## 2026-06-06 — Issue #82: Clean Up Shared DTO and Index Response Boilerplate
+
+## What I Did
+
+- Pulled latest `main`, reviewed Issue #82, and created branch `rasyid-82-clean-up-shared-dto-index-response-boilerplate`.
+- Re-read the required project docs and confirmed the current scope is behavior-preserving DTO/index response cleanup, not a new endpoint or feature module.
+- Reviewed database design and existing API contract; no migration, `openapi.yml`, or `docs/API_SPEC.md` changes were needed because public response shapes stay unchanged.
+- Added a shared `IndexResponse` DTO contract for index responses that expose returned item counts.
+- Added list-only constructors to resource-specific index response DTOs so `count` is derived from the returned collection while preserving keys such as `properties`, `units`, `tenants`, and `tenant_assignments`.
+- Updated services to stop repeating manual `items.size()` response construction.
+- Added focused DTO serialization/count coverage to verify derived count behavior and the `tenant_assignments` JSON key.
+- Stayed within the Issue #82 cleanup scope and did not implement future modules or endpoint behavior changes.
+
+## Test Results
+
+```text
+./gradlew test --tests com.propertybilling.dto.common.IndexResponseTest
+Passed
+
+./gradlew test --tests com.propertybilling.service.PropertyServiceTest --tests com.propertybilling.service.UnitServiceTest --tests com.propertybilling.service.TenantServiceTest --tests com.propertybilling.service.TenantAssignmentServiceTest --tests com.propertybilling.service.InvoiceServiceTest --tests com.propertybilling.service.PropertyExpenseServiceTest --tests com.propertybilling.dto.common.IndexResponseTest
+Passed
+
+./gradlew test --tests com.propertybilling.controller.PropertyControllerTest --tests com.propertybilling.controller.UnitControllerTest --tests com.propertybilling.controller.TenantControllerTest --tests com.propertybilling.controller.TenantAssignmentControllerTest --tests com.propertybilling.controller.InvoiceControllerTest --tests com.propertybilling.controller.PropertyExpenseControllerTest --tests com.propertybilling.openapi.OpenApiEndpointTest --tests com.propertybilling.dto.common.IndexResponseTest
+Passed
+
+./gradlew clean test
+Failed: Testcontainers could not find a usable Docker environment, so integration tests failed during Spring context startup.
+```
+
+## Pull Request
+
+- Issue: https://github.com/Rasyid619/property-billing-api/issues/82
+
+## Blockers
+
+- Full local `./gradlew clean test` needs Docker/Testcontainers available.
+
+---
+
 ## 2026-06-01 — Issue #108: Update README for Current MVP Status
 
 ## What I Did

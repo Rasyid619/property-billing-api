@@ -95,7 +95,7 @@ public class UnitService {
 				.map(this::toIndexElement)
 				.toList();
 
-		return new UnitIndexResponse(units.size(), units);
+		return new UnitIndexResponse(units);
 	}
 
 	/**
@@ -179,7 +179,7 @@ public class UnitService {
 	}
 
 	private UnitIndexResponse emptyIndexResponse() {
-		return new UnitIndexResponse(0, List.of());
+		return new UnitIndexResponse(List.of());
 	}
 
 	private String toMonthlyFeeValue(String monthlyFee) {
