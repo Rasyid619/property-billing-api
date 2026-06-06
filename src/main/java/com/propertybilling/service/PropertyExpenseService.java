@@ -113,7 +113,7 @@ public class PropertyExpenseService {
 				.map(this::toIndexElement)
 				.toList();
 
-		return new ExpenseIndexResponse(expenses.size(), expenses);
+		return new ExpenseIndexResponse(expenses);
 	}
 
 	private LocalDate toMonthStart(String month) {

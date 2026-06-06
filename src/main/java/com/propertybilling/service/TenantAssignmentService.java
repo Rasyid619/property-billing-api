@@ -105,7 +105,7 @@ public class TenantAssignmentService {
 				.map(this::toIndexElement)
 				.toList();
 
-		return new TenantAssignmentIndexResponse(tenantAssignments.size(), tenantAssignments);
+		return new TenantAssignmentIndexResponse(tenantAssignments);
 	}
 
 	/**

@@ -67,7 +67,7 @@ public class TenantService {
 				.map(this::toIndexElement)
 				.toList();
 
-		return new TenantIndexResponse(tenants.size(), tenants);
+		return new TenantIndexResponse(tenants);
 	}
 
 	/**
